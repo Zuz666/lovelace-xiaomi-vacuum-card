@@ -204,6 +204,7 @@
 
     const html = LitElement.prototype.html;
     const css = LitElement.prototype.css;
+    const sanitizeStyleUrl = value => String(value).replace(/["\\\n\r\f]/g, '');
 
     class XiaomiVacuumCard extends LitElement {
 
@@ -383,6 +384,7 @@
             if (config.vendor && !(config.vendor in vendors)) throw new Error('Please define a valid vendor.');
 
             const vendor = vendors[config.vendor] || vendors.xiaomi;
+            const image = config.image ? sanitizeStyleUrl(config.image) : '';
 
             this.config = {
                 name: config.name,
@@ -398,8 +400,8 @@
                 state: this.deepMerge(state, vendor.state, config.state),
                 attributes: this.deepMerge(attributes, vendor.attributes, config.attributes),
                 styles: {
-                    background: config.image ? `background-image: url('${config.image}'); color: white; text-shadow: 0 0 10px black;` : '',
-                    icon: `color: ${config.image ? 'white' : 'var(--paper-item-icon-color)'};`,
+                    background: image ? `background-image: url("${image}"); color: white; text-shadow: 0 0 10px black;` : '',
+                    icon: `color: ${image ? 'white' : 'var(--paper-item-icon-color)'};`,
                     content: `padding: ${config.name !== false ? '8px' : '16px'} 16px ${config.buttons !== false ? '8px' : '16px'};`,
                 },
             };
