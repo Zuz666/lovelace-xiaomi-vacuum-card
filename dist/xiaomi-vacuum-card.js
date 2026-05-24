@@ -250,12 +250,12 @@
   text-align: left;
   font-size: 110%;
   padding-left: 10px;
-  border-left: 2px solid var(--primary-color);
+  border-left: 2px solid var(--primary-color, #03a9f4);
 }
 .grid-right {
   text-align: right;
   padding-right: 10px;
-  border-right: 2px solid var(--primary-color);
+  border-right: 2px solid var(--primary-color, #03a9f4);
 }
 .xvc-dropdown {
   cursor: pointer;
@@ -275,11 +275,11 @@
   max-width: 100%;
 }
 .xvc-dropdown select option {
-  background: var(--card-background-color, var(--ha-card-background, white));
+  background: var(--ha-card-background, var(--card-background-color, white));
   color: var(--primary-text-color, #212121);
 }
 .xvc-dropdown select:focus-visible {
-  outline: 2px solid var(--primary-color);
+  outline: 2px solid var(--primary-color, #03a9f4);
   outline-offset: 2px;
 }`;
         }
@@ -409,7 +409,7 @@
                 attributes: this.deepMerge(attributes, vendor.attributes, config.attributes),
                 styles: {
                     background: image ? `background-image: url("${image}"); color: white; text-shadow: 0 0 10px black;` : '',
-                    icon: `color: ${image ? 'white' : 'var(--state-icon-color, var(--secondary-text-color))'};`,
+                    icon: `color: ${image ? 'white' : 'var(--state-icon-color, var(--secondary-text-color, #727272))'};`,
                     content: `padding: ${config.name !== false ? '8px' : '16px'} 16px ${config.buttons !== false ? '8px' : '16px'};`,
                 },
             };
