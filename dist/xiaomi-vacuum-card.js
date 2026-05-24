@@ -438,9 +438,10 @@
             this.callService(service || `vacuum.set_${key}`, {entity_id: this.stateObj.entity_id, [key]: mode});
         }
 
-        callService(service, data = {entity_id: this.stateObj.entity_id}) {
+        callService(service, data) {
+            if (!this.stateObj || !service) return;
             const [domain, name] = service.split('.');
-            this._hass.callService(domain, name, data);
+            this._hass.callService(domain, name, data ?? {entity_id: this.stateObj.entity_id});
         }
 
         fireEvent(type, options = {}) {
