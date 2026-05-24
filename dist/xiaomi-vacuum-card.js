@@ -361,9 +361,10 @@
             const current = key in this.stateObj.attributes ? this.stateObj.attributes[key] : '';
 
             return html`
-                <div class="xvc-dropdown" @click=${e => e.stopPropagation()}>
+                <div class="xvc-dropdown">
                     ${attribute}
                     <select
+                      @click=${e => e.stopPropagation()}
                       aria-label=${label || key}
                       .value=${current}
                       @change=${e => {
