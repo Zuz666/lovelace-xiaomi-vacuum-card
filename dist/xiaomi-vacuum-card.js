@@ -277,6 +277,10 @@
 .xvc-dropdown select option {
   background: var(--card-background-color, var(--ha-card-background, white));
   color: var(--primary-text-color, #212121);
+}
+.xvc-dropdown select:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }`;
         }
 
@@ -362,7 +366,10 @@
                     <select
                       aria-label=${label || key}
                       .value=${current}
-                      @change=${e => this.handleChange(e.target.value, key, service)}>
+                      @change=${e => {
+                          e.stopPropagation();
+                          this.handleChange(e.target.value, key, service);
+                      }}>
                         ${list.map(item => html`<option value=${item} ?selected=${item === current}>${item}</option>`)}
                     </select>
                 </div>`;
