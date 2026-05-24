@@ -214,6 +214,7 @@
         if (typeof value !== 'string') return '';
         const trimmed = value.trim();
         if (trimmed.includes('..')) return '';
+        if (/(%2e){2}/i.test(trimmed)) return '';
         return /^(https?:\/\/|\/local\/|\/hacsfiles\/|local\/)[\w\-./?=&#%+:@!~]+$/.test(trimmed) ? trimmed : '';
     };
 
