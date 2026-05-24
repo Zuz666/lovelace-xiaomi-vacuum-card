@@ -254,7 +254,7 @@
 .grid-content {
   display: grid;
   align-content: space-between;
-  grid-row-gap: 6px;
+  row-gap: 6px;
 }
 .grid-left {
   text-align: left;
