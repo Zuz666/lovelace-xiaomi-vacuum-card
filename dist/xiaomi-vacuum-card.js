@@ -204,7 +204,11 @@
 
     const html = LitElement.prototype.html;
     const css = LitElement.prototype.css;
-    const sanitizeStyleUrl = value => String(value).replace(/["\\\n\r\f]/g, '');
+    const sanitizeStyleUrl = value => {
+        if (typeof value !== 'string') return '';
+        const trimmed = value.trim();
+        return /^(https?:\/\/|\/local\/|\/hacsfiles\/|local\/)[\w\-./?=&#%+:@!~]+$/.test(trimmed) ? trimmed : '';
+    };
 
     class XiaomiVacuumCard extends LitElement {
 
