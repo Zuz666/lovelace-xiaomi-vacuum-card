@@ -213,6 +213,7 @@
     const sanitizeStyleUrl = value => {
         if (typeof value !== 'string') return '';
         const trimmed = value.trim();
+        if (trimmed.includes('..')) return '';
         return /^(https?:\/\/|\/local\/|\/hacsfiles\/|local\/)[\w\-./?=&#%+:@!~]+$/.test(trimmed) ? trimmed : '';
     };
 
@@ -369,13 +370,14 @@
                 ? this.stateObj.attributes[`${key}_list`]
                 : [];
             const current = key in this.stateObj.attributes ? this.stateObj.attributes[key] : '';
+            const ariaLabel = String(label || key).replace(/[:\s]+$/, '');
 
             return html`
                 <div class="xvc-dropdown">
                     ${attribute}
                     <select
                       @click=${e => e.stopPropagation()}
-                      aria-label=${label || key}
+                      aria-label=${ariaLabel}
                       .value=${current}
                       @change=${e => {
                           e.stopPropagation();
@@ -393,7 +395,7 @@
         }
 
         shouldUpdate(changedProps) {
-            return changedProps.has('stateObj');
+            return changedProps.has('stateObj') || changedProps.has('config');
         }
 
         setConfig(config) {
@@ -443,9 +445,9 @@
 
         fireEvent(type, options = {}) {
             const event = new Event(type, {
-                bubbles: options.bubbles || true,
-                cancelable: options.cancelable || true,
-                composed: options.composed || true,
+                bubbles: options.bubbles !== false,
+                cancelable: options.cancelable !== false,
+                composed: options.composed !== false,
             });
             event.detail = {entityId: this.stateObj.entity_id};
             this.dispatchEvent(event);
