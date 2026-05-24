@@ -80,8 +80,14 @@
 
     const compute = {
         trueFalse: v => (v === true ? 'Yes' : (v === false ? 'No' : '-')),
-        divide100: v => Math.round(Number(v) / 100),
-        secToHour: v => Math.floor(Number(v) / 60 / 60),
+        divide100: v => {
+            const n = Number(v);
+            return Number.isFinite(n) ? Math.round(n / 100) : '-';
+        },
+        secToHour: v => {
+            const n = Number(v);
+            return Number.isFinite(n) ? Math.floor(n / 60 / 60) : '-';
+        },
     }
 
     const vendors = {
