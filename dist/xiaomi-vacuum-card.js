@@ -258,16 +258,24 @@
 }
 .xvc-dropdown {
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
 }
 .xvc-dropdown select {
-  background: var(--card-background-color, var(--ha-card-background, white));
-  color: var(--primary-text-color, #212121);
-  border: 1px solid var(--divider-color, #e0e0e0);
-  border-radius: 4px;
-  padding: 2px 4px;
-  font-size: 14px;
+  background: transparent;
+  color: inherit;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  border-radius: 0;
+  padding: 2px 18px 2px 4px;
+  font: inherit;
   cursor: pointer;
   margin-left: 4px;
+  max-width: 100%;
+}
+.xvc-dropdown select option {
+  background: var(--card-background-color, var(--ha-card-background, white));
+  color: var(--primary-text-color, #212121);
 }`;
         }
 
@@ -313,11 +321,14 @@
                 ${(data.label || '') + (value !== null ? value : this._hass.localize('state.default.unavailable'))}
             </div>`;
 
-            const hasDropdown = `${data.key}_list` in this.stateObj.attributes;
+            const list = this.stateObj.attributes[`${data.key}_list`];
+            const hasDropdown = Array.isArray(list);
 
-            return (hasDropdown && value !== null)
-                ? this.renderDropdown(attribute, data.key, data.service)
-                : attribute;
+            if (hasDropdown && value !== null) {
+                const icon = data.icon ? this.renderIcon(data) : null;
+                return this.renderDropdown(icon, data.key, data.service, data.label);
+            }
+            return attribute;
         }
 
         renderIcon(data) {
@@ -338,14 +349,17 @@
                 : null;
         }
 
-        renderDropdown(attribute, key, service) {
-            const list = this.stateObj.attributes[`${key}_list`];
+        renderDropdown(attribute, key, service, label) {
+            const list = Array.isArray(this.stateObj.attributes[`${key}_list`])
+                ? this.stateObj.attributes[`${key}_list`]
+                : [];
             const current = key in this.stateObj.attributes ? this.stateObj.attributes[key] : '';
 
             return html`
                 <div class="xvc-dropdown" @click=${e => e.stopPropagation()}>
                     ${attribute}
                     <select
+                      aria-label=${label || key}
                       .value=${current}
                       @change=${e => this.handleChange(e.target.value, key, service)}>
                         ${list.map(item => html`<option value=${item} ?selected=${item === current}>${item}</option>`)}
