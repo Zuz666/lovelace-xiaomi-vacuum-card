@@ -321,16 +321,20 @@
 
         renderAttribute(data) {
             const computeFunc = data.compute || (v => v);
+            const formatValue = raw => {
+                const computed = computeFunc(raw);
+                return computed === '-' ? '-' : computed + (data.unit || '');
+            };
             const isValidSensorData = data && `${this.config.sensorEntity}_${data.key}` in this._hass.states;
             const isValidAttribute = data && data.key in this.stateObj.attributes;
             const isValidEntityData = data && data.key in this.stateObj;
 
             const value = isValidSensorData
-                ? computeFunc(this._hass.states[`${this.config.sensorEntity}_${data.key}`].state) + (data.unit || '')
+                ? formatValue(this._hass.states[`${this.config.sensorEntity}_${data.key}`].state)
                 : isValidAttribute
-                    ? computeFunc(this.stateObj.attributes[data.key]) + (data.unit || '')
+                    ? formatValue(this.stateObj.attributes[data.key])
                     : isValidEntityData
-                        ? computeFunc(this.stateObj[data.key]) + (data.unit || '')
+                        ? formatValue(this.stateObj[data.key])
                         : null;
             const attribute = html`<div>
                 ${data.icon && this.renderIcon(data)}
