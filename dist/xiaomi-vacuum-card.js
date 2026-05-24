@@ -259,7 +259,7 @@
 }
 .grid-left {
   text-align: left;
-  font-size: 110%;
+  font-size: 1.1em;
   padding-left: 10px;
   border-left: 2px solid var(--primary-color, #03a9f4);
 }
