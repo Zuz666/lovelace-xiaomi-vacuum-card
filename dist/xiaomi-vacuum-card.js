@@ -408,7 +408,7 @@
                 attributes: this.deepMerge(attributes, vendor.attributes, config.attributes),
                 styles: {
                     background: image ? `background-image: url("${image}"); color: white; text-shadow: 0 0 10px black;` : '',
-                    icon: `color: ${image ? 'white' : 'var(--paper-item-icon-color)'};`,
+                    icon: `color: ${image ? 'white' : 'var(--state-icon-color, var(--secondary-text-color))'};`,
                     content: `padding: ${config.name !== false ? '8px' : '16px'} 16px ${config.buttons !== false ? '8px' : '16px'};`,
                 },
             };
