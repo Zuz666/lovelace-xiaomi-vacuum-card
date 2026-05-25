@@ -590,6 +590,12 @@
             return changedProps.has('stateObj') || changedProps.has('config') || changedProps.has('_dropdown');
         }
 
+        updated() {
+            if (this._dropdown && this._dropdown.open) {
+                this.renderRoot.querySelector('.xvc-option[active]')?.scrollIntoView({block: 'nearest'});
+            }
+        }
+
         setConfig(config) {
             if (!config.entity) throw new Error('Please define an entity.');
             const [domain, entityName] = config.entity.split('.');
