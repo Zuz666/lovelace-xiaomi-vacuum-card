@@ -225,6 +225,7 @@
                 _hass: {},
                 config: {},
                 stateObj: {},
+                _dropdown: {},
             }
         }
 
@@ -273,8 +274,19 @@
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  position: relative;
+  width: max-content;
+  max-width: 100%;
 }
-.xvc-dropdown select {
+.xvc-dropdown:focus-within {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+.xvc-select {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
   background: transparent;
   color: inherit;
   border: 0;
@@ -282,17 +294,54 @@
   border-radius: 0;
   padding: 2px 18px 2px 4px;
   font: inherit;
+  line-height: inherit;
   cursor: pointer;
   margin-left: 4px;
   max-width: 100%;
 }
-.xvc-dropdown select option {
+.xvc-select::after {
+  content: "";
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  margin-top: -2px;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid currentColor;
+  pointer-events: none;
+}
+.xvc-select:focus {
+  outline: none;
+  box-shadow: none;
+}
+.xvc-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 3;
+  width: max-content;
+  min-width: var(--xvc-options-width);
+  box-sizing: border-box;
+  max-height: 200px;
+  overflow-y: auto;
   background: var(--ha-card-background, var(--card-background-color, white));
   color: var(--primary-text-color, #212121);
+  border: 1px solid var(--divider-color, #e0e0e0);
+  border-radius: 4px;
+  text-align: left;
+  text-shadow: none;
 }
-.xvc-dropdown select:focus-visible {
-  outline: 2px solid var(--primary-color, #03a9f4);
-  outline-offset: 2px;
+.xvc-option {
+  padding: 4px 8px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.xvc-option:hover,
+.xvc-option[active] {
+  background: var(--secondary-background-color, #f5f5f5);
+}
+.xvc-option[selected] {
+  color: var(--primary-color, #03a9f4);
 }`;
         }
 
@@ -375,22 +424,128 @@
                 ? this.stateObj.attributes[`${key}_list`]
                 : [];
             const current = key in this.stateObj.attributes ? this.stateObj.attributes[key] : '';
+            const dropdown = this._dropdown && this._dropdown.key === key ? this._dropdown : null;
+            const value = dropdown ? dropdown.value : current;
+            const active = dropdown ? dropdown.active : current;
+            const isOpen = dropdown && dropdown.open;
             const ariaLabel = String(label || key).replace(/[:\s]+$/, '');
+            const optionsWidth = Math.max(...list.map(item => String(item).length), String(current).length) + 2;
 
             return html`
-                <div class="xvc-dropdown">
+                <div class="xvc-dropdown" @focusout=${e => this.handleDropdownFocusout(e)}>
                     ${attribute}
-                    <select
-                      @click=${e => e.stopPropagation()}
+                    <button
+                      type="button"
+                      class="xvc-select"
+                      @click=${e => this.toggleDropdown(e, key, current)}
+                      @keydown=${e => this.handleDropdownKeydown(e, key, service, list, current)}
                       aria-label=${ariaLabel}
-                      .value=${current}
-                      @change=${e => {
-                          e.stopPropagation();
-                          this.handleChange(e.target.value, key, service);
-                      }}>
-                        ${list.map(item => html`<option value=${item} ?selected=${item === current}>${item}</option>`)}
-                    </select>
+                      aria-haspopup="listbox"
+                      aria-expanded=${isOpen ? 'true' : 'false'}>
+                        ${value}
+                    </button>
+                    ${isOpen ? html`
+                    <div class="xvc-options" role="listbox" style="--xvc-options-width: ${optionsWidth}ch">
+                        ${list.map(item => html`
+                        <div
+                          class="xvc-option"
+                          role="option"
+                          aria-selected=${item === current ? 'true' : 'false'}
+                          ?active=${item === active}
+                          ?selected=${item === current}
+                          @mousedown=${e => e.preventDefault()}
+                          @click=${e => {
+                              e.stopPropagation();
+                              this.commitDropdownValue(key, service, item, current);
+                          }}>
+                            ${item}
+                        </div>`)}
+                    </div>` : null}
                 </div>`;
+        }
+
+        toggleDropdown(event, key, current) {
+            event.stopPropagation();
+            const dropdown = this._dropdown && this._dropdown.key === key
+                ? this._dropdown
+                : this.getDropdownState(key, current);
+            this._dropdown = Object.assign({}, dropdown, {
+                active: dropdown.active || dropdown.value,
+                open: !dropdown.open,
+            });
+        }
+
+        handleDropdownKeydown(event, key, service, list, current) {
+            event.stopPropagation();
+            const dropdown = this._dropdown && this._dropdown.key === key
+                ? this._dropdown
+                : this.getDropdownState(key, current);
+
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                this._dropdown = null;
+                return;
+            }
+
+            if (event.key === 'Tab') {
+                this._dropdown = null;
+                return;
+            }
+
+            if (['ArrowDown', 'ArrowUp', 'Home', 'End', 'PageDown', 'PageUp'].includes(event.key)) {
+                event.preventDefault();
+                const next = this.getDropdownKeyboardValue(list, dropdown.open ? dropdown.active : dropdown.value, event.key);
+                this._dropdown = dropdown.open
+                    ? Object.assign({}, dropdown, {active: next})
+                    : Object.assign({}, dropdown, {active: next, value: next});
+                return;
+            }
+
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                if (dropdown.open) {
+                    this.commitDropdownValue(key, service, dropdown.active, dropdown.committed);
+                } else if (dropdown.value !== dropdown.committed) {
+                    this.commitDropdownValue(key, service, dropdown.value, dropdown.committed);
+                } else {
+                    this._dropdown = Object.assign({}, dropdown, {open: true});
+                }
+                return;
+            }
+
+            if (event.key === ' ') {
+                event.preventDefault();
+                if (dropdown.open) {
+                    this.commitDropdownValue(key, service, dropdown.active, dropdown.committed);
+                } else {
+                    this._dropdown = Object.assign({}, dropdown, {active: dropdown.value, open: true});
+                }
+                return;
+            }
+        }
+
+        getDropdownState(key, current) {
+            return {key, value: current, active: current, committed: current, open: false};
+        }
+
+        getDropdownKeyboardValue(list, value, key) {
+            if (!list.length) return value;
+            const index = Math.max(0, list.indexOf(value));
+            if (key === 'Home') return list[0];
+            if (key === 'End') return list[list.length - 1];
+            const step = ['ArrowDown', 'PageDown'].includes(key) ? 1 : -1;
+            return list[Math.min(list.length - 1, Math.max(0, index + step))];
+        }
+
+        handleDropdownFocusout(event) {
+            if (!event.currentTarget.contains(event.relatedTarget)) {
+                this._dropdown = null;
+            }
+        }
+
+        commitDropdownValue(key, service, value, committed) {
+            this._dropdown = null;
+            if (value !== committed) this.handleChange(value, key, service);
         }
 
         getCardSize() {
@@ -400,7 +555,7 @@
         }
 
         shouldUpdate(changedProps) {
-            return changedProps.has('stateObj') || changedProps.has('config');
+            return changedProps.has('stateObj') || changedProps.has('config') || changedProps.has('_dropdown');
         }
 
         setConfig(config) {
@@ -440,6 +595,7 @@
         }
 
         handleChange(mode, key, service) {
+            if (!this.stateObj) return;
             this.callService(service || `vacuum.set_${key}`, {entity_id: this.stateObj.entity_id, [key]: mode});
         }
 
