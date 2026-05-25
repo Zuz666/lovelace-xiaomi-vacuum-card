@@ -287,29 +287,17 @@
 .xvc-select {
   appearance: none;
   -webkit-appearance: none;
-  position: relative;
   background: transparent;
   color: inherit;
   border: 0;
   border-bottom: 1px solid currentColor;
   border-radius: 0;
-  padding: 2px 18px 2px 4px;
+  padding: 2px 4px;
   font: inherit;
   line-height: inherit;
   cursor: pointer;
   margin-left: 4px;
   max-width: 100%;
-}
-.xvc-select::after {
-  content: "";
-  position: absolute;
-  right: 6px;
-  top: 50%;
-  margin-top: -2px;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-top: 5px solid currentColor;
-  pointer-events: none;
 }
 .xvc-select:focus {
   outline: none;
@@ -390,11 +378,6 @@
                     : isValidEntityData
                         ? formatValue(this.stateObj[data.key])
                         : null;
-            const attribute = html`<div>
-                ${data.icon && this.renderIcon(data)}
-                ${(data.label || '') + (value !== null ? value : this._hass.localize('state.default.unavailable'))}
-            </div>`;
-
             const list = this.stateObj.attributes[`${data.key}_list`];
             const hasDropdown = Array.isArray(list);
 
@@ -402,7 +385,10 @@
                 const icon = data.icon ? this.renderIcon(data) : null;
                 return this.renderDropdown(icon, data.key, data.service, data.label);
             }
-            return attribute;
+            return html`<div>
+                ${data.icon && this.renderIcon(data)}
+                ${(data.label || '') + (value !== null ? value : this._hass.localize('state.default.unavailable'))}
+            </div>`;
         }
 
         renderIcon(data) {
@@ -434,7 +420,8 @@
             const active = dropdown ? dropdown.active : current;
             const isOpen = dropdown && dropdown.open;
             const ariaLabel = String(label || key).replace(/[:\s]+$/, '');
-            const listboxId = `xvc-list-${key}`;
+            const entitySlug = this.config.entity.replace(/[^a-z0-9]/gi, '_');
+            const listboxId = `xvc-list-${entitySlug}-${key}`;
             const optionId = item => `${listboxId}-${String(item).replace(/[^a-zA-Z0-9_-]/g, '-')}`;
 
             return html`
@@ -452,6 +439,7 @@
                       aria-controls=${listboxId}
                       aria-activedescendant=${isOpen ? optionId(active) : ''}>
                         ${value}
+                        <span aria-hidden="true" style="pointer-events:none;margin-left:6px;display:inline-block;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid currentColor;vertical-align:middle;opacity:0.7;transform:translateY(-1px)"></span>
                     </button>
                     ${isOpen ? html`
                     <div id=${listboxId} class="xvc-options" role="listbox" aria-label=${ariaLabel}>
@@ -597,7 +585,8 @@
 
         setConfig(config) {
             if (!config.entity) throw new Error('Please define an entity.');
-            if (config.entity.split('.')[0] !== 'vacuum') throw new Error('Please define a vacuum entity.');
+            const [domain, entityName] = config.entity.split('.');
+            if (domain !== 'vacuum' || !entityName) throw new Error('Please define a vacuum entity.');
             if (config.vendor && !(config.vendor in vendors)) throw new Error('Please define a valid vendor.');
 
             const vendor = vendors[config.vendor] || vendors.xiaomi;
@@ -606,7 +595,7 @@
             this.config = {
                 name: config.name,
                 entity: config.entity,
-                sensorEntity: `sensor.${config.entity.split('.')[1]}`,
+                sensorEntity: `sensor.${entityName}`,
                 show: {
                     name: config.name !== false,
                     state: config.state !== false,
