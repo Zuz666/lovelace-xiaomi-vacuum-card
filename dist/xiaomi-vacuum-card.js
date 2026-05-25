@@ -671,11 +671,13 @@
     customElements.define('xiaomi-vacuum-card', XiaomiVacuumCard);
 
     window.customCards = window.customCards || [];
-    window.customCards.push({
-        type: 'xiaomi-vacuum-card',
-        name: 'Xiaomi Vacuum Card',
-        description: 'Card for Xiaomi/Roborock/iRobot/Ecovacs vacuum cleaners',
-        preview: false,
-        documentationURL: 'https://github.com/3ative/lovelace-xiaomi-vacuum-card',
-    });
+    if (!window.customCards.some(c => c.type === 'xiaomi-vacuum-card')) {
+        window.customCards.push({
+            type: 'xiaomi-vacuum-card',
+            name: 'Xiaomi Vacuum Card',
+            description: 'Card for Xiaomi/Roborock/iRobot/Ecovacs vacuum cleaners',
+            preview: false,
+            documentationURL: 'https://github.com/3ative/lovelace-xiaomi-vacuum-card',
+        });
+    }
 })(window.LitElement || Object.getPrototypeOf(customElements.get("hui-masonry-view") || customElements.get("hui-view")));
