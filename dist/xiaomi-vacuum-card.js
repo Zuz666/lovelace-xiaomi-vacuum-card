@@ -320,7 +320,8 @@
   left: 0;
   z-index: 3;
   width: max-content;
-  min-width: var(--xvc-options-width);
+  min-width: 100%;
+  max-width: 200px;
   box-sizing: border-box;
   max-height: 200px;
   overflow-y: auto;
@@ -334,6 +335,8 @@
 .xvc-option {
   padding: 4px 8px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   cursor: pointer;
 }
 .xvc-option:hover,
@@ -429,7 +432,6 @@
             const active = dropdown ? dropdown.active : current;
             const isOpen = dropdown && dropdown.open;
             const ariaLabel = String(label || key).replace(/[:\s]+$/, '');
-            const optionsWidth = Math.max(...list.map(item => String(item).length), String(current).length) + 2;
 
             return html`
                 <div class="xvc-dropdown" @focusout=${e => this.handleDropdownFocusout(e)}>
@@ -445,7 +447,7 @@
                         ${value}
                     </button>
                     ${isOpen ? html`
-                    <div class="xvc-options" role="listbox" style="--xvc-options-width: ${optionsWidth}ch">
+                    <div class="xvc-options" role="listbox">
                         ${list.map(item => html`
                         <div
                           class="xvc-option"
