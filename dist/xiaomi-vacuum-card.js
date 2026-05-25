@@ -432,6 +432,8 @@
             const active = dropdown ? dropdown.active : current;
             const isOpen = dropdown && dropdown.open;
             const ariaLabel = String(label || key).replace(/[:\s]+$/, '');
+            const listboxId = `xvc-list-${key}`;
+            const optionId = item => `${listboxId}-${String(item).replace(/[^a-zA-Z0-9_-]/g, '-')}`;
 
             return html`
                 <div class="xvc-dropdown" @focusout=${e => this.handleDropdownFocusout(e)}>
@@ -441,15 +443,19 @@
                       class="xvc-select"
                       @click=${e => this.toggleDropdown(e, key, current)}
                       @keydown=${e => this.handleDropdownKeydown(e, key, service, list, current)}
+                      role="combobox"
                       aria-label=${ariaLabel}
                       aria-haspopup="listbox"
-                      aria-expanded=${isOpen ? 'true' : 'false'}>
+                      aria-expanded=${isOpen ? 'true' : 'false'}
+                      aria-controls=${listboxId}
+                      aria-activedescendant=${isOpen ? optionId(active) : ''}>
                         ${value}
                     </button>
                     ${isOpen ? html`
-                    <div class="xvc-options" role="listbox">
+                    <div id=${listboxId} class="xvc-options" role="listbox" aria-label=${ariaLabel}>
                         ${list.map(item => html`
                         <div
+                          id=${optionId(item)}
                           class="xvc-option"
                           role="option"
                           aria-selected=${item === current ? 'true' : 'false'}
