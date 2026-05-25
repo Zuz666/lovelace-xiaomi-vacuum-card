@@ -214,8 +214,15 @@
     const sanitizeStyleUrl = value => {
         if (typeof value !== 'string') return '';
         const trimmed = value.trim();
-        if (trimmed.includes('..')) return '';
-        if (/(%2e){2}/i.test(trimmed)) return '';
+        let decoded = trimmed;
+        let prev;
+        try {
+            do {
+                prev = decoded;
+                decoded = decodeURIComponent(decoded);
+            } while (decoded !== prev);
+        } catch (e) { return ''; }
+        if (decoded.includes('..')) return '';
         return /^(https?:\/\/|\/local\/|\/hacsfiles\/|local\/)[\w\-./?=&#%+:@!~]+$/.test(trimmed) ? trimmed : '';
     };
 
