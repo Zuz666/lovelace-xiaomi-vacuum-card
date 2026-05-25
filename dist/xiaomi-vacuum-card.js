@@ -416,6 +416,7 @@
             return data && data.show !== false
                 ? html`<ha-icon-button
                     @click="${() => this.callService(data.service, data.service_data)}"
+                    label="${data.label || ''}"
                     title="${data.label || ''}"
                     style="${this.config.styles.icon}">
                       <ha-icon style="display:flex;" icon="${data.icon}"></ha-icon>
