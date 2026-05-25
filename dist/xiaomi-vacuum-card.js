@@ -648,7 +648,7 @@
                 cancelable: options.cancelable !== false,
                 composed: options.composed !== false,
             });
-            event.detail = {entityId: this.stateObj.entity_id};
+            event.detail = {entityId: this.stateObj && this.stateObj.entity_id};
             this.dispatchEvent(event);
         }
 
