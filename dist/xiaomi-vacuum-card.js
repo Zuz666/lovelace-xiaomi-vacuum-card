@@ -589,7 +589,11 @@
 
         set hass(hass) {
             if (hass && this.config) {
-                this.stateObj = this.config.entity in hass.states ? hass.states[this.config.entity] : null;
+                const nextStateObj = this.config.entity in hass.states ? hass.states[this.config.entity] : null;
+                if (this._dropdown && nextStateObj && nextStateObj.attributes[this._dropdown.key] !== this._dropdown.committed) {
+                    this._dropdown = null;
+                }
+                this.stateObj = nextStateObj;
             }
             this._hass = hass;
         }
