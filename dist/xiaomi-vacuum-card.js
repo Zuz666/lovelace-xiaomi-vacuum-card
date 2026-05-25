@@ -576,6 +576,16 @@
             return 2;
         }
 
+        getGridOptions() {
+            return {
+                columns: 6,
+                min_columns: 3,
+                max_columns: 12,
+                rows: this.getCardSize(),
+                min_rows: 2,
+            };
+        }
+
         static getStubConfig() {
             return {entity: 'vacuum.xiaomi_vacuum_cleaner'};
         }
