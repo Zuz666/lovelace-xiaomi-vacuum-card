@@ -233,7 +233,7 @@
                 _hass: {},
                 config: {},
                 stateObj: {},
-                _dropdown: {},
+                _dropdown: {type: Object},
             }
         }
 
