@@ -546,9 +546,22 @@
         }
 
         handleDropdownFocusout(event) {
-            if (!event.currentTarget.contains(event.relatedTarget)) {
-                this._dropdown = null;
+            if (event.currentTarget.contains(event.relatedTarget)) return;
+            if (this._dropdownCloseFrame) cancelAnimationFrame(this._dropdownCloseFrame);
+            this._dropdownCloseFrame = requestAnimationFrame(() => {
+                this._dropdownCloseFrame = null;
+                if (this._dropdown && !this.renderRoot.activeElement) {
+                    this._dropdown = null;
+                }
+            });
+        }
+
+        disconnectedCallback() {
+            if (this._dropdownCloseFrame) {
+                cancelAnimationFrame(this._dropdownCloseFrame);
+                this._dropdownCloseFrame = null;
             }
+            super.disconnectedCallback();
         }
 
         commitDropdownValue(key, service, value, committed) {
