@@ -18,6 +18,7 @@
         mode: {
             key: 'fan_speed',
             icon: 'mdi:fan',
+            service: 'vacuum.set_fan_speed',
         },
     };
 
