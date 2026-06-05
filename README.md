@@ -1,10 +1,14 @@
 # Xiaomi Vacuum Card
 
-Fork of [benct/lovelace-xiaomi-vacuum-card](https://github.com/benct/lovelace-xiaomi-vacuum-card) with fixes for modern Home Assistant versions.
+Maintained fork of the unsupported [benct/lovelace-xiaomi-vacuum-card](https://github.com/benct/lovelace-xiaomi-vacuum-card), updated for modern Home Assistant versions and direct HACS/browser loading.
 
 ## Changes from upstream
 
-- **Fixed fan speed dropdown** — Home Assistant 2026.02+ removed the `mwc-menu` and `mwc-list-item` web components that the original card relied on. The dropdown has been replaced with a native HTML `<select>` element that has no dependency on HA internal frontend components.
+- **Fixed fan speed control**: Home Assistant 2026.02+ removed the `mwc-menu` and `mwc-list-item` web components that the original card relied on. This fork uses a dependency-free custom dropdown with keyboard support, labelled actions, safer blur handling, and no dependency on removed HA internals.
+- **Added modern HA card picker support**: the card registers `window.customCards` metadata, preview support, vacuum entity suggestions, `getStubConfig()`, and sections-view grid sizing.
+- **Added GUI configuration support**: Home Assistant can configure the card through `getConfigForm()` and a custom `getConfigElement()` editor using the same `ha-form` pattern as standard HA cards.
+- **Added modern media image handling**: uploaded images and media sources such as `media-source://image_upload/...`, `media-source://media_source/...`, and `media-source://image/<entity_id>` are resolved for card backgrounds.
+- **Hardened rendering and configuration**: image URLs are sanitized before use in inline CSS, encoded traversal is blocked, vendor/entity validation is stricter, unavailable values are handled more safely, and modern HA theme variables are supported.
 
 ## Installation
 
