@@ -223,7 +223,7 @@
             } while (decoded !== prev);
         } catch (e) { return ''; }
         if (decoded.includes('..')) return '';
-        return /^(https?:\/\/|\/local\/|\/hacsfiles\/|local\/)[\w\-./?=&#%+:@!~]+$/.test(trimmed) ? trimmed : '';
+        return /^(https?:\/\/|\/local\/|\/hacsfiles\/|\/api\/image\/serve\/|\/api\/image_proxy\/|\/api\/media_source_proxy\/|\/media\/|local\/)[\w\-./?=&#%+:@!~]+$/.test(trimmed) ? trimmed : '';
     };
 
     class XiaomiVacuumCard extends LitElement {
@@ -234,6 +234,8 @@
                 config: {},
                 stateObj: {},
                 _dropdown: {type: Object},
+                _resolvedImage: {},
+                _resolvedImageSource: {},
             }
         }
 
@@ -582,12 +584,28 @@
             };
         }
 
-        static getStubConfig() {
-            return {entity: 'vacuum.xiaomi_vacuum_cleaner'};
+        static getStubConfig(hass) {
+            const entity = hass && hass.states && Object.keys(hass.states).find(entityId => entityId.split('.')[0] === 'vacuum');
+            return {entity: entity || 'vacuum.xiaomi_vacuum_cleaner'};
+        }
+
+        static getConfigForm() {
+            return {
+                schema: [
+                    {name: 'entity', required: true, selector: {entity: {filter: {domain: 'vacuum'}}}},
+                    {name: 'name', selector: {text: {}}},
+                    {name: 'vendor', selector: {select: {mode: 'dropdown', options: Object.keys(vendors)}}},
+                    {name: 'image', selector: {media: {accept: ['image/*'], clearable: true, image_upload: true, hide_content_type: true}}},
+                ],
+            };
+        }
+
+        static getConfigElement() {
+            return document.createElement('xiaomi-vacuum-card-editor');
         }
 
         shouldUpdate(changedProps) {
-            return changedProps.has('stateObj') || changedProps.has('config') || changedProps.has('_dropdown');
+            return changedProps.has('stateObj') || changedProps.has('config') || changedProps.has('_dropdown') || changedProps.has('_resolvedImage');
         }
 
         updated() {
@@ -603,38 +621,115 @@
             if (config.vendor && !(config.vendor in vendors)) throw new Error('Please define a valid vendor.');
 
             const vendor = vendors[config.vendor] || vendors.xiaomi;
-            const image = config.image ? sanitizeStyleUrl(config.image) : '';
+            const image = this.getConfigImage(config.image);
+            const showName = config.name !== false;
+            const showButtons = config.buttons !== false;
 
             this.config = {
                 name: config.name,
                 entity: config.entity,
+                image,
                 sensorEntity: `sensor.${entityName}`,
                 show: {
-                    name: config.name !== false,
+                    name: showName,
                     state: config.state !== false,
                     attributes: config.attributes !== false,
-                    buttons: config.buttons !== false,
+                    buttons: showButtons,
                 },
                 buttons: this.deepMerge(buttons, vendor.buttons, config.buttons),
                 state: this.deepMerge(state, vendor.state, config.state),
                 attributes: this.deepMerge(attributes, vendor.attributes, config.attributes),
-                styles: {
-                    background: image ? `background-image: url("${image}"); color: white; text-shadow: 0 0 10px black;` : '',
-                    icon: `color: ${image ? 'white' : 'var(--state-icon-color, var(--secondary-text-color, #727272))'};`,
-                    content: `padding: ${config.name !== false ? '8px' : '16px'} 16px ${config.buttons !== false ? '8px' : '16px'};`,
-                },
+                styles: this.getCardStyles(image, showName, showButtons),
+            };
+            this.resolveCardImage();
+        }
+
+        getConfigImage(image) {
+            if (image && typeof image === 'object') return image.media_content_id || '';
+            return image || '';
+        }
+
+        getImageStyleUrl(image) {
+            if (!image) return '';
+            if (String(image).startsWith('media-source://')) return sanitizeStyleUrl(this._resolvedImage);
+            return sanitizeStyleUrl(image);
+        }
+
+        getCardStyles(image, showName, showButtons) {
+            const styleImage = this.getImageStyleUrl(image);
+            return {
+                background: styleImage ? `background-image: url("${styleImage}"); color: white; text-shadow: 0 0 10px black;` : '',
+                icon: `color: ${styleImage ? 'white' : 'var(--state-icon-color, var(--secondary-text-color, #727272))'};`,
+                content: `padding: ${showName ? '8px' : '16px'} 16px ${showButtons ? '8px' : '16px'};`,
             };
         }
 
+        updateImageStyles() {
+            if (!this.config) return;
+            this.config = Object.assign({}, this.config, {
+                styles: this.getCardStyles(this.config.image, this.config.show.name, this.config.show.buttons),
+            });
+        }
+
+        resolveCardImage() {
+            if (!this.config || !this._hass) return;
+            const image = this.config.image;
+            if (!image || !String(image).startsWith('media-source://')) {
+                if (this._resolvedImage || this._resolvedImageSource) {
+                    this._resolvedImage = '';
+                    this._resolvedImageSource = '';
+                    this.updateImageStyles();
+                }
+                return;
+            }
+
+            const imageEntityId = this.getImageEntityId(image);
+            if (imageEntityId) {
+                const nextImage = this.getImageEntityUrl(imageEntityId);
+                if (this._resolvedImageSource === image && this._resolvedImage === nextImage) return;
+                this._resolvedImage = nextImage;
+                this._resolvedImageSource = image;
+                this.updateImageStyles();
+                return;
+            }
+
+            if (this._resolvedImageSource === image) return;
+            this._resolvedImage = '';
+            this._resolvedImageSource = image;
+            this.updateImageStyles();
+            this._hass.callWS({type: 'media_source/resolve_media', media_content_id: image}).then(result => {
+                if (!this.config || this.config.image !== image) return;
+                this._resolvedImage = result && result.url ? result.url : '';
+                this.updateImageStyles();
+            }).catch(() => {
+                if (!this.config || this.config.image !== image) return;
+                this._resolvedImage = '';
+                this.updateImageStyles();
+            });
+        }
+
+        getImageEntityId(image) {
+            const prefix = 'media-source://image/';
+            return String(image).startsWith(prefix) ? String(image).slice(prefix.length) : '';
+        }
+
+        getImageEntityUrl(entityId) {
+            const stateObj = this._hass.states[entityId];
+            if (!stateObj) return '';
+            const token = stateObj.attributes && stateObj.attributes.access_token;
+            return token ? `/api/image_proxy/${entityId}?token=${token}&state=${stateObj.state}` : '';
+        }
+
         set hass(hass) {
+            this._hass = hass;
             if (hass && this.config) {
                 const nextStateObj = this.config.entity in hass.states ? hass.states[this.config.entity] : null;
                 if (this._dropdown && nextStateObj && nextStateObj.attributes[this._dropdown.key] !== this._dropdown.committed) {
                     this._dropdown = null;
                 }
                 this.stateObj = nextStateObj;
+                this.resolveCardImage();
             }
-            this._hass = hass;
         }
 
         handleChange(mode, key, service) {
@@ -681,6 +776,71 @@
         }
     }
 
+    class XiaomiVacuumCardEditor extends LitElement {
+        static get properties() {
+            return {
+                hass: {},
+                _config: {},
+            };
+        }
+
+        setConfig(config) {
+            this._config = config;
+        }
+
+        render() {
+            if (!this.hass || !this._config) return html``;
+            return html`
+                <ha-form
+                    .hass=${this.hass}
+                    .data=${this.processData(this._config)}
+                    .schema=${XiaomiVacuumCard.getConfigForm().schema}
+                    @value-changed=${this.valueChanged}
+                ></ha-form>
+            `;
+        }
+
+        processData(config) {
+            const data = Object.assign({}, config);
+            if (typeof data.image === 'string') {
+                data.image = {media_content_id: data.image};
+            }
+            return data;
+        }
+
+        valueChanged(ev) {
+            const config = Object.assign({}, ev.detail.value);
+            const image = this.cleanImageConfig(config.image);
+            if (image) {
+                config.image = image;
+            } else {
+                delete config.image;
+            }
+
+            this.dispatchEvent(new CustomEvent('config-changed', {
+                bubbles: true,
+                composed: true,
+                detail: {config},
+            }));
+        }
+
+        cleanImageConfig(image) {
+            if (!image) return undefined;
+            if (typeof image === 'string') return image || undefined;
+            if (typeof image !== 'object') return undefined;
+
+            const clean = {};
+            Object.keys(image).forEach(key => {
+                if (!/^\d+$/.test(key) && image[key] !== undefined) clean[key] = image[key];
+            });
+
+            const mediaContentId = clean.media_content_id;
+            if (!mediaContentId) return undefined;
+            return String(mediaContentId).startsWith('media-source://') ? clean : mediaContentId;
+        }
+    }
+
+    customElements.define('xiaomi-vacuum-card-editor', XiaomiVacuumCardEditor);
     customElements.define('xiaomi-vacuum-card', XiaomiVacuumCard);
 
     window.customCards = window.customCards || [];
@@ -689,8 +849,11 @@
             type: 'xiaomi-vacuum-card',
             name: 'Xiaomi Vacuum Card',
             description: 'Card for Xiaomi/Roborock/iRobot/Ecovacs vacuum cleaners',
-            preview: false,
+            preview: true,
             documentationURL: 'https://github.com/3ative/lovelace-xiaomi-vacuum-card',
+            getEntitySuggestion: (hass, entityId) => entityId.split('.')[0] === 'vacuum'
+                ? {config: {type: 'custom:xiaomi-vacuum-card', entity: entityId}}
+                : null,
         });
     }
 })(window.LitElement || Object.getPrototypeOf(customElements.get("hui-masonry-view") || customElements.get("hui-view")));
