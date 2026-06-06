@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Home Assistant custom card documentation
+    url: https://developers.home-assistant.io/docs/frontend/custom-ui/custom-card/
+    about: Read the HA custom card docs before opening implementation questions.
