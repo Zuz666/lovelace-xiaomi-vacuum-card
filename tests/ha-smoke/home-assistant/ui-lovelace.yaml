@@ -1,0 +1,8 @@
+title: Xiaomi Vacuum Card Smoke
+views:
+  - title: Smoke
+    path: smoke
+    cards:
+      - type: custom:xiaomi-vacuum-card
+        entity: vacuum.demo_vacuum
+        name: Smoke Vacuum
