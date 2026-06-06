@@ -1,0 +1,49 @@
+name: Bug report
+description: Report a reproducible problem with the Xiaomi Vacuum Card.
+title: "fix: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Describe the problem and what you expected to happen.
+    validations:
+      required: true
+  - type: input
+    id: home-assistant-version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.6.0"
+    validations:
+      required: true
+  - type: input
+    id: card-version-commit
+    attributes:
+      label: Card version/commit
+      placeholder: "v1.0.0 or commit SHA"
+    validations:
+      required: true
+  - type: textarea
+    id: card-configuration
+    attributes:
+      label: Card configuration YAML
+      description: Paste the relevant Lovelace card configuration.
+      render: yaml
+  - type: textarea
+    id: logs
+    attributes:
+      label: Browser console or HA logs
+      description: Paste any browser console output or Home Assistant log entries.
+      render: text
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Reproduction steps
+      description: List the smallest set of steps needed to reproduce the issue.
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+        3. See ...
+    validations:
+      required: true
