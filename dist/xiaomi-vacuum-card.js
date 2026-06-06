@@ -748,10 +748,25 @@
             this.callService(service || `vacuum.set_${key}`, {entity_id: this.stateObj.entity_id, [key]: mode});
         }
 
-        callService(service, data) {
+        async callService(service, data) {
             if (!this.stateObj || !service) return;
             const [domain, name] = service.split('.');
-            this._hass.callService(domain, name, data ?? {entity_id: this.stateObj.entity_id});
+            let resolvedData = data ?? {entity_id: this.stateObj.entity_id};
+            if (typeof data === 'string') {
+                try {
+                    const rendered = await this._hass.callWS({type: 'render_template', template: data});
+                    const parsed = JSON.parse(rendered);
+                    if (!parsed || typeof parsed !== 'object') {
+                        console.error('[xiaomi-vacuum-card] service_data_template must return a JSON object, got:', rendered);
+                        return;
+                    }
+                    resolvedData = Object.assign({}, parsed, {entity_id: this.stateObj.entity_id});
+                } catch (e) {
+                    console.error('[xiaomi-vacuum-card] Failed to render/parse service_data_template:', e);
+                    return;
+                }
+            }
+            this._hass.callService(domain, name, resolvedData);
         }
 
         fireEvent(type, options = {}) {
@@ -793,7 +808,6 @@
                 hass: {},
                 _config: {},
                 _model: {},
-                _serviceDataError: {},
                 _expandedSections: {},
             };
         }
@@ -806,21 +820,23 @@
                 .row { border: 1px solid var(--divider-color, #e0e0e0); border-radius: 8px; margin: 8px 0; padding: 8px; }
                 .row-title { align-items: center; display: flex; justify-content: space-between; margin-bottom: 4px; }
                 .row-title span { font-weight: 500; }
-                .service-data { box-sizing: border-box; min-height: 72px; width: 100%; }
-                .error { color: var(--error-color, #db4437); margin-top: 8px; }
+                .service-data-header { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; width: 100%; }
+                .service-data-mode { display: inline-flex; }
+                .service-data-mode-button:first-child { --_button-start-end-radius: 0; --_button-end-end-radius: 0; }
+                .service-data-mode-button:last-child { --_button-start-start-radius: 0; --_button-end-start-radius: 0; }
             `;
         }
 
         setConfig(config) {
             this._config = config;
             this._model = this.configToEditorModel(config || {});
-            this._serviceDataError = '';
             if (this._expandedSections === undefined) {
                 this._expandedSections = { basic: true };
             }
         }
 
-        _toggleSection(key) {
+        _toggleSection(key, ev) {
+            if (ev && ev.target !== ev.currentTarget) return;
             this._expandedSections = Object.assign({}, this._expandedSections, { [key]: !this._expandedSections[key] });
         }
 
@@ -833,7 +849,6 @@
                     ${this.renderStateSection()}
                     ${this.renderAttributesSection()}
                     ${this.renderButtonsSection()}
-                    ${this._serviceDataError ? html`<div class="error">${this._serviceDataError}</div>` : ''}
                 </div>
             `;
         }
@@ -916,7 +931,6 @@
                 const defaultValue = buttons[id] || {};
                 const override = configObject[id];
                 const overrideObject = override && typeof override === 'object' ? override : {};
-                const serviceData = overrideObject.service_data;
                 return {
                     id,
                     custom: !(id in buttons),
@@ -924,8 +938,10 @@
                     icon: this.configField(overrideObject, defaultValue, 'icon', ''),
                     label: this.configField(overrideObject, defaultValue, 'label', ''),
                     service: this.configField(overrideObject, defaultValue, 'service', ''),
-                    service_data_json: serviceData ? JSON.stringify(serviceData, null, 2) : '',
-                    extra: this.extraFields(overrideObject, ['icon', 'label', 'service', 'show', 'service_data']),
+                    service_data_mode: overrideObject.service_data_mode || 'static',
+                    service_data: overrideObject.service_data || {},
+                    service_data_template: overrideObject.service_data_template || '',
+                    extra: this.extraFields(overrideObject, ['icon', 'label', 'service', 'show', 'service_data_mode', 'service_data', 'service_data_template']),
                 };
             });
         }
@@ -985,8 +1001,16 @@
             ['icon', 'label', 'service'].forEach(key => {
                 if (this.hasConfigChange(row[key], defaultValue[key])) rowConfig[key] = row[key];
             });
-            if (row.service_data_json && row.service_data_json.trim()) {
-                rowConfig.service_data = JSON.parse(row.service_data_json);
+            const mode = row.service_data_mode || 'static';
+            if (mode === 'dynamic') {
+                if (row.service_data_template && row.service_data_template.trim()) {
+                    rowConfig.service_data_mode = 'dynamic';
+                    rowConfig.service_data_template = row.service_data_template;
+                }
+            } else {
+                if (row.service_data && typeof row.service_data === 'object' && Object.keys(row.service_data).length) {
+                    rowConfig.service_data = row.service_data;
+                }
             }
             if (!row.show) return Object.keys(rowConfig).length ? Object.assign({show: false}, rowConfig) : (defaultValue.show === false ? undefined : false);
             if (defaultValue.show === false) rowConfig.show = true;
@@ -999,7 +1023,7 @@
 
         renderBasicSection() {
             return html`
-                <ha-expansion-panel outlined .expanded=${this._expandedSections.basic} @expanded-changed=${() => this._toggleSection('basic')}>
+                <ha-expansion-panel outlined .expanded=${this._expandedSections.basic} @expanded-changed=${ev => this._toggleSection('basic', ev)}>
                     <ha-icon slot="leading-icon" icon="mdi:tune-variant"></ha-icon>
                     <h3 slot="header">Basic</h3>
                     ${this.renderForm([
@@ -1019,7 +1043,7 @@
 
         renderVisibilitySection() {
             return html`
-                <ha-expansion-panel outlined .expanded=${this._expandedSections.visibility} @expanded-changed=${() => this._toggleSection('visibility')}>
+                <ha-expansion-panel outlined .expanded=${this._expandedSections.visibility} @expanded-changed=${ev => this._toggleSection('visibility', ev)}>
                     <ha-icon slot="leading-icon" icon="mdi:eye-outline"></ha-icon>
                     <h3 slot="header">Visibility</h3>
                     ${this.renderForm([
@@ -1039,7 +1063,7 @@
 
         renderStateSection() {
             return html`
-                <ha-expansion-panel outlined .expanded=${this._expandedSections.state} @expanded-changed=${() => this._toggleSection('state')}>
+                <ha-expansion-panel outlined .expanded=${this._expandedSections.state} @expanded-changed=${ev => this._toggleSection('state', ev)}>
                     <ha-icon slot="leading-icon" icon="mdi:card-text-outline"></ha-icon>
                     <h3 slot="header">State</h3>
                     ${this._model.state.map((row, index) => this.renderEntityDataRow('state', row, index))}
@@ -1053,7 +1077,7 @@
 
         renderAttributesSection() {
             return html`
-                <ha-expansion-panel outlined .expanded=${this._expandedSections.attributes} @expanded-changed=${() => this._toggleSection('attributes')}>
+                <ha-expansion-panel outlined .expanded=${this._expandedSections.attributes} @expanded-changed=${ev => this._toggleSection('attributes', ev)}>
                     <ha-icon slot="leading-icon" icon="mdi:format-list-bulleted-type"></ha-icon>
                     <h3 slot="header">Attributes</h3>
                     ${this._model.attributes.map((row, index) => this.renderEntityDataRow('attributes', row, index))}
@@ -1067,7 +1091,7 @@
 
         renderButtonsSection() {
             return html`
-                <ha-expansion-panel outlined .expanded=${this._expandedSections.buttons} @expanded-changed=${() => this._toggleSection('buttons')}>
+                <ha-expansion-panel outlined .expanded=${this._expandedSections.buttons} @expanded-changed=${ev => this._toggleSection('buttons', ev)}>
                     <ha-icon slot="leading-icon" icon="mdi:gesture-tap-button"></ha-icon>
                     <h3 slot="header">Buttons</h3>
                     ${this._model.buttons.map((row, index) => this.renderButtonRow(row, index))}
@@ -1111,6 +1135,13 @@
         }
 
         renderButtonRow(row, index) {
+            const serviceDataMode = row.service_data_mode || 'static';
+            const dataSchema = serviceDataMode !== 'dynamic'
+                ? [{name: 'service_data', label: '', selector: {object: {}}}]
+                : [{name: 'service_data_template', label: '', selector: {template: {}}}];
+            const dataModel = serviceDataMode !== 'dynamic'
+                ? {service_data: row.service_data}
+                : {service_data_template: row.service_data_template};
             return html`
                 <div class="row">
                     <div class="row-title">
@@ -1123,8 +1154,30 @@
                         ` : ''}
                     </div>
                     ${this.renderForm(this.buttonRowSchema(row), row, ev => this.updateRow('buttons', index, ev))}
-                    <label>service_data JSON</label>
-                    <textarea class="service-data" .value=${row.service_data_json || ''} @input=${ev => this.updateServiceData(index, ev)}></textarea>
+                    <ha-expansion-panel outlined>
+                        <div slot="header" class="service-data-header">
+                            <span>Service data</span>
+                            <div class="service-data-mode">
+                                <ha-button
+                                    class="service-data-mode-button"
+                                    size="s"
+                                    variant="brand"
+                                    appearance=${serviceDataMode === 'static' ? 'accent' : 'filled'}
+                                    @mousedown=${ev => ev.stopPropagation()}
+                                    @click=${ev => this.updateServiceDataMode(index, 'static', ev)}
+                                >Static</ha-button>
+                                <ha-button
+                                    class="service-data-mode-button"
+                                    size="s"
+                                    variant="brand"
+                                    appearance=${serviceDataMode === 'dynamic' ? 'accent' : 'filled'}
+                                    @mousedown=${ev => ev.stopPropagation()}
+                                    @click=${ev => this.updateServiceDataMode(index, 'dynamic', ev)}
+                                >Dynamic</ha-button>
+                            </div>
+                        </div>
+                        ${this.renderForm(dataSchema, dataModel, ev => this.updateRow('buttons', index, ev))}
+                    </ha-expansion-panel>
                 </div>
             `;
         }
@@ -1152,7 +1205,7 @@
         }
 
         computeLabel(schema) {
-            return schema.label || schema.name;
+            return 'label' in schema ? schema.label : schema.name;
         }
 
         updateBasic(ev) {
@@ -1162,6 +1215,16 @@
 
         updateVisibility(ev) {
             this._model = Object.assign({}, this._model, ev.detail.value);
+            this.dispatchModelConfig();
+        }
+
+        updateServiceDataMode(index, mode, ev) {
+            if (ev) ev.stopPropagation();
+            const panel = ev && ev.currentTarget && ev.currentTarget.closest('ha-expansion-panel');
+            if (panel && panel.expanded !== true) panel.expanded = true;
+            const rows = this._model.buttons.slice();
+            rows[index] = Object.assign({}, rows[index], {service_data_mode: mode || 'static'});
+            this._model = Object.assign({}, this._model, {buttons: rows});
             this.dispatchModelConfig();
         }
 
@@ -1181,19 +1244,12 @@
             this.dispatchModelConfig();
         }
 
-        updateServiceData(index, ev) {
-            const rows = this._model.buttons.slice();
-            rows[index] = Object.assign({}, rows[index], {service_data_json: ev.target.value});
-            this._model = Object.assign({}, this._model, {buttons: rows});
-            this.dispatchModelConfig();
-        }
-
         addCustomRow(group) {
             const rows = this._model[group].slice();
             const prefixes = {buttons: 'custom_button', attributes: 'custom_attribute', state: 'custom_state'};
             const id = this.nextCustomId(rows, prefixes[group]);
             rows.push(group === 'buttons'
-                ? {id, custom: true, show: true, icon: '', label: '', service: '', service_data_json: '', extra: {}}
+                ? {id, custom: true, show: true, icon: '', label: '', service: '', service_data_mode: 'static', service_data: {}, service_data_template: '', extra: {}}
                 : {id, group, custom: true, show: true, key: id, entity: '', icon: '', label: '', unit: '', extra: {}});
             this._model = Object.assign({}, this._model, {[group]: rows});
             this.dispatchModelConfig();
@@ -1219,14 +1275,7 @@
         }
 
         dispatchModelConfig() {
-            try {
-                const config = this.editorModelToConfig(this._model);
-                this._serviceDataError = '';
-                this.dispatchConfig(config);
-            } catch (e) {
-                this._serviceDataError = `Invalid service_data JSON: ${e.message}`;
-                this.requestUpdate();
-            }
+            this.dispatchConfig(this.editorModelToConfig(this._model));
         }
 
         valueChanged(ev) {
