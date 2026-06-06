@@ -213,6 +213,13 @@ test("loads the Xiaomi vacuum card in Home Assistant", async ({ page, request, b
     timeout: 45_000,
   });
 
-  await expect(page.locator("xiaomi-vacuum-card").first()).toBeAttached();
+  const vacuumCard = page.locator("xiaomi-vacuum-card").first();
+
+  await expect(vacuumCard).toBeAttached();
+  await expect(vacuumCard).toContainText("Smoke Vacuum");
+  await expect(vacuumCard).not.toContainText(/not available/i);
+  await expect(vacuumCard).not.toContainText(
+    "Entity 'vacuum.demo_vacuum_0_ground_floor' not available",
+  );
   expect(fatalErrors, fatalErrors.join("\n")).toEqual([]);
 });
