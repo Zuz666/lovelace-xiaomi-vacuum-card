@@ -6,6 +6,4 @@ test-results/
 docs/
 tmp/
 session-*.md
-README.md
-hacs.json
 dist/xiaomi-vacuum-card.js
