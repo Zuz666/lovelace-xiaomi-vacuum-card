@@ -48,8 +48,10 @@ service-call, and source-level behavior that does not require a real browser.
 Use the smoke test for UI-sensitive changes, browser loading, Home Assistant
 resource wiring, and integration checks that the VM harness cannot cover.
 
-The setup copies config/ui-lovelace/dist into `.ha-smoke`: the smoke Home
-Assistant config, the Lovelace dashboard, and the built card resource.
+The setup copies `tests/ha-smoke/home-assistant/configuration.yaml`,
+`tests/ha-smoke/home-assistant/ui-lovelace.yaml`, and
+`dist/xiaomi-vacuum-card.js` into `.ha-smoke` and its Home Assistant
+`www/community/lovelace-xiaomi-vacuum-card` resource directory.
 
 PowerShell example:
 
@@ -59,6 +61,7 @@ New-Item -ItemType Directory -Path ".ha-smoke\www\community\lovelace-xiaomi-vacu
 Copy-Item -Recurse "tests\ha-smoke\home-assistant\*" ".ha-smoke\"
 Copy-Item "dist\xiaomi-vacuum-card.js" ".ha-smoke\www\community\lovelace-xiaomi-vacuum-card\xiaomi-vacuum-card.js"
 docker run --rm -d --name xiaomi-vacuum-card-ha-smoke -p 8123:8123 -v "${PWD}\.ha-smoke:/config" ghcr.io/home-assistant/home-assistant:stable
+npx playwright install chromium
 npm run test:ha-smoke
 docker stop xiaomi-vacuum-card-ha-smoke
 ```
