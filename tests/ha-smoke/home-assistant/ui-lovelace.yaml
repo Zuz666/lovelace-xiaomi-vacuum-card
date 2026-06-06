@@ -4,5 +4,5 @@ views:
     path: smoke
     cards:
       - type: custom:xiaomi-vacuum-card
-        entity: vacuum.demo_vacuum
+        entity: vacuum.demo_vacuum_0_ground_floor
         name: Smoke Vacuum
