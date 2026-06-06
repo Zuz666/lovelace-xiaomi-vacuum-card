@@ -11,6 +11,7 @@ Describe what changed and why.
 # Test Plan
 
 - [ ] `npm run format:check`
+- [ ] `npm run check`
 - [ ] `node --check dist/xiaomi-vacuum-card.js` if JavaScript changed
 - [ ] Manual Home Assistant browser resource reload if UI behavior changed
 
@@ -23,6 +24,6 @@ Describe what changed and why.
 # Checklist
 
 - [ ] Conventional Commits are used for commit messages.
-- [ ] No AGENTS.md/docs/tmp/session files are included.
+- [ ] No local-private files are included: `AGENTS.md`, `/docs/`, `/tmp/`, `session-*.md`.
 - [ ] Changes remain compatible with direct browser JS resource loading in Home Assistant/HACS.
 - [ ] Docs/tests are updated when behavior changed.
