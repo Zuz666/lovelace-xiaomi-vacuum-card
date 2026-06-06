@@ -16,25 +16,27 @@ export default [
   },
   js.configs.recommended,
   {
-    files: ["**/*.js", "**/*.mjs"],
+    files: ["dist/**/*.js"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
       globals: {
         ...globals.browser,
+      },
+    },
+  },
+  {
+    files: ["tests/**/*.mjs", "*.config.mjs", "eslint.config.mjs"],
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: {
         ...globals.node,
       },
     },
   },
   {
-    files: [
-      "dist/**/*.js",
-      "tests/**/*.js",
-      "tests/**/*.mjs",
-      "*.config.js",
-      "*.config.mjs",
-      "eslint.config.mjs",
-    ],
+    files: ["dist/**/*.js", "tests/**/*.mjs", "*.config.mjs", "eslint.config.mjs"],
     rules: {
       "no-console": "off",
       "no-empty": "off",
