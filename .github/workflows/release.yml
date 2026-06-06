@@ -15,11 +15,15 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+      WORKFLOW_REF_NAME: ${{ github.ref_name }}
+      WORKFLOW_REF_TYPE: ${{ github.ref_type }}
     steps:
       - name: Validate release branch
         run: |
-          if [ "${{ github.ref_name }}" != "release" ]; then
-            echo "Releases must be run from the release branch; current ref is ${{ github.ref_name }}" >&2
+          if [ "${WORKFLOW_REF_TYPE}" != "branch" ] || [ "${WORKFLOW_REF_NAME}" != "release" ]; then
+            echo "Releases must be run from the release branch; current ref is ${WORKFLOW_REF_TYPE}/${WORKFLOW_REF_NAME}" >&2
             exit 1
           fi
 
@@ -39,15 +43,14 @@ jobs:
 
       - name: Validate version
         run: |
-          VERSION="${{ inputs.version }}"
           PACKAGE_VERSION="$(node -p "require('./package.json').version")"
 
-          if [ "$VERSION" != "$PACKAGE_VERSION" ]; then
-            echo "Requested version $VERSION does not match package.json version $PACKAGE_VERSION" >&2
+          if [ "${RELEASE_VERSION}" != "${PACKAGE_VERSION}" ]; then
+            echo "Requested version ${RELEASE_VERSION} does not match package.json version ${PACKAGE_VERSION}" >&2
             exit 1
           fi
 
-          node -e "const version = process.argv[1]; const semver = /^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$/; if (!semver.test(version)) throw new Error('Invalid semver: ' + version);" "$VERSION"
+          node -e "const version = process.argv[1]; const semver = /^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$/; if (!semver.test(version)) throw new Error('Invalid semver: ' + version);" "${RELEASE_VERSION}"
 
       - name: Check
         run: npm run check
@@ -62,10 +65,10 @@ jobs:
 
       - name: Create and push tag
         run: |
-          git tag -a "v${{ inputs.version }}" -m "v${{ inputs.version }}"
-          git push origin "v${{ inputs.version }}"
+          git tag -a "v${RELEASE_VERSION}" -m "v${RELEASE_VERSION}"
+          git push origin "v${RELEASE_VERSION}"
 
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "v${{ inputs.version }}" xiaomi-vacuum-card.js --title "v${{ inputs.version }}" --generate-notes
+        run: gh release create "v${RELEASE_VERSION}" xiaomi-vacuum-card.js --title "v${RELEASE_VERSION}" --generate-notes
