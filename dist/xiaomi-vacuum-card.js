@@ -270,12 +270,14 @@
   row-gap: 6px;
 }
 .grid-left {
+  grid-column: 1;
   text-align: left;
   font-size: 1.1em;
   padding-left: 10px;
   border-left: 2px solid var(--primary-color, #03a9f4);
 }
 .grid-right {
+  grid-column: 2;
   text-align: right;
   padding-right: 10px;
   border-right: 2px solid var(--primary-color, #03a9f4);
@@ -356,11 +358,11 @@
               <div class="grid" style="${this.config.styles.content}" @click="${() => this.fireEvent('hass-more-info')}">
                 ${this.config.show.state ? html`
                 <div class="grid-content grid-left">
-                  ${Object.values(this.config.state).filter(v => v).map(this.renderAttribute.bind(this))}
+                  ${Object.values(this.config.state).filter(v => v && v.show !== false).map(this.renderAttribute.bind(this))}
                 </div>` : null}
                 ${this.config.show.attributes ? html`
                 <div class="grid-content grid-right">
-                  ${Object.values(this.config.attributes).filter(v => v).map(this.renderAttribute.bind(this))}
+                  ${Object.values(this.config.attributes).filter(v => v && v.show !== false).map(this.renderAttribute.bind(this))}
                 </div>` : null}
               </div>` : null}
               ${this.config.show.buttons ? html`
@@ -781,22 +783,49 @@
             return {
                 hass: {},
                 _config: {},
+                _model: {},
+                _serviceDataError: {},
+                _expandedSections: {},
             };
+        }
+
+        static get styles() {
+            return css`
+                .editor { display: block; }
+                ha-expansion-panel { margin-bottom: 8px; }
+                h4 { margin: 16px 0 8px; }
+                .row { border: 1px solid var(--divider-color, #e0e0e0); border-radius: 8px; margin: 8px 0; padding: 8px; }
+                .row-title { align-items: center; display: flex; justify-content: space-between; margin-bottom: 4px; }
+                .row-title span { font-weight: 500; }
+                .service-data { box-sizing: border-box; min-height: 72px; width: 100%; }
+                .error { color: var(--error-color, #db4437); margin-top: 8px; }
+            `;
         }
 
         setConfig(config) {
             this._config = config;
+            this._model = this.configToEditorModel(config || {});
+            this._serviceDataError = '';
+            if (this._expandedSections === undefined) {
+                this._expandedSections = { basic: true };
+            }
+        }
+
+        _toggleSection(key) {
+            this._expandedSections = Object.assign({}, this._expandedSections, { [key]: !this._expandedSections[key] });
         }
 
         render() {
-            if (!this.hass || !this._config) return html``;
+            if (!this.hass || !this._model) return html``;
             return html`
-                <ha-form
-                    .hass=${this.hass}
-                    .data=${this.processData(this._config)}
-                    .schema=${XiaomiVacuumCard.getConfigForm().schema}
-                    @value-changed=${this.valueChanged}
-                ></ha-form>
+                <div class="editor">
+                    ${this.renderBasicSection()}
+                    ${this.renderVisibilitySection()}
+                    ${this.renderStateSection()}
+                    ${this.renderAttributesSection()}
+                    ${this.renderButtonsSection()}
+                    ${this._serviceDataError ? html`<div class="error">${this._serviceDataError}</div>` : ''}
+                </div>
             `;
         }
 
@@ -808,15 +837,361 @@
             return data;
         }
 
-        valueChanged(ev) {
-            const config = Object.assign({}, ev.detail.value);
-            const image = this.cleanImageConfig(config.image);
-            if (image) {
-                config.image = image;
-            } else {
-                delete config.image;
+        configToEditorModel(config) {
+            return {
+                type: config.type,
+                entity: config.entity,
+                vendor: config.vendor,
+                name: config.name === false ? '' : config.name,
+                image: this.processData(config).image,
+                show_name: config.name !== false,
+                show_state: config.state !== false,
+                show_attributes: config.attributes !== false,
+                show_buttons: config.buttons !== false,
+                state: this.entityDataRows('state', state, config.state),
+                attributes: this.entityDataRows('attributes', attributes, config.attributes),
+                buttons: this.buttonRows(config.buttons),
+                extra: this.extraFields(config, ['type', 'entity', 'vendor', 'name', 'image', 'state', 'attributes', 'buttons']),
+            };
+        }
+
+        editorModelToConfig(model) {
+            const config = Object.assign({}, model.extra || {});
+            if (model.type) config.type = model.type;
+            if (model.entity) config.entity = model.entity;
+            if (model.vendor) config.vendor = model.vendor;
+
+            const image = this.cleanImageConfig(model.image);
+            if (image) config.image = image;
+
+            if (model.show_name === false) {
+                config.name = false;
+            } else if (model.name) {
+                config.name = model.name;
             }
 
+            this.assignEntityDataConfig(config, 'state', state, model.show_state, model.state);
+            this.assignEntityDataConfig(config, 'attributes', attributes, model.show_attributes, model.attributes);
+            this.assignButtonConfig(config, model.show_buttons, model.buttons);
+            return config;
+        }
+
+        entityDataRows(group, defaults, configValue) {
+            const configObject = configValue && typeof configValue === 'object' ? configValue : {};
+            const ids = Object.keys(defaults).concat(Object.keys(configObject).filter(id => !(id in defaults)));
+            return ids.map(id => {
+                const defaultValue = defaults[id] || {};
+                const override = configObject[id];
+                const overrideObject = override && typeof override === 'object' ? override : {};
+                const custom = !(id in defaults);
+                return {
+                    id,
+                    group,
+                    custom,
+                    show: override === false ? false : overrideObject.show !== false,
+                    key: this.configField(overrideObject, defaultValue, 'key', custom ? id : ''),
+                    icon: this.configField(overrideObject, defaultValue, 'icon', ''),
+                    label: this.configField(overrideObject, defaultValue, 'label', ''),
+                    label_kind: this.configField(overrideObject, defaultValue, 'service', '') ? 'accessible' : 'visible',
+                    unit: this.configField(overrideObject, defaultValue, 'unit', ''),
+                    extra: this.extraFields(overrideObject, ['key', 'icon', 'label', 'unit', 'show']),
+                };
+            });
+        }
+
+        buttonRows(configValue) {
+            const configObject = configValue && typeof configValue === 'object' ? configValue : {};
+            const ids = Object.keys(buttons).concat(Object.keys(configObject).filter(id => !(id in buttons)));
+            return ids.map(id => {
+                const defaultValue = buttons[id] || {};
+                const override = configObject[id];
+                const overrideObject = override && typeof override === 'object' ? override : {};
+                const serviceData = overrideObject.service_data;
+                return {
+                    id,
+                    custom: !(id in buttons),
+                    show: override === false ? false : (overrideObject.show !== undefined ? overrideObject.show !== false : defaultValue.show !== false),
+                    icon: this.configField(overrideObject, defaultValue, 'icon', ''),
+                    label: this.configField(overrideObject, defaultValue, 'label', ''),
+                    service: this.configField(overrideObject, defaultValue, 'service', ''),
+                    service_data_json: serviceData ? JSON.stringify(serviceData, null, 2) : '',
+                    extra: this.extraFields(overrideObject, ['icon', 'label', 'service', 'show', 'service_data']),
+                };
+            });
+        }
+
+        configField(override, defaultValue, key, fallback) {
+            return key in override ? override[key] : (key in defaultValue ? defaultValue[key] : fallback);
+        }
+
+        extraFields(config, knownKeys) {
+            const extra = {};
+            Object.keys(config).forEach(key => {
+                if (!knownKeys.includes(key)) extra[key] = config[key];
+            });
+            return extra;
+        }
+
+        assignEntityDataConfig(config, name, defaults, showGroup, rows) {
+            if (showGroup === false) {
+                config[name] = false;
+                return;
+            }
+
+            const groupConfig = {};
+            rows.forEach(row => {
+                const rowConfig = this.entityDataRowToConfig(row, defaults[row.id] || {});
+                if (rowConfig !== undefined) groupConfig[row.id] = rowConfig;
+            });
+            if (Object.keys(groupConfig).length) config[name] = groupConfig;
+        }
+
+        entityDataRowToConfig(row, defaultValue) {
+            const rowConfig = Object.assign({}, row.extra || {});
+            ['key', 'icon', 'label', 'unit'].forEach(key => {
+                if (this.hasConfigChange(row[key], defaultValue[key])) rowConfig[key] = row[key];
+            });
+            if (row.custom && !rowConfig.key) rowConfig.key = row.key || row.id;
+            if (!row.show) return Object.keys(rowConfig).length ? Object.assign({show: false}, rowConfig) : false;
+            return Object.keys(rowConfig).length ? rowConfig : undefined;
+        }
+
+        assignButtonConfig(config, showGroup, rows) {
+            if (showGroup === false) {
+                config.buttons = false;
+                return;
+            }
+
+            const buttonConfig = {};
+            rows.forEach(row => {
+                const rowConfig = this.buttonRowToConfig(row, buttons[row.id] || {});
+                if (rowConfig !== undefined) buttonConfig[row.id] = rowConfig;
+            });
+            if (Object.keys(buttonConfig).length) config.buttons = buttonConfig;
+        }
+
+        buttonRowToConfig(row, defaultValue) {
+            const rowConfig = Object.assign({}, row.extra || {});
+            ['icon', 'label', 'service'].forEach(key => {
+                if (this.hasConfigChange(row[key], defaultValue[key])) rowConfig[key] = row[key];
+            });
+            if (row.service_data_json && row.service_data_json.trim()) {
+                rowConfig.service_data = JSON.parse(row.service_data_json);
+            }
+            if (!row.show) return Object.keys(rowConfig).length ? Object.assign({show: false}, rowConfig) : (defaultValue.show === false ? undefined : false);
+            if (defaultValue.show === false) rowConfig.show = true;
+            return Object.keys(rowConfig).length ? rowConfig : undefined;
+        }
+
+        hasConfigChange(value, defaultValue) {
+            return value !== undefined && value !== '' && value !== defaultValue;
+        }
+
+        renderBasicSection() {
+            return html`
+                <ha-expansion-panel outlined .expanded=${this._expandedSections.basic} @expanded-changed=${() => this._toggleSection('basic')}>
+                    <ha-icon slot="leading-icon" icon="mdi:tune-variant"></ha-icon>
+                    <h3 slot="header">Basic</h3>
+                    ${this.renderForm([
+                        {name: 'entity', required: true, selector: {entity: {filter: {domain: 'vacuum'}}}},
+                        {name: 'name', selector: {text: {}}},
+                        {name: 'vendor', selector: {select: {mode: 'dropdown', options: Object.keys(vendors)}}},
+                        {name: 'image', selector: {media: {accept: ['image/*'], clearable: true, image_upload: true, hide_content_type: true}}},
+                    ], {
+                        entity: this._model.entity,
+                        name: this._model.name,
+                        vendor: this._model.vendor,
+                        image: this._model.image,
+                    }, ev => this.updateBasic(ev))}
+                </ha-expansion-panel>
+            `;
+        }
+
+        renderVisibilitySection() {
+            return html`
+                <ha-expansion-panel outlined .expanded=${this._expandedSections.visibility} @expanded-changed=${() => this._toggleSection('visibility')}>
+                    <ha-icon slot="leading-icon" icon="mdi:eye-outline"></ha-icon>
+                    <h3 slot="header">Visibility</h3>
+                    ${this.renderForm([
+                        {name: 'show_name', selector: {boolean: {}}},
+                        {name: 'show_state', selector: {boolean: {}}},
+                        {name: 'show_attributes', selector: {boolean: {}}},
+                        {name: 'show_buttons', selector: {boolean: {}}},
+                    ], {
+                        show_name: this._model.show_name,
+                        show_state: this._model.show_state,
+                        show_attributes: this._model.show_attributes,
+                        show_buttons: this._model.show_buttons,
+                    }, ev => this.updateVisibility(ev))}
+                </ha-expansion-panel>
+            `;
+        }
+
+        renderStateSection() {
+            return html`
+                <ha-expansion-panel outlined .expanded=${this._expandedSections.state} @expanded-changed=${() => this._toggleSection('state')}>
+                    <ha-icon slot="leading-icon" icon="mdi:card-text-outline"></ha-icon>
+                    <h3 slot="header">State</h3>
+                    ${this._model.state.map((row, index) => this.renderEntityDataRow('state', row, index))}
+                </ha-expansion-panel>
+            `;
+        }
+
+        renderAttributesSection() {
+            return html`
+                <ha-expansion-panel outlined .expanded=${this._expandedSections.attributes} @expanded-changed=${() => this._toggleSection('attributes')}>
+                    <ha-icon slot="leading-icon" icon="mdi:format-list-bulleted-type"></ha-icon>
+                    <h3 slot="header">Attributes</h3>
+                    ${this._model.attributes.map((row, index) => this.renderEntityDataRow('attributes', row, index))}
+                    <ha-button appearance="plain" @click=${() => this.addCustomRow('attributes')}>Add custom attribute</ha-button>
+                </ha-expansion-panel>
+            `;
+        }
+
+        renderButtonsSection() {
+            return html`
+                <ha-expansion-panel outlined .expanded=${this._expandedSections.buttons} @expanded-changed=${() => this._toggleSection('buttons')}>
+                    <ha-icon slot="leading-icon" icon="mdi:gesture-tap-button"></ha-icon>
+                    <h3 slot="header">Buttons</h3>
+                    ${this._model.buttons.map((row, index) => this.renderButtonRow(row, index))}
+                    <ha-button appearance="plain" @click=${() => this.addCustomRow('buttons')}>Add custom button</ha-button>
+                </ha-expansion-panel>
+            `;
+        }
+
+        renderEntityDataRow(group, row, index) {
+            return html`
+                <div class="row">
+                    <div class="row-title">
+                        <span>${row.id}</span>
+                        ${row.custom ? html`<ha-button appearance="plain" variant="danger" @click=${() => this.removeCustomRow(group, index)}>Remove</ha-button>` : ''}
+                    </div>
+                    ${this.renderForm(this.entityDataRowSchema(row), row, ev => this.updateRow(group, index, ev))}
+                </div>
+            `;
+        }
+
+        entityDataRowSchema(row) {
+            return [
+                ...(row.custom ? [{name: 'id', selector: {text: {}}}] : []),
+                {name: 'show', selector: {boolean: {}}},
+                {name: 'key', selector: {text: {}}},
+                {name: 'icon', selector: {icon: {}}},
+                {name: 'label', label: row.label_kind === 'accessible' ? 'Accessible label' : 'Visible label', selector: {text: {}}},
+                {name: 'unit', selector: {text: {}}},
+            ];
+        }
+
+        renderButtonRow(row, index) {
+            return html`
+                <div class="row">
+                    <div class="row-title">
+                        <span>${row.id}</span>
+                        ${row.custom ? html`<ha-button appearance="plain" variant="danger" @click=${() => this.removeCustomRow('buttons', index)}>Remove</ha-button>` : ''}
+                    </div>
+                    ${this.renderForm(this.buttonRowSchema(row), row, ev => this.updateRow('buttons', index, ev))}
+                    <label>service_data JSON</label>
+                    <textarea class="service-data" .value=${row.service_data_json || ''} @input=${ev => this.updateServiceData(index, ev)}></textarea>
+                </div>
+            `;
+        }
+
+        buttonRowSchema(row) {
+            return [
+                ...(row.custom ? [{name: 'id', selector: {text: {}}}] : []),
+                {name: 'show', selector: {boolean: {}}},
+                {name: 'icon', selector: {icon: {}}},
+                {name: 'label', label: 'Tooltip', selector: {text: {}}},
+                {name: 'service', selector: {text: {}}},
+            ];
+        }
+
+        renderForm(schema, data, handler) {
+            return html`
+                <ha-form
+                    .hass=${this.hass}
+                    .data=${data}
+                    .schema=${schema}
+                    .computeLabel=${this.computeLabel}
+                    @value-changed=${handler}
+                ></ha-form>
+            `;
+        }
+
+        computeLabel(schema) {
+            return schema.label || schema.name;
+        }
+
+        updateBasic(ev) {
+            this._model = Object.assign({}, this._model, ev.detail.value);
+            this.dispatchModelConfig();
+        }
+
+        updateVisibility(ev) {
+            this._model = Object.assign({}, this._model, ev.detail.value);
+            this.dispatchModelConfig();
+        }
+
+        updateRow(group, index, ev) {
+            const rows = this._model[group].slice();
+            rows[index] = Object.assign({}, rows[index], ev.detail.value);
+            if (rows[index].custom) rows[index].id = this.normalizeCustomId(rows[index].id, group === 'buttons' ? 'custom_button' : 'custom_attribute');
+            this._model = Object.assign({}, this._model, {[group]: rows});
+            this.dispatchModelConfig();
+        }
+
+        updateServiceData(index, ev) {
+            const rows = this._model.buttons.slice();
+            rows[index] = Object.assign({}, rows[index], {service_data_json: ev.target.value});
+            this._model = Object.assign({}, this._model, {buttons: rows});
+            this.dispatchModelConfig();
+        }
+
+        addCustomRow(group) {
+            const rows = this._model[group].slice();
+            const id = this.nextCustomId(rows, group === 'buttons' ? 'custom_button' : 'custom_attribute');
+            rows.push(group === 'buttons'
+                ? {id, custom: true, show: true, icon: '', label: '', service: '', service_data_json: '', extra: {}}
+                : {id, group, custom: true, show: true, key: id, icon: '', label: '', unit: '', extra: {}});
+            this._model = Object.assign({}, this._model, {[group]: rows});
+            this.dispatchModelConfig();
+        }
+
+        removeCustomRow(group, index) {
+            const rows = this._model[group].slice();
+            rows.splice(index, 1);
+            this._model = Object.assign({}, this._model, {[group]: rows});
+            this.dispatchModelConfig();
+        }
+
+        nextCustomId(rows, base) {
+            const ids = new Set(rows.map(row => row.id));
+            let id = base;
+            let index = 2;
+            while (ids.has(id)) id = `${base}_${index++}`;
+            return id;
+        }
+
+        normalizeCustomId(value, fallback) {
+            return String(value || fallback).trim().replace(/[^a-zA-Z0-9_]+/g, '_') || fallback;
+        }
+
+        dispatchModelConfig() {
+            try {
+                const config = this.editorModelToConfig(this._model);
+                this._serviceDataError = '';
+                this.dispatchConfig(config);
+            } catch (e) {
+                this._serviceDataError = `Invalid service_data JSON: ${e.message}`;
+                this.requestUpdate();
+            }
+        }
+
+        valueChanged(ev) {
+            this.dispatchConfig(this.editorModelToConfig(this.configToEditorModel(ev.detail.value)));
+        }
+
+        dispatchConfig(config) {
             this.dispatchEvent(new CustomEvent('config-changed', {
                 bubbles: true,
                 composed: true,
