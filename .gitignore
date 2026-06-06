@@ -1,0 +1,14 @@
+/.vscode/
+/.env/
+node_modules/
+coverage/
+playwright-report/
+test-results/
+.ha-smoke/
+*.orig
+*.bak
+.history
+/docs/
+/tmp/
+AGENTS.md
+session-*.md
