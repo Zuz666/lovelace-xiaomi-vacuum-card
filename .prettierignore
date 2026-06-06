@@ -1,0 +1,11 @@
+node_modules/
+coverage/
+playwright-report/
+test-results/
+.ha-smoke/
+docs/
+tmp/
+session-*.md
+README.md
+hacs.json
+dist/xiaomi-vacuum-card.js

@@ -1,0 +1,24 @@
+{
+  "name": "lovelace-xiaomi-vacuum-card",
+  "version": "4.6.0",
+  "private": true,
+  "description": "Maintained Home Assistant Lovelace Xiaomi Vacuum Card fork",
+  "type": "module",
+  "scripts": {
+    "check": "npm run check:syntax && npm run check:version && npm run lint && npm run format:check && npm test",
+    "check:syntax": "node --check dist/xiaomi-vacuum-card.js",
+    "check:version": "node tests/check-version.mjs",
+    "test": "node --test tests",
+    "test:ha-smoke": "playwright test tests/ha-smoke",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.28.0",
+    "@playwright/test": "^1.52.0",
+    "eslint": "^9.28.0",
+    "globals": "^16.2.0",
+    "prettier": "^3.5.3"
+  }
+}
