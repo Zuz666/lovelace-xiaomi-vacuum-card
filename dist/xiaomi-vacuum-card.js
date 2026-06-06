@@ -378,35 +378,44 @@
                 const computed = computeFunc(raw);
                 return computed === '-' ? '-' : computed + (data.unit || '');
             };
+            const externalEntity = data.entity && data.entity in this._hass.states ? this._hass.states[data.entity] : null;
             const isValidSensorData = data && `${this.config.sensorEntity}_${data.key}` in this._hass.states;
             const isValidAttribute = data && data.key in this.stateObj.attributes;
             const isValidEntityData = data && data.key in this.stateObj;
 
-            const value = isValidSensorData
-                ? formatValue(this._hass.states[`${this.config.sensorEntity}_${data.key}`].state)
-                : isValidAttribute
-                    ? formatValue(this.stateObj.attributes[data.key])
-                    : isValidEntityData
-                        ? formatValue(this.stateObj[data.key])
-                        : null;
+            let value = externalEntity
+                ? formatValue(externalEntity.state)
+                : isValidSensorData
+                    ? formatValue(this._hass.states[`${this.config.sensorEntity}_${data.key}`].state)
+                    : isValidAttribute
+                        ? formatValue(this.stateObj.attributes[data.key])
+                        : isValidEntityData
+                            ? formatValue(this.stateObj[data.key])
+                            : null;
             const list = this.stateObj.attributes[`${data.key}_list`];
             const hasDropdown = Array.isArray(list);
 
             if (hasDropdown && value !== null) {
-                const icon = data.icon ? this.renderIcon(data) : null;
+                const icon = this.renderIcon(data);
                 return this.renderDropdown(icon, data.key, data.service, data.label);
             }
             return html`<div>
-                ${data.icon && this.renderIcon(data)}
+                ${this.renderIcon(data)}
                 ${(data.label || '') + (value !== null ? value : this._hass.localize('state.default.unavailable'))}
             </div>`;
         }
 
         renderIcon(data) {
-            const icon = (data.key === 'battery_level' && 'battery_icon' in this.stateObj.attributes)
-                ? this.stateObj.attributes.battery_icon
-                : data.icon;
-            return html`<ha-icon icon="${icon}" style="margin-right: 10px; ${this.config.styles.icon}"></ha-icon>`;
+            let icon = '';
+            if (data.key === 'battery_level' && 'battery_icon' in this.stateObj.attributes) {
+                icon = this.stateObj.attributes.battery_icon;
+            } else if (data.icon) {
+                icon = data.icon;
+            } else if (data.entity && data.entity in this._hass.states) {
+                const entityState = this._hass.states[data.entity];
+                if (entityState.attributes && entityState.attributes.icon) icon = entityState.attributes.icon;
+            }
+            return icon ? html`<ha-icon icon="${icon}" style="margin-right: 10px; ${this.config.styles.icon}"></ha-icon>` : null;
         }
 
         renderButton(data) {
@@ -890,11 +899,12 @@
                     custom,
                     show: override === false ? false : overrideObject.show !== false,
                     key: this.configField(overrideObject, defaultValue, 'key', custom ? id : ''),
+                    entity: this.configField(overrideObject, defaultValue, 'entity', ''),
                     icon: this.configField(overrideObject, defaultValue, 'icon', ''),
                     label: this.configField(overrideObject, defaultValue, 'label', ''),
                     label_kind: this.configField(overrideObject, defaultValue, 'service', '') ? 'accessible' : 'visible',
                     unit: this.configField(overrideObject, defaultValue, 'unit', ''),
-                    extra: this.extraFields(overrideObject, ['key', 'icon', 'label', 'unit', 'show']),
+                    extra: this.extraFields(overrideObject, ['key', 'entity', 'icon', 'label', 'unit', 'show']),
                 };
             });
         }
@@ -948,7 +958,7 @@
 
         entityDataRowToConfig(row, defaultValue) {
             const rowConfig = Object.assign({}, row.extra || {});
-            ['key', 'icon', 'label', 'unit'].forEach(key => {
+            ['key', 'entity', 'icon', 'label', 'unit'].forEach(key => {
                 if (this.hasConfigChange(row[key], defaultValue[key])) rowConfig[key] = row[key];
             });
             if (row.custom && !rowConfig.key) rowConfig.key = row.key || row.id;
@@ -1033,6 +1043,10 @@
                     <ha-icon slot="leading-icon" icon="mdi:card-text-outline"></ha-icon>
                     <h3 slot="header">State</h3>
                     ${this._model.state.map((row, index) => this.renderEntityDataRow('state', row, index))}
+                    <ha-button appearance="filled" size="s" @click=${() => this.addCustomRow('state')}>
+                        <ha-icon icon="mdi:plus" slot="start"></ha-icon>
+                        Add custom state
+                    </ha-button>
                 </ha-expansion-panel>
             `;
         }
@@ -1043,7 +1057,10 @@
                     <ha-icon slot="leading-icon" icon="mdi:format-list-bulleted-type"></ha-icon>
                     <h3 slot="header">Attributes</h3>
                     ${this._model.attributes.map((row, index) => this.renderEntityDataRow('attributes', row, index))}
-                    <ha-button appearance="plain" @click=${() => this.addCustomRow('attributes')}>Add custom attribute</ha-button>
+                    <ha-button appearance="filled" size="s" @click=${() => this.addCustomRow('attributes')}>
+                        <ha-icon icon="mdi:plus" slot="start"></ha-icon>
+                        Add custom attribute
+                    </ha-button>
                 </ha-expansion-panel>
             `;
         }
@@ -1054,7 +1071,10 @@
                     <ha-icon slot="leading-icon" icon="mdi:gesture-tap-button"></ha-icon>
                     <h3 slot="header">Buttons</h3>
                     ${this._model.buttons.map((row, index) => this.renderButtonRow(row, index))}
-                    <ha-button appearance="plain" @click=${() => this.addCustomRow('buttons')}>Add custom button</ha-button>
+                    <ha-button appearance="filled" size="s" @click=${() => this.addCustomRow('buttons')}>
+                        <ha-icon icon="mdi:plus" slot="start"></ha-icon>
+                        Add custom button
+                    </ha-button>
                 </ha-expansion-panel>
             `;
         }
@@ -1064,7 +1084,12 @@
                 <div class="row">
                     <div class="row-title">
                         <span>${row.id}</span>
-                        ${row.custom ? html`<ha-button appearance="plain" variant="danger" @click=${() => this.removeCustomRow(group, index)}>Remove</ha-button>` : ''}
+                        ${row.custom ? html`
+                            <ha-button appearance="filled" variant="danger" size="s" @click=${() => this.removeCustomRow(group, index)}>
+                                <ha-icon icon="mdi:delete" slot="start"></ha-icon>
+                                Remove
+                            </ha-button>
+                        ` : ''}
                     </div>
                     ${this.renderForm(this.entityDataRowSchema(row), row, ev => this.updateRow(group, index, ev))}
                 </div>
@@ -1072,11 +1097,14 @@
         }
 
         entityDataRowSchema(row) {
+            const entityState = this.hass && this._model && this._model.entity ? this.hass.states[this._model.entity] : null;
+            const hasDynamicBatteryIcon = row.key === 'battery_level' && entityState && 'battery_icon' in entityState.attributes;
             return [
                 ...(row.custom ? [{name: 'id', selector: {text: {}}}] : []),
                 {name: 'show', selector: {boolean: {}}},
                 {name: 'key', selector: {text: {}}},
-                {name: 'icon', selector: {icon: {}}},
+                {name: 'entity', selector: {entity: {}}},
+                ...(hasDynamicBatteryIcon ? [] : [{name: 'icon', selector: {icon: {}}}]),
                 {name: 'label', label: row.label_kind === 'accessible' ? 'Accessible label' : 'Visible label', selector: {text: {}}},
                 {name: 'unit', selector: {text: {}}},
             ];
@@ -1087,7 +1115,12 @@
                 <div class="row">
                     <div class="row-title">
                         <span>${row.id}</span>
-                        ${row.custom ? html`<ha-button appearance="plain" variant="danger" @click=${() => this.removeCustomRow('buttons', index)}>Remove</ha-button>` : ''}
+                        ${row.custom ? html`
+                            <ha-button appearance="filled" variant="danger" size="s" @click=${() => this.removeCustomRow('buttons', index)}>
+                                <ha-icon icon="mdi:delete" slot="start"></ha-icon>
+                                Remove
+                            </ha-button>
+                        ` : ''}
                     </div>
                     ${this.renderForm(this.buttonRowSchema(row), row, ev => this.updateRow('buttons', index, ev))}
                     <label>service_data JSON</label>
@@ -1135,7 +1168,15 @@
         updateRow(group, index, ev) {
             const rows = this._model[group].slice();
             rows[index] = Object.assign({}, rows[index], ev.detail.value);
-            if (rows[index].custom) rows[index].id = this.normalizeCustomId(rows[index].id, group === 'buttons' ? 'custom_button' : 'custom_attribute');
+            if (rows[index].custom) {
+            const prefixes = {buttons: 'custom_button', attributes: 'custom_attribute', state: 'custom_state'};
+            const prefix = prefixes[group];
+            if (rows[index].entity && rows[index].id.startsWith(prefix)) {
+                    rows[index].id = rows[index].entity.split('.').pop().replace(/[^a-z0-9_]/gi, '_');
+                } else {
+                    rows[index].id = this.normalizeCustomId(rows[index].id, prefix);
+                }
+            }
             this._model = Object.assign({}, this._model, {[group]: rows});
             this.dispatchModelConfig();
         }
@@ -1149,10 +1190,11 @@
 
         addCustomRow(group) {
             const rows = this._model[group].slice();
-            const id = this.nextCustomId(rows, group === 'buttons' ? 'custom_button' : 'custom_attribute');
+            const prefixes = {buttons: 'custom_button', attributes: 'custom_attribute', state: 'custom_state'};
+            const id = this.nextCustomId(rows, prefixes[group]);
             rows.push(group === 'buttons'
                 ? {id, custom: true, show: true, icon: '', label: '', service: '', service_data_json: '', extra: {}}
-                : {id, group, custom: true, show: true, key: id, icon: '', label: '', unit: '', extra: {}});
+                : {id, group, custom: true, show: true, key: id, entity: '', icon: '', label: '', unit: '', extra: {}});
             this._model = Object.assign({}, this._model, {[group]: rows});
             this.dispatchModelConfig();
         }
