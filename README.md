@@ -1,5 +1,12 @@
 # Xiaomi Vacuum Card
 
+[![GitHub Release](https://img.shields.io/github/v/release/Zuz666/lovelace-xiaomi-vacuum-card?style=flat-square)](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/releases)
+[![GitHub Downloads](https://img.shields.io/github/downloads/Zuz666/lovelace-xiaomi-vacuum-card/total?style=flat-square)](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/releases)
+[![GitHub last commit](https://img.shields.io/github/last-commit/Zuz666/lovelace-xiaomi-vacuum-card/main?style=flat-square)](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/commits/main)
+[![GitHub code size](https://img.shields.io/github/languages/code-size/Zuz666/lovelace-xiaomi-vacuum-card?style=flat-square)](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card)
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg?style=flat-square)](https://hacs.xyz/)
+[![CI](https://img.shields.io/github/actions/workflow/status/Zuz666/lovelace-xiaomi-vacuum-card/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/actions/workflows/ci.yml)
+
 ![Xiaomi Vacuum Card showing Documentation Vacuum](docs/images/card-default.png)
 
 A maintained, modern Home Assistant Lovelace custom card for vacuum cleaners. Forked from [benct/lovelace-xiaomi-vacuum-card](https://github.com/benct/lovelace-xiaomi-vacuum-card) and updated for modern Home Assistant versions, sections-view dashboards, and direct HACS / browser module loading.
