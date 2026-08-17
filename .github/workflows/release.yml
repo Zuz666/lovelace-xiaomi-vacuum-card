@@ -22,8 +22,8 @@ jobs:
     steps:
       - name: Validate release branch
         run: |
-          if [ "${WORKFLOW_REF_TYPE}" != "branch" ] || [ "${WORKFLOW_REF_NAME}" != "release" ]; then
-            echo "Releases must be run from the release branch; current ref is ${WORKFLOW_REF_TYPE}/${WORKFLOW_REF_NAME}" >&2
+          if [ "${WORKFLOW_REF_TYPE}" != "branch" ] || [ "${WORKFLOW_REF_NAME}" != "main" ]; then
+            echo "Releases must be run from the main branch; current ref is ${WORKFLOW_REF_TYPE}/${WORKFLOW_REF_NAME}" >&2
             exit 1
           fi
 
@@ -58,17 +58,11 @@ jobs:
       - name: Prepare HACS asset
         run: cp dist/xiaomi-vacuum-card.js xiaomi-vacuum-card.js
 
-      - name: Configure git author
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-      - name: Create and push tag
-        run: |
-          git tag -a "v${RELEASE_VERSION}" -m "v${RELEASE_VERSION}"
-          git push origin "v${RELEASE_VERSION}"
-
-      - name: Create GitHub release
+      - name: Create GitHub release and tag
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "v${RELEASE_VERSION}" xiaomi-vacuum-card.js --title "v${RELEASE_VERSION}" --generate-notes
+        run: |
+          gh release create "v${RELEASE_VERSION}" xiaomi-vacuum-card.js \
+            --title "v${RELEASE_VERSION}" \
+            --generate-notes \
+            --target "${GITHUB_SHA}"
