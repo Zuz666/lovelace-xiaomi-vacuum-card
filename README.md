@@ -121,10 +121,12 @@ entity: vacuum.my_vacuum
 
 ### State and Attribute Rows
 
-State and attribute sections are maps of row configurations. The YAML map key represents the row ID.
+State and attribute sections are maps of row configurations displayed in a two-column grid:
 
-Default state rows: `status`, `battery`, `mode`.  
-Default attribute rows: `main_brush`, `side_brush`, `filter`, `sensor`.
+- **`state`**: Configures the **left column** with an accent border and larger font (defaults: `status`, `battery`, `mode`).
+- **`attributes`**: Configures the **right column** with right-aligned text (defaults: `main_brush`, `side_brush`, `filter`, `sensor`).
+
+Both sections share the same configuration fields and allow binding rows to any arbitrary external Home Assistant sensor or entity via `entity:`. The YAML map key represents the row ID.
 
 | Field    | Type      | Default        | Description                                                                                         |
 | :------- | :-------- | :------------- | :-------------------------------------------------------------------------------------------------- |
@@ -255,6 +257,10 @@ state:
 ### 4. Custom External Entity Row
 
 Adds a custom row to the card backed by an external Home Assistant entity. You can specify **any** arbitrary sensor or entity in the `entity:` field (such as a template sensor, room temperature `sensor.living_room_temperature`, dustbin status, or mop water level) completely independent of the vacuum cleaner itself.
+
+_Tip: Place the custom row under `attributes:` to display it in the right column, or under `state:` to display it in the left column._
+
+> **Displaying attributes of external entities:** The `entity:` field reads the primary state of the referenced entity. If you want to display an attribute of a third-party entity (such as `current_humidity` from `climate.living_room`), the standard Home Assistant method is to create a one-line Template Sensor (`state: "{{ state_attr('climate.living_room', 'current_humidity') }}"`) and pass its entity ID to `entity:`.
 
 ```yaml
 type: custom:xiaomi-vacuum-card
