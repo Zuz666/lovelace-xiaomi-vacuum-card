@@ -260,6 +260,8 @@ Adds a custom row to the card backed by an external Home Assistant entity. You c
 
 _Tip: Place the custom row under `attributes:` to display it in the right column, or under `state:` to display it in the left column._
 
+> **Displaying attributes of external entities:** The `entity:` field reads the primary state of the referenced entity. If you want to display an attribute of a third-party entity (such as `current_humidity` from `climate.living_room`), the standard Home Assistant method is to create a one-line Template Sensor (`state: "{{ state_attr('climate.living_room', 'current_humidity') }}"`) and pass its entity ID to `entity:`.
+
 ```yaml
 type: custom:xiaomi-vacuum-card
 entity: vacuum.my_vacuum
