@@ -27,13 +27,15 @@ Thank you for contributing to this maintained Home Assistant Lovelace custom car
    npm run check
    ```
 
-   This runs JavaScript syntax checks, version synchronization, ESLint, Prettier formatting checks, and Node.js behavior tests.
+   This runs JavaScript syntax checks, version synchronization, ESLint, markdownlint, Prettier formatting checks, and Node.js behavior tests.
 
 3. **Browser & UI smoke verification**:
    For changes affecting card appearance, user interaction, or Home Assistant integration:
+
    ```bash
    npm run test:ha-smoke
    ```
+
    Requires Docker and Playwright.
 
 ## Commit Message Guidelines

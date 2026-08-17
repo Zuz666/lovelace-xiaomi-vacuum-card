@@ -34,8 +34,13 @@ jobs:
       - name: Check version
         run: npm run check:version
 
-      - name: Lint
-        run: npm run lint
+      - name: Lint JavaScript
+        run: npm run lint:js
+
+      - name: Lint Markdown
+        uses: DavidAnson/markdownlint-cli2-action@v19
+        with:
+          globs: "**/*.md"
 
       - name: Check formatting
         run: npm run format:check

@@ -1,0 +1,14 @@
+{
+  "config": {
+    "default": true,
+    "MD013": false,
+    "MD024": {
+      "siblings_only": true,
+    },
+    "MD033": {
+      "allowed_elements": ["details", "summary", "img", "a", "br", "p", "div", "span"],
+    },
+    "MD041": false,
+  },
+  "ignores": ["node_modules/**", ".local/**", ".ha-smoke/**", "tmp/**"],
+}
