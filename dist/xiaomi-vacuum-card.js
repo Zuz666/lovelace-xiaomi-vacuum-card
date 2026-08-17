@@ -255,6 +255,19 @@
   text-align: right;
   padding-right: 10px;
   border-right: 2px solid var(--primary-color);
+}
+.xvc-dropdown {
+  cursor: pointer;
+}
+.xvc-dropdown select {
+  background: var(--card-background-color, var(--ha-card-background, white));
+  color: var(--primary-text-color, #212121);
+  border: 1px solid var(--divider-color, #e0e0e0);
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-left: 4px;
 }`;
         }
 
@@ -327,25 +340,17 @@
 
         renderDropdown(attribute, key, service) {
             const list = this.stateObj.attributes[`${key}_list`];
+            const current = key in this.stateObj.attributes ? this.stateObj.attributes[key] : '';
 
             return html`
-                <div style="position: relative" @click=${e => e.stopPropagation()}>
-                    <ha-button @click=${() => this.toggleMenu(key)}>
-                      ${attribute}
-                    </ha-button>
-                    <mwc-menu
-                      @selected=${e => this.handleChange(list[e.detail.index], key, service)}
-                      id=${`xvc-menu-${key}`}
-                      activatable
-                      corner="BOTTOM_START">
-                        ${list.map(item => html`<mwc-list-item value=${item}>${item}</mwc-list-item>`)}
-                    </mwc-menu>
+                <div class="xvc-dropdown" @click=${e => e.stopPropagation()}>
+                    ${attribute}
+                    <select
+                      .value=${current}
+                      @change=${e => this.handleChange(e.target.value, key, service)}>
+                        ${list.map(item => html`<option value=${item} ?selected=${item === current}>${item}</option>`)}
+                    </select>
                 </div>`;
-        }
-
-        toggleMenu(key) {
-            const menu = this.shadowRoot.querySelector(`#xvc-menu-${key}`);
-            menu.open = !menu.open;
         }
 
         getCardSize() {
