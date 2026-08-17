@@ -6,3 +6,15 @@ views:
       - type: custom:xiaomi-vacuum-card
         entity: vacuum.demo_vacuum_0_ground_floor
         name: Smoke Vacuum
+        buttons:
+          selected_speed:
+            icon: mdi:fan-auto
+            label: Use selected fan speed
+            service: vacuum.set_fan_speed
+            service_data_mode: dynamic
+            service_data_template: >-
+              {{
+                {
+                  "fan_speed": states("input_select.vacuum_fan_speed")
+                } | tojson
+              }}

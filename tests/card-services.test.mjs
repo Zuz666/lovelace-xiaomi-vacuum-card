@@ -68,7 +68,7 @@ test("editor-to-click: editor serializes dynamic button, click subscribes once a
       },
     },
     subscribeEvent: {
-      result: '{"command": "app_zoned_clean", "zone_id": 42, "entity_id": "vacuum.wrong"}',
+      result: { entity_id: "vacuum.wrong", fan_speed: "Standard" },
     },
   });
 
@@ -84,10 +84,11 @@ test("editor-to-click: editor serializes dynamic button, click subscribes once a
   editor.updateRow("buttons", customIndex, {
     detail: {
       value: {
-        icon: "mdi:play",
-        label: "Zone Clean",
-        service: "vacuum.send_command",
-        service_data_template: '{"command": "app_zoned_clean", "zone_id": 42}',
+        icon: "mdi:fan-auto",
+        label: "Use selected fan speed",
+        service: "vacuum.set_fan_speed",
+        service_data_template:
+          '{{ {"fan_speed": states("input_select.vacuum_fan_speed")} | tojson }}',
       },
     },
   });
@@ -99,7 +100,7 @@ test("editor-to-click: editor serializes dynamic button, click subscribes once a
   assert.equal(generatedConfig.buttons[customButtonId].service_data_mode, "dynamic");
   assert.equal(
     generatedConfig.buttons[customButtonId].service_data_template,
-    '{"command": "app_zoned_clean", "zone_id": 42}',
+    '{{ {"fan_speed": states("input_select.vacuum_fan_speed")} | tojson }}',
   );
 
   const card = new Card();
@@ -118,7 +119,7 @@ test("editor-to-click: editor serializes dynamic button, click subscribes once a
   assert.equal(hass.calls.subscriptions.length, 1);
   assert.deepEqual(hass.calls.subscriptions[0].message, {
     report_errors: true,
-    template: '{"command": "app_zoned_clean", "zone_id": 42}',
+    template: '{{ {"fan_speed": states("input_select.vacuum_fan_speed")} | tojson }}',
     type: "render_template",
   });
   assert.deepEqual(hass.calls.subscriptions[0].options, { resubscribe: false });
@@ -127,12 +128,11 @@ test("editor-to-click: editor serializes dynamic button, click subscribes once a
   assert.deepEqual(hass.calls.services, [
     {
       data: {
-        command: "app_zoned_clean",
         entity_id: "vacuum.xiaomi",
-        zone_id: 42,
+        fan_speed: "Standard",
       },
       domain: "vacuum",
-      service: "send_command",
+      service: "set_fan_speed",
     },
   ]);
 });
