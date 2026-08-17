@@ -419,9 +419,10 @@
         }
 
         renderButton(data) {
+            const payload = data && data.service_data_mode === 'dynamic' ? data.service_data_template : (data ? data.service_data : undefined);
             return data && data.show !== false
                 ? html`<ha-icon-button
-                    @click="${() => this.callService(data.service, data.service_data)}"
+                    @click="${() => this.callService(data.service, payload)}"
                     label="${data.label || ''}"
                     title="${data.label || ''}"
                     style="${this.config.styles.icon}">
@@ -748,15 +749,87 @@
             this.callService(service || `vacuum.set_${key}`, {entity_id: this.stateObj.entity_id, [key]: mode});
         }
 
+        renderTemplateOnce(template) {
+            return new Promise((resolve, reject) => {
+                if (!this._hass || !this._hass.connection || typeof this._hass.connection.subscribeMessage !== 'function') {
+                    reject(new Error('No Home Assistant connection available'));
+                    return;
+                }
+
+                let unsub = null;
+                let settled = false;
+                let pendingUnsub = false;
+
+                const cleanup = async () => {
+                    if (unsub) {
+                        try {
+                            await unsub();
+                        } catch (e) {
+                            console.error('[xiaomi-vacuum-card] Error during template unsubscribe:', e);
+                        }
+                    } else {
+                        pendingUnsub = true;
+                    }
+                };
+
+                const callback = (event) => {
+                    if (settled) return;
+                    settled = true;
+                    cleanup();
+                    if (event && event.error) {
+                        reject(new Error(event.error));
+                    } else if (event && 'result' in event) {
+                        resolve(event.result);
+                    } else {
+                        reject(new Error('Invalid template event'));
+                    }
+                };
+
+                try {
+                    const unsubPromise = this._hass.connection.subscribeMessage(
+                        callback,
+                        {type: 'render_template', template, report_errors: true},
+                        {resubscribe: false}
+                    );
+                    if (unsubPromise && typeof unsubPromise.then === 'function') {
+                        unsubPromise.then(
+                            (unsubFn) => {
+                                unsub = unsubFn;
+                                if (pendingUnsub && unsub) {
+                                    try {
+                                        const res = unsub();
+                                        if (res && typeof res.catch === 'function') {
+                                            res.catch((e) => console.error('[xiaomi-vacuum-card] Error during template unsubscribe:', e));
+                                        }
+                                    } catch (e) {
+                                        console.error('[xiaomi-vacuum-card] Error during template unsubscribe:', e);
+                                    }
+                                }
+                            },
+                            (err) => {
+                                if (!settled) {
+                                    settled = true;
+                                    reject(err);
+                                }
+                            }
+                        );
+                    }
+                } catch (err) {
+                    settled = true;
+                    reject(err);
+                }
+            });
+        }
+
         async callService(service, data) {
             if (!this.stateObj || !service) return;
             const [domain, name] = service.split('.');
             let resolvedData = data ?? {entity_id: this.stateObj.entity_id};
             if (typeof data === 'string') {
                 try {
-                    const rendered = await this._hass.callWS({type: 'render_template', template: data});
+                    const rendered = await this.renderTemplateOnce(data);
                     const parsed = JSON.parse(rendered);
-                    if (!parsed || typeof parsed !== 'object') {
+                    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
                         console.error('[xiaomi-vacuum-card] service_data_template must return a JSON object, got:', rendered);
                         return;
                     }

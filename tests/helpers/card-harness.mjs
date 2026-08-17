@@ -127,14 +127,71 @@ export async function loadCard() {
   };
 }
 
-export function createHass({ states = {}, wsResult = {}, wsReject = null } = {}) {
+export function createHass({
+  states = {},
+  wsResult = {},
+  wsReject = null,
+  subscribeHandler = null,
+  subscribeEvent = null,
+  subscribeError = null,
+  subscribeReject = null,
+  syncCallback = false,
+  unsubscribeReject = null,
+} = {}) {
   const calls = {
     services: [],
+    subscriptions: [],
+    unsubscribes: 0,
     ws: [],
+  };
+
+  const connection = {
+    subscribeMessage(callback, message, options) {
+      const record = {
+        callback,
+        message: toHost(message),
+        options: toHost(options),
+      };
+      calls.subscriptions.push(record);
+
+      if (subscribeReject) {
+        return Promise.reject(subscribeReject);
+      }
+
+      const unsub = async () => {
+        calls.unsubscribes++;
+        if (unsubscribeReject) {
+          throw unsubscribeReject;
+        }
+      };
+
+      if (typeof subscribeHandler === "function") {
+        return subscribeHandler({ callback, message, options, calls, defaultUnsub: unsub });
+      }
+
+      if (syncCallback) {
+        if (subscribeError) {
+          callback({ error: subscribeError });
+        } else if (subscribeEvent !== null) {
+          callback(subscribeEvent);
+        }
+      } else {
+        queueMicrotask(() => {
+          if (subscribeError) {
+            callback({ error: subscribeError });
+          } else if (subscribeEvent !== null) {
+            callback(subscribeEvent);
+          }
+        });
+      }
+
+      return Promise.resolve(unsub);
+    },
   };
 
   return {
     calls,
+    connection,
     states,
     callService(domain, service, data) {
       calls.services.push({ domain, service, data: toHost(data) });
