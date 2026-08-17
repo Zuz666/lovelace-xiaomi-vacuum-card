@@ -12,6 +12,7 @@ export default [
       "docs/**",
       "tmp/**",
       "session-*.md",
+      ".local/**",
     ],
   },
   js.configs.recommended,
