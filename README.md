@@ -1,5 +1,7 @@
 # Xiaomi Vacuum Card
 
+![Preview](examples/default.png)
+
 Maintained fork of the unsupported [benct/lovelace-xiaomi-vacuum-card](https://github.com/benct/lovelace-xiaomi-vacuum-card), updated for modern Home Assistant versions and direct HACS/browser loading.
 
 ## Changes from upstream
