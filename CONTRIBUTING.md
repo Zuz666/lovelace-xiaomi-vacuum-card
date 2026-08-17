@@ -1,17 +1,54 @@
-# Contributing
+# Contributing to Xiaomi Vacuum Card
 
-Thanks for improving this maintained Xiaomi Vacuum Card fork. Keep changes small,
-public, and easy to review.
+Thank you for contributing to this maintained Home Assistant Lovelace custom card (HACS plugin). Keep changes small, public, and easy to review.
 
-## Before Opening A Pull Request
+## Repository Roles
 
-- Run `npm run check` and fix any failures before submitting.
-- For UI-sensitive changes, run the Home Assistant smoke test (`npm run test:ha-smoke`) or complete an equivalent manual Home Assistant browser test.
-- Use Conventional Commits, for example `fix: handle unavailable fan speed` or `docs: clarify smoke testing`.
+- **`Zuz666/lovelace-xiaomi-vacuum-card`** is the canonical mainline repository for ongoing development and HACS-facing releases.
+- **`benct/lovelace-xiaomi-vacuum-card`** is the historical upstream repository. It is unmaintained but serves as a reference for legacy configurations.
+
+## Branching Model
+
+- `main` is the primary and only persistent branch. It serves as both the integration branch and the release source.
+- Do not use a separate `release` branch.
+- Use short, descriptive feature branches (e.g., `feat/card-editor`, `fix/fan-speed-dropdown`, `docs/contributing-update`, `chore/tooling`) for all work.
+
+## Development & Testing Workflow
+
+1. **Install dependencies**:
+
+   ```bash
+   npm ci
+   ```
+
+2. **Run validation suite**:
+
+   ```bash
+   npm run check
+   ```
+
+   This runs JavaScript syntax checks, version synchronization, ESLint, Prettier formatting checks, and Node.js behavior tests.
+
+3. **Browser & UI smoke verification**:
+   For changes affecting card appearance, user interaction, or Home Assistant integration:
+   ```bash
+   npm run test:ha-smoke
+   ```
+   Requires Docker and Playwright.
+
+## Commit Message Guidelines
+
+Use Conventional Commits so history and automated changelogs remain structured and readable:
+
+- `fix:` for bug fixes (e.g., `fix: resolve modern vacuum battery sensors`)
+- `feat:` for new capabilities (e.g., `feat: support dynamic service data`)
+- `docs:` for documentation updates (e.g., `docs: refine contributing guidelines`)
+- `test:` for adding or updating tests (e.g., `test: add ha-smoke coverage`)
+- `chore:` for tooling and maintenance (e.g., `chore: update dependencies`)
 
 ## Pull Request Guidelines
 
-Every pull request must use and completely fill out all sections from `.github/PULL_REQUEST_TEMPLATE.md`:
+Every pull request must target the `main` branch of `Zuz666/lovelace-xiaomi-vacuum-card` and completely fill out all sections from `.github/PULL_REQUEST_TEMPLATE.md`:
 
 ### 1. Summary (`## Summary`)
 
@@ -54,13 +91,14 @@ Every pull request must use and completely fill out all sections from `.github/P
 
 Do not use single-line placeholders or empty stubs in `--body`. Use `--body-file` or a full multiline description when submitting pull requests with the `gh` CLI.
 
-## Scope
+## Workspace Scope & Documentation
 
 - Private notes, scratchpads, and transcripts belong in `/.local/` (which is ignored by Git).
-- Public architectural decisions and finalized plans belong in `/docs/`.
+- Do not commit credentials or local-only session files.
+- Public architectural decisions and finalized plans belong in the public `/docs/` folder.
 
-## Card Architecture
+## Card Architecture & Direct Browser Loading
 
-`dist/xiaomi-vacuum-card.js` is the shipped Home Assistant/HACS browser resource.
-It is loaded directly by Home Assistant as a JavaScript module. Do not add
-bundler, package-build, or import assumptions.
+`dist/xiaomi-vacuum-card.js` is the shipped canonical Home Assistant/HACS browser resource.
+It is loaded directly by Home Assistant as an ES module in the browser. Do not add
+bundler, package-build, or node-import assumptions.
