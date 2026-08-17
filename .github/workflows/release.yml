@@ -62,7 +62,75 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "v${RELEASE_VERSION}" xiaomi-vacuum-card.js \
-            --title "v${RELEASE_VERSION}" \
-            --generate-notes \
-            --target "${GITHUB_SHA}"
+          for attempt in {1..5}; do
+            info="$(gh release view "v${RELEASE_VERSION}" --json isDraft,targetCommitish,assets 2>/dev/null)" || info=""
+
+            if [ -n "$info" ]; then
+              is_draft="$(echo "$info" | jq -r '.isDraft')"
+              target="$(echo "$info" | jq -r '.targetCommitish')"
+              has_asset="$(echo "$info" | jq -r '.assets[]? | select(.name == "xiaomi-vacuum-card.js") | .name')"
+
+              if [ "$is_draft" = "false" ]; then
+                if [ "$target" = "${GITHUB_SHA}" ] && [ "$has_asset" = "xiaomi-vacuum-card.js" ]; then
+                  echo "Release v${RELEASE_VERSION} is published, targets ${GITHUB_SHA}, and contains xiaomi-vacuum-card.js."
+                  exit 0
+                else
+                  echo "Error: Release v${RELEASE_VERSION} is already published but invalid (target=${target}, has_asset=${has_asset}). Refusing to mutate." >&2
+                  exit 1
+                fi
+              fi
+
+              if [ "$target" != "${GITHUB_SHA}" ]; then
+                echo "Error: Existing draft release targets ${target}, expected ${GITHUB_SHA}." >&2
+                exit 1
+              fi
+            else
+              echo "Creating draft release v${RELEASE_VERSION} targeting ${GITHUB_SHA}..."
+              if ! gh release create "v${RELEASE_VERSION}" \
+                --title "v${RELEASE_VERSION}" \
+                --generate-notes \
+                --target "${GITHUB_SHA}" \
+                --draft; then
+                echo "Draft create attempt $attempt failed; retrying in 5s..."
+                sleep 5
+                continue
+              fi
+            fi
+
+            echo "Uploading asset to draft release..."
+            if ! gh release upload "v${RELEASE_VERSION}" xiaomi-vacuum-card.js --clobber; then
+              echo "Asset upload attempt $attempt failed; retrying in 5s..."
+              sleep 5
+              continue
+            fi
+
+            info="$(gh release view "v${RELEASE_VERSION}" --json isDraft,targetCommitish,assets 2>/dev/null)" || info=""
+            has_asset="$(echo "$info" | jq -r '.assets[]? | select(.name == "xiaomi-vacuum-card.js") | .name')"
+            if [ "$has_asset" != "xiaomi-vacuum-card.js" ]; then
+              echo "Asset missing on draft; retrying in 5s..."
+              sleep 5
+              continue
+            fi
+
+            echo "Publishing draft release..."
+            if ! gh release edit "v${RELEASE_VERSION}" --draft=false; then
+              echo "Publish attempt $attempt failed; retrying in 5s..."
+              sleep 5
+              continue
+            fi
+
+            info="$(gh release view "v${RELEASE_VERSION}" --json isDraft,targetCommitish,assets 2>/dev/null)" || info=""
+            is_draft="$(echo "$info" | jq -r '.isDraft')"
+            target="$(echo "$info" | jq -r '.targetCommitish')"
+            has_asset="$(echo "$info" | jq -r '.assets[]? | select(.name == "xiaomi-vacuum-card.js") | .name')"
+
+            if [ "$is_draft" = "false" ] && [ "$target" = "${GITHUB_SHA}" ] && [ "$has_asset" = "xiaomi-vacuum-card.js" ]; then
+              echo "Successfully published and verified release v${RELEASE_VERSION}."
+              exit 0
+            fi
+
+            sleep 5
+          done
+
+          echo "Failed to create and publish release v${RELEASE_VERSION} after retries." >&2
+          exit 1
