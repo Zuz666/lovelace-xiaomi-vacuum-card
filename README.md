@@ -1,4 +1,4 @@
-# Xiaomi Vacuum Card
+# Xiaomi Vacuum Card Reborn
 
 [![GitHub Release](https://img.shields.io/github/v/release/Zuz666/lovelace-xiaomi-vacuum-card?style=flat-square)](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/releases)
 [![GitHub Downloads](https://img.shields.io/github/downloads/Zuz666/lovelace-xiaomi-vacuum-card/total?style=flat-square)](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/releases)
@@ -7,9 +7,9 @@
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg?style=flat-square)](https://hacs.xyz/)
 [![CI](https://img.shields.io/github/actions/workflow/status/Zuz666/lovelace-xiaomi-vacuum-card/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/actions/workflows/ci.yml)
 
-![Xiaomi Vacuum Card showing Documentation Vacuum](docs/images/card-default.png)
-
 A maintained, modern Home Assistant Lovelace custom card for vacuum cleaners. Forked from [benct/lovelace-xiaomi-vacuum-card](https://github.com/benct/lovelace-xiaomi-vacuum-card) and updated for modern Home Assistant versions, sections-view dashboards, and direct HACS / browser module loading.
+
+![Xiaomi Vacuum Card Reborn showing Documentation Vacuum](docs/images/card-default.png)
 
 ## Highlights
 
@@ -40,12 +40,12 @@ This repository is distributed as a HACS Custom Repository. You do not need to s
 
 5. In the **Type** dropdown, select **Dashboard**, then click **ADD**.
 
-   ![HACS Custom repositories dialog configured for Xiaomi Vacuum Card](docs/images/hacs-custom-repository.png)
+   ![HACS Custom repositories dialog configured for Xiaomi Vacuum Card Reborn](docs/images/hacs-custom-repository.png)
 
-6. Open the **Xiaomi Vacuum Card** repository entry in HACS and click **Download**.
+6. Open the **Xiaomi Vacuum Card Reborn** repository entry in HACS and click **Download**.
 7. In the download dialog, keep the latest release selected and confirm **Download**.
 
-   ![HACS download dialog for Xiaomi Vacuum Card](docs/images/hacs-download.png)
+   ![HACS download dialog for Xiaomi Vacuum Card Reborn](docs/images/hacs-download.png)
 
 HACS serves the card resource automatically at:
 
@@ -82,7 +82,7 @@ When updating manually, replace `xiaomi-vacuum-card.js` and append a cache-busti
 ### Visual Editor
 
 1. Open your dashboard, click the pencil icon in the top header to enter edit mode, and click **Add Card**.
-2. Search for **Xiaomi Vacuum Card** in the card picker.
+2. Search for **Xiaomi Vacuum Card Reborn** in the card picker.
 3. Select your vacuum entity from the vacuum-only entity selector.
 4. Customize settings across the organized configuration sections:
    - **Basic**: Entity, card title, vendor preset, and background image.
@@ -91,7 +91,7 @@ When updating manually, replace `xiaomi-vacuum-card.js` and append a cache-busti
    - **Attributes**: Configure consumables, brushes, filters, sensors, or custom rows.
    - **Buttons**: Customize action buttons, add custom buttons, and configure static or dynamic service calls.
 
-![Xiaomi Vacuum Card visual editor](docs/images/visual-editor.png)
+![Xiaomi Vacuum Card Reborn visual editor](docs/images/visual-editor.png)
 
 ### Minimal YAML
 
@@ -205,7 +205,7 @@ Unsafe path traversal sequences (`..`) and invalid protocols are blocked for sec
 
 Sets a custom title, selects the Xiaomi vendor preset, and displays a background image from your local `www/images/` folder.
 
-![Xiaomi Vacuum Card with background image](docs/images/card-with-image.png)
+![Xiaomi Vacuum Card Reborn with background image](docs/images/card-with-image.png)
 
 ```yaml
 type: custom:xiaomi-vacuum-card
