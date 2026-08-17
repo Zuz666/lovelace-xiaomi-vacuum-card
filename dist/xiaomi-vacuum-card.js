@@ -1,6 +1,6 @@
 ((LitElement) => {
     console.info(
-        '%c XIAOMI-VACUUM-CARD %c 4.6.1 ',
+        '%c XIAOMI-VACUUM-CARD-REBORN %c 4.6.1 ',
         'color: cyan; background: black; font-weight: bold;',
         'color: darkblue; background: white; font-weight: bold;',
     );
@@ -1477,10 +1477,10 @@
     if (!window.customCards.some(c => c.type === 'xiaomi-vacuum-card')) {
         window.customCards.push({
             type: 'xiaomi-vacuum-card',
-            name: 'Xiaomi Vacuum Card',
-            description: 'Card for Xiaomi/Roborock/iRobot/Ecovacs vacuum cleaners',
+            name: 'Xiaomi Vacuum Card Reborn',
+            description: 'Maintained Lovelace custom card for vacuum cleaners',
             preview: true,
-            documentationURL: 'https://github.com/3ative/lovelace-xiaomi-vacuum-card',
+            documentationURL: 'https://github.com/Zuz666/lovelace-xiaomi-vacuum-card',
             getEntitySuggestion: (hass, entityId) => entityId.split('.')[0] === 'vacuum'
                 ? {config: {type: 'custom:xiaomi-vacuum-card', entity: entityId}}
                 : null,

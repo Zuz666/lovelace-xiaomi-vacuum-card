@@ -2,7 +2,7 @@
   "name": "lovelace-xiaomi-vacuum-card",
   "version": "4.6.1",
   "private": true,
-  "description": "Maintained Home Assistant Lovelace Xiaomi Vacuum Card fork",
+  "description": "Maintained Xiaomi Vacuum Card Reborn for Home Assistant Lovelace",
   "type": "module",
   "scripts": {
     "check": "npm run check:syntax && npm run check:version && npm run lint && npm run format:check && npm test",

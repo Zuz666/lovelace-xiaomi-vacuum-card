@@ -1,4 +1,4 @@
-# Contributing to Xiaomi Vacuum Card
+# Contributing to Xiaomi Vacuum Card Reborn
 
 Thank you for contributing to this maintained Home Assistant Lovelace custom card (HACS plugin). Keep changes small, public, and easy to review.
 

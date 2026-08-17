@@ -16,7 +16,7 @@ test("registers Home Assistant card picker metadata", async () => {
 
   assert.ok(metadata);
   assert.equal(metadata.preview, true);
-  assert.equal(metadata.name, "Xiaomi Vacuum Card");
+  assert.equal(metadata.name, "Xiaomi Vacuum Card Reborn");
   assert.deepEqual(toHost(metadata.getEntitySuggestion({}, "vacuum.xiaomi")), {
     config: { type: "custom:xiaomi-vacuum-card", entity: "vacuum.xiaomi" },
   });
