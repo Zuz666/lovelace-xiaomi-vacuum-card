@@ -3,8 +3,7 @@ coverage/
 playwright-report/
 test-results/
 .ha-smoke/
-docs/
 tmp/
-session-*.md
 dist/xiaomi-vacuum-card.js
 CHANGELOG.md
+.local/

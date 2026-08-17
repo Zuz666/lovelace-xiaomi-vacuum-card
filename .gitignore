@@ -8,7 +8,5 @@ test-results/
 *.orig
 *.bak
 .history
-/docs/
 /tmp/
-AGENTS.md
-session-*.md
+/.local/
