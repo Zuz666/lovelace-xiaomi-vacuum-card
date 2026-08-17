@@ -1,4 +1,5 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 ## 4.5.0
@@ -108,7 +109,8 @@ See [README](https://github.com/benct/lovelace-xiaomi-vacuum-card) for more info
 - **Changed:** Accommodate future vendor implementations
 - **Fixed:** Use standardized name and path for background images (#4)
 
-**Breaking**
+### Breaking
+
 - Option `background` renamed to `image`
 - Custom image URLs must now include the `/local/` path prefix
 

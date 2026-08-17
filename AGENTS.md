@@ -13,7 +13,9 @@
 - Run all checks: `npm run check` (runs syntax, version, lint, format, and Node tests).
 - Run syntax check: `npm run check:syntax` (`node --check dist/xiaomi-vacuum-card.js`).
 - Run version check: `npm run check:version` (`node tests/check-version.mjs`).
-- Run linter: `npm run lint` (`eslint .`).
+- Run linters: `npm run lint` (runs `eslint .` and `markdownlint-cli2 "**/*.md"`).
+- Run JavaScript linter: `npm run lint:js` (`eslint .`).
+- Run Markdown linter: `npm run lint:md` (`markdownlint-cli2 "**/*.md"`).
 - Check formatting: `npm run format:check` (`prettier --check .`).
 - Fix formatting: `npm run format` (`prettier --write .`).
 - Run behavior tests: `npm test` (`node --test "tests/**/*.test.mjs"`).

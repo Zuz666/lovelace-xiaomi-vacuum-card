@@ -10,7 +10,9 @@
     "check:version": "node tests/check-version.mjs",
     "test": "node --test \"tests/**/*.test.mjs\"",
     "test:ha-smoke": "playwright test tests/ha-smoke",
-    "lint": "eslint .",
+    "lint": "npm run lint:js && npm run lint:md",
+    "lint:js": "eslint .",
+    "lint:md": "markdownlint-cli2 \"**/*.md\"",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -19,6 +21,7 @@
     "@playwright/test": "^1.52.0",
     "eslint": "^9.28.0",
     "globals": "^16.2.0",
+    "markdownlint-cli2": "^0.23.2",
     "prettier": "^3.5.3"
   }
 }
