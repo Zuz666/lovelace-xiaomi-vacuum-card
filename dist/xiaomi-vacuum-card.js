@@ -372,49 +372,135 @@
             </ha-card>` : html`<ha-card style="padding: 8px 16px">Entity '${this.config.entity}' not available...</ha-card>`;
         }
 
+        resolveAttributeSource(data) {
+            if (!data) return { rawValue: null, entityState: null, isBattery: false };
+
+            const isBattery = data.id === 'battery' || data.key === 'battery_level' || data.key === 'battery';
+            const states = (this._hass && this._hass.states) || {};
+
+            if (isBattery) {
+                if (data.entity && data.entity in states) {
+                    const entityState = states[data.entity];
+                    return { rawValue: entityState.state, entityState, isBattery: true };
+                }
+
+                const vacuumEntityId = (this.stateObj && this.stateObj.entity_id) || (this.config && this.config.entity) || '';
+                const vacuumObjectId = vacuumEntityId.includes('.') ? vacuumEntityId.split('.')[1] : vacuumEntityId;
+
+                const modernSensorId = `sensor.${vacuumObjectId}_battery`;
+                if (modernSensorId in states) {
+                    const entityState = states[modernSensorId];
+                    return { rawValue: entityState.state, entityState, isBattery: true };
+                }
+
+                const legacySensorId = `sensor.${vacuumObjectId}_battery_level`;
+                if (legacySensorId in states) {
+                    const entityState = states[legacySensorId];
+                    return { rawValue: entityState.state, entityState, isBattery: true };
+                }
+
+                if (this.stateObj && this.stateObj.attributes && 'battery_level' in this.stateObj.attributes) {
+                    return { rawValue: this.stateObj.attributes.battery_level, entityState: null, isBattery: true };
+                }
+
+                if (this.stateObj && this.stateObj.attributes && 'battery' in this.stateObj.attributes) {
+                    return { rawValue: this.stateObj.attributes.battery, entityState: null, isBattery: true };
+                }
+
+                if (this.stateObj && data.key && data.key in this.stateObj) {
+                    return { rawValue: this.stateObj[data.key], entityState: null, isBattery: true };
+                }
+
+                return { rawValue: null, entityState: null, isBattery: true };
+            }
+
+            if (data.entity && data.entity in states) {
+                const entityState = states[data.entity];
+                return { rawValue: entityState.state, entityState, isBattery: false };
+            }
+
+            const sensorKey = `${this.config.sensorEntity}_${data.key}`;
+            if (sensorKey in states) {
+                const entityState = states[sensorKey];
+                return { rawValue: entityState.state, entityState, isBattery: false };
+            }
+
+            if (this.stateObj && this.stateObj.attributes && data.key && data.key in this.stateObj.attributes) {
+                return { rawValue: this.stateObj.attributes[data.key], entityState: null, isBattery: false };
+            }
+
+            if (this.stateObj && data.key && data.key in this.stateObj) {
+                return { rawValue: this.stateObj[data.key], entityState: null, isBattery: false };
+            }
+
+            return { rawValue: null, entityState: null, isBattery: false };
+        }
+
         renderAttribute(data) {
+            const source = this.resolveAttributeSource(data);
+            const raw = source.rawValue;
             const computeFunc = data.compute || (v => v);
-            const formatValue = raw => {
-                const computed = computeFunc(raw);
+            const formatValue = val => {
+                const computed = computeFunc(val);
                 return computed === '-' ? '-' : computed + (data.unit || '');
             };
-            const externalEntity = data.entity && data.entity in this._hass.states ? this._hass.states[data.entity] : null;
-            const isValidSensorData = data && `${this.config.sensorEntity}_${data.key}` in this._hass.states;
-            const isValidAttribute = data && data.key in this.stateObj.attributes;
-            const isValidEntityData = data && data.key in this.stateObj;
 
-            let value = externalEntity
-                ? formatValue(externalEntity.state)
-                : isValidSensorData
-                    ? formatValue(this._hass.states[`${this.config.sensorEntity}_${data.key}`].state)
-                    : isValidAttribute
-                        ? formatValue(this.stateObj.attributes[data.key])
-                        : isValidEntityData
-                            ? formatValue(this.stateObj[data.key])
-                            : null;
-            const list = this.stateObj.attributes[`${data.key}_list`];
+            const value = raw !== null && raw !== undefined ? formatValue(raw) : null;
+            const list = this.stateObj && this.stateObj.attributes && data.key ? this.stateObj.attributes[`${data.key}_list`] : undefined;
             const hasDropdown = Array.isArray(list);
 
             if (hasDropdown && value !== null) {
-                const icon = this.renderIcon(data);
+                const icon = this.renderIcon(data, source);
                 return this.renderDropdown(icon, data.key, data.service, data.label);
             }
             return html`<div>
-                ${this.renderIcon(data)}
+                ${this.renderIcon(data, source)}
                 ${(data.label || '') + (value !== null ? value : this._hass.localize('state.default.unavailable'))}
             </div>`;
         }
 
-        renderIcon(data) {
+        renderIcon(data, source) {
+            const attrSource = source || this.resolveAttributeSource(data);
             let icon = '';
-            if (data.key === 'battery_level' && 'battery_icon' in this.stateObj.attributes) {
-                icon = this.stateObj.attributes.battery_icon;
-            } else if (data.icon) {
-                icon = data.icon;
-            } else if (data.entity && data.entity in this._hass.states) {
-                const entityState = this._hass.states[data.entity];
-                if (entityState.attributes && entityState.attributes.icon) icon = entityState.attributes.icon;
+
+            if (attrSource.isBattery) {
+                if (attrSource.entityState && attrSource.entityState.attributes && attrSource.entityState.attributes.icon) {
+                    icon = attrSource.entityState.attributes.icon;
+                }
+
+                if (!icon && attrSource.rawValue !== null && attrSource.rawValue !== undefined && attrSource.rawValue !== '') {
+                    const num = Number(attrSource.rawValue);
+                    if (!Number.isNaN(num)) {
+                        const clamped = Math.max(0, Math.min(100, num));
+                        const rounded = Math.round(clamped / 10) * 10;
+                        if (rounded === 0) {
+                            icon = 'mdi:battery-outline';
+                        } else if (rounded === 100) {
+                            icon = 'mdi:battery';
+                        } else {
+                            icon = `mdi:battery-${rounded}`;
+                        }
+                    }
+                }
+
+                if (!icon && this.stateObj && this.stateObj.attributes && this.stateObj.attributes.battery_icon) {
+                    icon = this.stateObj.attributes.battery_icon;
+                }
+
+                if (!icon && data && data.icon) {
+                    icon = data.icon;
+                }
+            } else {
+                if (data && data.icon) {
+                    icon = data.icon;
+                } else if (attrSource.entityState && attrSource.entityState.attributes && attrSource.entityState.attributes.icon) {
+                    icon = attrSource.entityState.attributes.icon;
+                } else if (data && data.entity && this._hass && this._hass.states && data.entity in this._hass.states) {
+                    const entityState = this._hass.states[data.entity];
+                    if (entityState.attributes && entityState.attributes.icon) icon = entityState.attributes.icon;
+                }
             }
+
             return icon ? html`<ha-icon icon="${icon}" style="margin-right: 10px; ${this.config.styles.icon}"></ha-icon>` : null;
         }
 
@@ -1194,14 +1280,16 @@
         }
 
         entityDataRowSchema(row) {
-            const entityState = this.hass && this._model && this._model.entity ? this.hass.states[this._model.entity] : null;
-            const hasDynamicBatteryIcon = row.key === 'battery_level' && entityState && 'battery_icon' in entityState.attributes;
+            const isBattery = row && (row.id === 'battery' || row.key === 'battery_level' || row.key === 'battery');
+            const entitySelector = isBattery
+                ? {entity: {domain: 'sensor', device_class: 'battery'}}
+                : {entity: {}};
             return [
                 ...(row.custom ? [{name: 'id', selector: {text: {}}}] : []),
                 {name: 'show', selector: {boolean: {}}},
                 {name: 'key', selector: {text: {}}},
-                {name: 'entity', selector: {entity: {}}},
-                ...(hasDynamicBatteryIcon ? [] : [{name: 'icon', selector: {icon: {}}}]),
+                {name: 'entity', selector: entitySelector},
+                {name: 'icon', selector: {icon: {}}},
                 {name: 'label', label: row.label_kind === 'accessible' ? 'Accessible label' : 'Visible label', selector: {text: {}}},
                 {name: 'unit', selector: {text: {}}},
             ];
