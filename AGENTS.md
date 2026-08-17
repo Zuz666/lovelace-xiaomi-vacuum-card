@@ -30,5 +30,6 @@
 
 - All development happens in the `Zuz666/lovelace-xiaomi-vacuum-card` repository.
 - Changes must be done via feature branches and merged into `main` via PRs with passing CI checks. There is no separate `release` branch.
+- Pull requests must populate all sections from `.github/PULL_REQUEST_TEMPLATE.md` (`# Summary`, `# Target`, `# Test Plan`, `# HACS And Release Impact`, `# Checklist`) using `--body-file` or complete multiline text, avoiding single-line placeholders.
 - Project docs and finalized plans belong in the public `docs/` folder.
 - Private notes, scratchpads, and transcripts belong in `/.local/`, which is ignored by Git. Do not commit secrets.
