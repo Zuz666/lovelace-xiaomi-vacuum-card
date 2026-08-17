@@ -19,7 +19,7 @@ This catches JavaScript syntax errors without starting Home Assistant.
 Install dependencies once per checkout:
 
 ```sh
-npm install
+npm ci
 ```
 
 Run the complete local validation suite:
