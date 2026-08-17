@@ -217,6 +217,7 @@ test("loads the Xiaomi vacuum card in Home Assistant", async ({ page, request, b
 
   await expect(vacuumCard).toBeAttached();
   await expect(vacuumCard).toContainText("Smoke Vacuum");
+  await expect(vacuumCard).toContainText(/73(?:\.0)?%/);
   await expect(vacuumCard).not.toContainText(/not available/i);
   await expect(vacuumCard).not.toContainText(
     "Entity 'vacuum.demo_vacuum_0_ground_floor' not available",
