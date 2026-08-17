@@ -1,8 +1,16 @@
 # Specification: Home Assistant 2026.8 Battery Compatibility
 
-## Context
+## Context & Core References
 
-Home Assistant modern vacuum integrations (such as the standard `vacuum` entity domain integrations and contemporary MQTT / integration platforms) expose battery level as a separate `sensor.<vacuum_name>_battery` or `sensor.<vacuum_name>_battery_level` entity rather than legacy vacuum state attributes.
+In Home Assistant Core 2026.8 ([home-assistant/core#175682](https://github.com/home-assistant/core/pull/175682), [home-assistant/core#175687](https://github.com/home-assistant/core/pull/175687)), the deprecated `battery_level` property and `battery_icon` attribute were removed from `vacuum` platform entities for standard and vendor integrations (including `xiaomi_miio`, `roomba`, `neato`, etc.).
+
+Under [home-assistant/core#179095](https://github.com/home-assistant/core/pull/179095), dedicated battery diagnostic sensors (`SensorDeviceClass.BATTERY`) were introduced for `xiaomi_miio` under the entity ID pattern:
+
+- **`sensor.<vacuum_name>_battery`** (for example `sensor.test_vacuum_cleaner_battery`).
+
+The legacy attribute `battery_level` in `vacuum.<vacuum_name>` is not populated in modern HA. Consequently, the default card configuration (which expected `sensor.<vacuum_name>_battery_level` or `vacuum.attributes.battery_level`) would display "Unavailable" unless updated.
+
+Note on UI components: while older versions of the card previously depended on `mwc-menu` / `mwc-list-item`, the modern card uses a dependency-free custom ARIA combobox (`button`/`listbox` pattern) for fan speed selection rather than a native `<select>` element.
 
 The card must resolve battery state accurately across modern sensor entities, explicit overrides, and legacy attributes without breaking existing configurations.
 

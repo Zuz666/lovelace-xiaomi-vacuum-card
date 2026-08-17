@@ -9,10 +9,15 @@
 
 ## Development Commands
 
-- Run all checks: `npm run check` (runs syntax, lint, format, and Node tests).
-- Run behavior tests: `npm test`.
-- Run real browser verification: `npm run test:ha-smoke` (requires Docker).
-- Fix formatting: `npm run format`.
+- Install dependencies: `npm ci`
+- Run all checks: `npm run check` (runs syntax, version, lint, format, and Node tests).
+- Run syntax check: `npm run check:syntax` (`node --check dist/xiaomi-vacuum-card.js`).
+- Run version check: `npm run check:version` (`node tests/check-version.mjs`).
+- Run linter: `npm run lint` (`eslint .`).
+- Check formatting: `npm run format:check` (`prettier --check .`).
+- Fix formatting: `npm run format` (`prettier --write .`).
+- Run behavior tests: `npm test` (`node --test "tests/**/*.test.mjs"`).
+- Run real browser verification: `npm run test:ha-smoke` (requires Docker and Playwright).
 - Always verify behavior and ensure tests pass before yielding.
 
 ## Implementation Gotchas
@@ -24,6 +29,6 @@
 ## Workflow & Documentation
 
 - All development happens in the `Zuz666/lovelace-xiaomi-vacuum-card` repository.
-- Changes must be done via feature branches and merged into `main` via PRs. There is no separate `release` branch.
+- Changes must be done via feature branches and merged into `main` via PRs with passing CI checks. There is no separate `release` branch.
 - Project docs and finalized plans belong in the public `docs/` folder.
 - Private notes, scratchpads, and transcripts belong in `/.local/`, which is ignored by Git. Do not commit secrets.
