@@ -194,13 +194,15 @@ Unsafe path traversal sequences (`..`) and invalid protocols are blocked for sec
 
 Sets a custom title, selects the Xiaomi vendor preset, and displays a background image from your local `www/images/` folder.
 
-```yaml
+![Xiaomi Vacuum Card with background image](docs/images/card-with-image.png)
+
 type: custom:xiaomi-vacuum-card
 entity: vacuum.my_vacuum
 name: Downstairs vacuum
 vendor: xiaomi
 image: /local/images/vacuum.png
-```
+
+````
 
 ---
 
@@ -221,7 +223,7 @@ buttons:
     show: true
   locate:
     show: false
-```
+````
 
 ---
 
