@@ -290,7 +290,9 @@ buttons:
 
 ### 6. Dynamic Service Data with Jinja Template
 
-Adds a custom action button whose fan speed payload is dynamically read from an `input_select` helper at the moment of click.
+Adds a custom action button whose service payload is dynamically rendered on click using an external Home Assistant helper entity (such as an `input_select` dropdown created under **Settings → Devices & services → Helpers**).
+
+> **Note / Prerequisite:** This example assumes you have created an `input_select.vacuum_fan_speed` helper in Home Assistant with matching fan speed options (such as `Quiet`, `Standard`, `Turbo`). When the button is clicked, Home Assistant renders the template with the helper's current state, and the card automatically injects the configured vacuum `entity_id` before dispatching `vacuum.set_fan_speed`.
 
 ```yaml
 type: custom:xiaomi-vacuum-card
