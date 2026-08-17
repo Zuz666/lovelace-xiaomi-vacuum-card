@@ -26,17 +26,19 @@ This repository is distributed as a HACS Custom Repository. You do not need to s
 2. In Home Assistant, navigate to **HACS**.
 3. Open the three dots menu in the top right corner and select **Custom repositories**.
 4. In the **Repository** field, enter:
+
    ```text
    https://github.com/Zuz666/lovelace-xiaomi-vacuum-card
    ```
+
 5. In the **Type** dropdown, select **Dashboard**, then click **ADD**.
 
-![HACS Custom repositories dialog configured for Xiaomi Vacuum Card](docs/images/hacs-custom-repository.png)
+   ![HACS Custom repositories dialog configured for Xiaomi Vacuum Card](docs/images/hacs-custom-repository.png)
 
 6. Open the **Xiaomi Vacuum Card** repository entry in HACS and click **Download**.
 7. In the download dialog, keep the latest release selected and confirm **Download**.
 
-![HACS download dialog for Xiaomi Vacuum Card](docs/images/hacs-download.png)
+   ![HACS download dialog for Xiaomi Vacuum Card](docs/images/hacs-download.png)
 
 HACS serves the card resource automatically at:
 
@@ -53,9 +55,11 @@ If the card does not immediately appear in the dashboard card picker, verify tha
 
 1. Download `xiaomi-vacuum-card.js` from the [latest release](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/releases/latest).
 2. Place the file in your Home Assistant configuration directory under:
+
    ```text
    <config>/www/community/lovelace-xiaomi-vacuum-card/xiaomi-vacuum-card.js
    ```
+
 3. In Home Assistant, go to **Settings → Dashboards → three dots menu → Resources**.
 4. Click **Add Resource** and configure:
    - **URL**: `/local/community/lovelace-xiaomi-vacuum-card/xiaomi-vacuum-card.js`
@@ -122,7 +126,7 @@ Default attribute rows: `main_brush`, `side_brush`, `filter`, `sensor`.
 | `entity` | `string`  | `undefined`    | Optional external entity ID to read value from (for example `sensor.my_vacuum_battery`). |
 | `icon`   | `string`  | Preset default | Material Design icon to display for this row (for example `mdi:fan`).                    |
 | `label`  | `string`  | Preset default | Custom label prefix displayed before the value.                                          |
-| `unit`   | `string`  | Preset default | Unit suffix displayed after the value (for example ` %`, ` h`, ` m²`).                   |
+| `unit`   | `string`  | Preset default | Unit suffix displayed after the value (for example `" %"`, `" h"`, `" m²"`).             |
 
 #### Fan Speed Dropdown
 
@@ -196,13 +200,13 @@ Sets a custom title, selects the Xiaomi vendor preset, and displays a background
 
 ![Xiaomi Vacuum Card with background image](docs/images/card-with-image.png)
 
+```yaml
 type: custom:xiaomi-vacuum-card
 entity: vacuum.my_vacuum
 name: Downstairs vacuum
 vendor: xiaomi
 image: /local/images/vacuum.png
-
-````
+```
 
 ---
 
@@ -223,7 +227,7 @@ buttons:
     show: true
   locate:
     show: false
-````
+```
 
 ---
 
