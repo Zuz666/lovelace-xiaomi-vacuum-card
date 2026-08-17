@@ -137,6 +137,7 @@ export function createHass({
   subscribeReject = null,
   syncCallback = false,
   unsubscribeReject = null,
+  localize = (key) => key,
 } = {}) {
   const calls = {
     services: [],
@@ -192,6 +193,7 @@ export function createHass({
   return {
     calls,
     connection,
+    localize,
     states,
     callService(domain, service, data) {
       calls.services.push({ domain, service, data: toHost(data) });

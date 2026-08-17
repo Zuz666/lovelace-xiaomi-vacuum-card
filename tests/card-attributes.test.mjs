@@ -332,8 +332,10 @@ test("editor entityDataRowSchema: battery row restricts entity selector to senso
   const entityField = batterySchema.find((f) => f.name === "entity");
   assert.deepEqual(toHost(entityField.selector), {
     entity: {
-      device_class: "battery",
-      domain: "sensor",
+      filter: {
+        device_class: "battery",
+        domain: "sensor",
+      },
     },
   });
   const iconField = batterySchema.find((f) => f.name === "icon");
@@ -342,4 +344,63 @@ test("editor entityDataRowSchema: battery row restricts entity selector to senso
   const filterSchema = editor.entityDataRowSchema({ id: "filter_left", key: "filter_left" });
   const filterEntityField = filterSchema.find((f) => f.name === "entity");
   assert.deepEqual(toHost(filterEntityField.selector), { entity: {} });
+});
+test("render() path: id-only battery row with custom key discovers modern sensor and renders icon/percentage", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+  const hass = createHass({
+    states: {
+      "sensor.my_vacuum_battery": {
+        attributes: {},
+        entity_id: "sensor.my_vacuum_battery",
+        state: "62",
+      },
+      "vacuum.my_vacuum": {
+        attributes: {},
+        entity_id: "vacuum.my_vacuum",
+        state: "docked",
+      },
+    },
+  });
+
+  // User configures state.battery with a custom key that does not match standard battery keys
+  card.setConfig({
+    entity: "vacuum.my_vacuum",
+    state: {
+      battery: {
+        key: "custom_unmatched_key",
+        unit: "%",
+      },
+    },
+  });
+  card.hass = hass;
+
+  const renderedCard = card.render();
+  assert.ok(renderedCard);
+  // Find grid template from rendered ha-card
+  const gridTemplate = renderedCard.values.find(
+    (val) => val && val.strings && val.strings.some((s) => s.includes('class="grid"')),
+  );
+  assert.ok(gridTemplate, "Card must render grid");
+  const stateTemplate = gridTemplate.values.find(
+    (val) => val && val.strings && val.strings.some((s) => s.includes("grid-left")),
+  );
+  assert.ok(stateTemplate, "Card must render state content");
+
+  const renderedRows = stateTemplate.values[0];
+  assert.ok(Array.isArray(renderedRows) && renderedRows.length > 0);
+
+  // Find the rendered battery row among the state rows
+  const batteryRow = renderedRows.find(
+    (row) =>
+      row && row.values && row.values.some((v) => typeof v === "string" && v.includes("62%")),
+  );
+  assert.ok(batteryRow, "Must find rendered battery row with 62%");
+
+  // Check that battery icon was resolved via numeric mapping
+  const batteryIcon = batteryRow.values.find(
+    (val) => val && val.values && Array.isArray(val.values),
+  );
+  assert.ok(batteryIcon, "Battery icon must be rendered");
+  assert.ok(batteryIcon.values.includes("mdi:battery-60"));
 });

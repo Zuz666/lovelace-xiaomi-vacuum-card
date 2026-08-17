@@ -358,16 +358,16 @@
               <div class="grid" style="${this.config.styles.content}" @click="${() => this.fireEvent('hass-more-info')}">
                 ${this.config.show.state ? html`
                 <div class="grid-content grid-left">
-                  ${Object.values(this.config.state).filter(v => v && v.show !== false).map(this.renderAttribute.bind(this))}
+                  ${Object.entries(this.config.state).filter(([k, v]) => v && v.show !== false).map(([id, data]) => this.renderAttribute(Object.assign({id}, data)))}
                 </div>` : null}
                 ${this.config.show.attributes ? html`
                 <div class="grid-content grid-right">
-                  ${Object.values(this.config.attributes).filter(v => v && v.show !== false).map(this.renderAttribute.bind(this))}
+                  ${Object.entries(this.config.attributes).filter(([k, v]) => v && v.show !== false).map(([id, data]) => this.renderAttribute(Object.assign({id}, data)))}
                 </div>` : null}
               </div>` : null}
               ${this.config.show.buttons ? html`
               <div class="flex">
-                ${Object.values(this.config.buttons).filter(v => v).map(this.renderButton.bind(this))}
+                ${Object.entries(this.config.buttons).filter(([k, v]) => v).map(([id, data]) => this.renderButton(Object.assign({id}, data)))}
               </div>` : null}
             </ha-card>` : html`<ha-card style="padding: 8px 16px">Entity '${this.config.entity}' not available...</ha-card>`;
         }
@@ -453,9 +453,12 @@
                 const icon = this.renderIcon(data, source);
                 return this.renderDropdown(icon, data.key, data.service, data.label);
             }
+            const unavailableText = (this._hass && typeof this._hass.localize === 'function')
+                ? this._hass.localize('state.default.unavailable')
+                : 'Unavailable';
             return html`<div>
                 ${this.renderIcon(data, source)}
-                ${(data.label || '') + (value !== null ? value : this._hass.localize('state.default.unavailable'))}
+                ${(data.label || '') + (value !== null ? value : unavailableText)}
             </div>`;
         }
 
@@ -1282,7 +1285,7 @@
         entityDataRowSchema(row) {
             const isBattery = row && (row.id === 'battery' || row.key === 'battery_level' || row.key === 'battery');
             const entitySelector = isBattery
-                ? {entity: {domain: 'sensor', device_class: 'battery'}}
+                ? {entity: {filter: {domain: 'sensor', device_class: 'battery'}}}
                 : {entity: {}};
             return [
                 ...(row.custom ? [{name: 'id', selector: {text: {}}}] : []),
