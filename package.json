@@ -1,6 +1,6 @@
 {
   "name": "lovelace-xiaomi-vacuum-card",
-  "version": "4.6.0",
+  "version": "4.6.1",
   "private": true,
   "description": "Maintained Home Assistant Lovelace Xiaomi Vacuum Card fork",
   "type": "module",

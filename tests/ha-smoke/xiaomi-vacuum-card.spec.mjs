@@ -17,6 +17,15 @@ const readResponseText = async (response) => {
 const getOnboardingSteps = async (request) => {
   const response = await request.get("/api/onboarding", { failOnStatusCode: false });
 
+  if (response.status() === 404) {
+    return [
+      { done: true, step: "user" },
+      { done: true, step: "core_config" },
+      { done: true, step: "analytics" },
+      { done: true, step: "integration" },
+    ];
+  }
+
   if (!response.ok()) {
     throw new Error(
       `Unable to read Home Assistant onboarding status: ${await readResponseText(response)}`,
@@ -222,5 +231,24 @@ test("loads the Xiaomi vacuum card in Home Assistant", async ({ page, request, b
   await expect(vacuumCard).not.toContainText(
     "Entity 'vacuum.demo_vacuum_0_ground_floor' not available",
   );
+  await vacuumCard.screenshot({ path: ".local/proof/before-dynamic-click.png" });
+
+  const dynamicButton = vacuumCard.locator('ha-icon-button[title="Use selected fan speed"]');
+  await expect(dynamicButton).toBeVisible();
+  await dynamicButton.click();
+
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const ha = globalThis.document?.querySelector("home-assistant");
+          const state = ha?.hass?.states?.["vacuum.demo_vacuum_0_ground_floor"];
+          return state?.attributes?.fan_speed ?? null;
+        }),
+      { timeout: 15_000 },
+    )
+    .toBe("max");
+
+  await vacuumCard.screenshot({ path: ".local/proof/after-dynamic-click.png" });
   expect(fatalErrors, fatalErrors.join("\n")).toEqual([]);
 });

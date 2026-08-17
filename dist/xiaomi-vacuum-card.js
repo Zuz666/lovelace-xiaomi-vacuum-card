@@ -1,6 +1,6 @@
 ((LitElement) => {
     console.info(
-        '%c XIAOMI-VACUUM-CARD %c 4.6.0 ',
+        '%c XIAOMI-VACUUM-CARD %c 4.6.1 ',
         'color: cyan; background: black; font-weight: bold;',
         'color: darkblue; background: white; font-weight: bold;',
     );
@@ -917,7 +917,7 @@
             if (typeof data === 'string') {
                 try {
                     const rendered = await this.renderTemplateOnce(data);
-                    const parsed = JSON.parse(rendered);
+                    const parsed = typeof rendered === 'string' ? JSON.parse(rendered) : rendered;
                     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
                         console.error('[xiaomi-vacuum-card] service_data_template must return a JSON object, got:', rendered);
                         return;
