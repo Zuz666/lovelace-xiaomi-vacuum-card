@@ -14,15 +14,15 @@ Maintained fork of the unsupported [benct/lovelace-xiaomi-vacuum-card](https://g
 
 ### HACS (Custom Repository)
 
-1. Open HACS in Home Assistant
-2. Click the three dots menu (top right) and select **Custom repositories**
-3. Add this repository URL with category **Dashboard**
-4. Search for "Xiaomi Vacuum Card" and install
+1. Open HACS in Home Assistant.
+2. Click the three dots menu (top right) and select **Custom repositories**.
+3. Add repository URL `https://github.com/Zuz666/lovelace-xiaomi-vacuum-card` with category **Dashboard**.
+4. Search for "Xiaomi Vacuum Card" and install.
 
 ### Manual
 
-1. Download `xiaomi-vacuum-card.js` from the [latest release](../../releases/latest)
-2. Place it in `www/community/lovelace-xiaomi-vacuum-card/`
+1. Download `xiaomi-vacuum-card.js` from the [latest release](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/releases/latest).
+2. Place it in `www/community/lovelace-xiaomi-vacuum-card/`.
 3. Add the resource in Settings > Dashboards > Resources:
    - URL: `/hacsfiles/lovelace-xiaomi-vacuum-card/xiaomi-vacuum-card.js`
    - Type: JavaScript Module
