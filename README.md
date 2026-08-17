@@ -126,14 +126,14 @@ State and attribute sections are maps of row configurations. The YAML map key re
 Default state rows: `status`, `battery`, `mode`.  
 Default attribute rows: `main_brush`, `side_brush`, `filter`, `sensor`.
 
-| Field    | Type      | Default        | Description                                                                              |
-| :------- | :-------- | :------------- | :--------------------------------------------------------------------------------------- |
-| `show`   | `boolean` | `true`         | Set to `false` to hide this individual row.                                              |
-| `key`    | `string`  | Row ID         | Vacuum entity attribute key to read value from (for example `status`, `fan_speed`).      |
-| `entity` | `string`  | `undefined`    | Optional external entity ID to read value from (for example `sensor.my_vacuum_battery`). |
-| `icon`   | `string`  | Preset default | Material Design icon to display for this row (for example `mdi:fan`).                    |
-| `label`  | `string`  | Preset default | Custom label prefix displayed before the value.                                          |
-| `unit`   | `string`  | Preset default | Unit suffix displayed after the value (for example `" %"`, `" h"`, `" m²"`).             |
+| Field    | Type      | Default        | Description                                                                                         |
+| :------- | :-------- | :------------- | :-------------------------------------------------------------------------------------------------- |
+| `show`   | `boolean` | `true`         | Set to `false` to hide this individual row.                                                         |
+| `key`    | `string`  | Row ID         | Vacuum entity attribute key to read value from (for example `status`, `fan_speed`).                 |
+| `entity` | `string`  | `undefined`    | Optional external Home Assistant entity ID to read value from (can be any sensor in your instance). |
+| `icon`   | `string`  | Preset default | Material Design icon to display for this row (for example `mdi:fan`).                               |
+| `label`  | `string`  | Preset default | Custom label prefix displayed before the value.                                                     |
+| `unit`   | `string`  | Preset default | Unit suffix displayed after the value (for example `" %"`, `" h"`, `" m²"`).                        |
 
 #### Fan Speed Dropdown
 
@@ -254,7 +254,7 @@ state:
 
 ### 4. Custom External Entity Row
 
-Adds a custom cleaned area row to the attributes list backed by an external template sensor.
+Adds a custom row to the card backed by an external Home Assistant entity. You can specify **any** arbitrary sensor or entity in the `entity:` field (such as a template sensor, room temperature `sensor.living_room_temperature`, dustbin status, or mop water level) completely independent of the vacuum cleaner itself.
 
 ```yaml
 type: custom:xiaomi-vacuum-card
