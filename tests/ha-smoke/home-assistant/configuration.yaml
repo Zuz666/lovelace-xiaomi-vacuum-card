@@ -1,6 +1,14 @@
 default_config:
 demo:
 
+template:
+  - sensor:
+      - name: "demo_vacuum_0_ground_floor_battery"
+        unique_id: demo_vacuum_0_ground_floor_battery
+        state: "73"
+        device_class: battery
+        unit_of_measurement: "%"
+
 homeassistant:
   auth_providers:
     - type: trusted_networks
