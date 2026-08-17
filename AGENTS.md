@@ -32,3 +32,8 @@
 - Changes must be done via feature branches and merged into `main` via PRs with passing CI checks. There is no separate `release` branch.
 - Project docs and finalized plans belong in the public `docs/` folder.
 - Private notes, scratchpads, and transcripts belong in `/.local/`, which is ignored by Git. Do not commit secrets.
+
+### Pull Request Requirements
+
+- When opening pull requests via `gh pr create` or editing pull requests via `gh pr edit`, always populate all required sections from `.github/PULL_REQUEST_TEMPLATE.md` (`# Summary`, `# Target`, `# Test Plan`, `# HACS And Release Impact`, `# Checklist`).
+- Single-line stubs or placeholders in `--body` are strictly prohibited. Pass the body using a prepared file (`--body-file`) or a complete multiline string matching the template.
