@@ -38,10 +38,7 @@ jobs:
         run: npm run lint:js
 
       - name: Lint Markdown
-        uses: DavidAnson/markdownlint-cli2-action@v19
-        with:
-          globs: "**/*.md"
-
+        run: npm run lint:md
       - name: Check formatting
         run: npm run format:check
 
