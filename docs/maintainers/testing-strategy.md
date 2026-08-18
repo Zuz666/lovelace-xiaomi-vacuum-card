@@ -147,6 +147,14 @@ The same fixture should be consumable by unit tests, component tests, and select
 | New integration or vendor compatibility claim                                | Sanitized fixture, contract or component test, and targeted HA verification when feasible |
 | Release or supported HA baseline update                                      | Full required suite and explicit smoke-baseline review                                    |
 
+### Interim lifecycle rule
+
+Until the real browser component layer is merged, a lifecycle-sensitive pull request must include targeted Home Assistant smoke coverage that observes the user-visible regression and must link an issue that records the missing component-level regression test.
+
+This is a temporary exception for urgent maintenance, security, or compatibility fixes that cannot safely wait for the component harness. It is not permission to expand the VM harness into a fake browser. Planned lifecycle-heavy work, including the external-entity reactivity implementation, remains blocked by the real component-harness backlog item.
+
+After the component layer is available, the real browser component test is mandatory for lifecycle, DOM, focus, keyboard, availability, accessibility, or interaction changes. A full HA smoke scenario is additionally required only when the change crosses a Home Assistant resource, editor, registry, service, WebSocket, or other integration boundary.
+
 ## Required sequence before major development
 
 ### Before the external-entity reactivity fix
