@@ -29,7 +29,7 @@ Deep sub-dependencies of our developer tooling (e.g. `brace-expansion`, `js-yaml
 
 ### 3. GitHub Actions (`.github/workflows/*.yml`)
 
-Pre-built actions used in CI pipelines (e.g. `actions/checkout`, `actions/setup-node`, `DavidAnson/markdownlint-cli2-action`, `hacs/action`).
+Pre-built actions used in CI pipelines (e.g. `actions/checkout`, `actions/setup-node`, `github/codeql-action`, `hacs/action`).
 
 ---
 
@@ -71,7 +71,10 @@ Every dependency PR must pass all standard automated checks before merging:
    - `ha-smoke`: Boots a containerized Home Assistant instance and executes Playwright browser tests.
 2. **HACS Validation (`.github/workflows/validate.yml`)**:
    - `validate-hacs`: Validates repository structure against HACS standards.
-3. **CodeRabbit Review**:
+3. **GitHub CodeQL (`.github/workflows/codeql.yml`)**:
+   - `Analyze (actions)`: Scans GitHub Actions workflow definitions for security misconfigurations.
+   - `Analyze (javascript-typescript)`: Performs deep static analysis on JS/TS code for security vulnerabilities.
+4. **CodeRabbit Review**:
    - Check CodeRabbit feedback for any security flags, deprecation warnings, or workflow permission concerns.
 
 If all checks pass and the update is a standard patch/minor or transitive vulnerability fix, the PR can proceed directly to merge.
