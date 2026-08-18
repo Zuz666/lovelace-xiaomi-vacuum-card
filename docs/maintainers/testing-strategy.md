@@ -10,7 +10,7 @@ The existing test system is a useful foundation and should be retained, but it i
 
 Before broad runtime refactoring or new entity-aware controls begin, the repository should add a real browser component-test layer that executes the card with an actual Lit lifecycle and DOM. In parallel, the required Home Assistant smoke test should become reproducible and produce useful failure artifacts. Reusable entity fixtures should be in place before the v4.7.0 implementation work expands across integrations.
 
-This is a targeted upgrade, not a test-stack rewrite.
+This is a targeted upgrade, not a test-stack rewrite. The component layer and immutable Home Assistant smoke baseline described below are the **target state**. The interim rules explicitly describe what is enforceable before those backlog items are complete.
 
 ## Current test system
 
@@ -22,6 +22,8 @@ This is a targeted upgrade, not a test-stack rewrite.
 | Repository validation     | HACS validation and CodeQL                                                                     | Packaging and static security checks                                                                                    |
 
 The current suite directly tests the shipped browser resource rather than a parallel implementation. That is an important property and must be preserved when the source tree is later modularized.
+
+The current required Home Assistant job uses the moving `ghcr.io/home-assistant/home-assistant:stable` tag. It is a real integration check, but it is not yet the reproducible pinned baseline described in the target architecture.
 
 ## What works well
 
@@ -88,6 +90,7 @@ Add a fast Playwright component harness that loads the shipped card, or the same
 - actual custom elements and Shadow DOM;
 - a deterministic Home Assistant object stub;
 - controllable entity-state updates;
+- production-shaped optional entity and device registry maps;
 - service and WebSocket call recording;
 - keyboard, focus, pointer, and accessibility assertions.
 
@@ -98,24 +101,26 @@ This layer should cover behavior such as:
 - an external sensor changing while the vacuum object is unchanged;
 - unrelated entities not causing unnecessary renders;
 - unavailable and removed dependencies;
+- registry-map replacement and documented map-absent fallback;
 - ARIA combobox focus, selection, escape, and keyboard navigation;
 - disabled or hidden actions based on capabilities;
 - editor configuration round trips;
 - external `select.*` controls and future Lovelace actions.
 
-### Layer 3: pinned Home Assistant smoke test
+### Layer 3: immutable Home Assistant smoke baseline
 
-Keep a required Chromium smoke test against an explicit supported Home Assistant baseline rather than a mutable tag.
+Keep a required Chromium smoke test against an immutable Home Assistant container digest such as `ghcr.io/home-assistant/home-assistant@sha256:<digest>`. A human-readable Home Assistant release is recorded alongside the digest, but a tag alone is not the runtime identity.
 
 It should continue to verify:
 
 - loading the HACS-style distributed resource;
 - registration and rendering inside Home Assistant;
 - current public Home Assistant card APIs;
+- actual `hass` registry maps where the card consumes that boundary;
 - at least one real state update and one service or action dispatch;
 - absence of fatal browser errors.
 
-The required baseline should be updated intentionally through a reviewed pull request.
+Repository validation must reject tag-only references for the required smoke job. The required digest should be updated intentionally through a reviewed pull request that records how the digest was resolved.
 
 ### Layer 4: compatibility canaries
 
@@ -127,25 +132,29 @@ A periodic secondary-browser run may be added for interaction-sensitive paths. R
 
 ### Shared fixture layer
 
-Create sanitized, versioned entity fixtures that describe:
+Create sanitized, explicitly versioned entity fixtures that describe:
 
 - the main vacuum state and `supported_features`;
 - related sensors, binary sensors, selects, buttons, numbers, image or camera entities;
 - entity and device metadata needed for discovery;
 - expected rows, controls, availability, formatting, and actions.
 
-The same fixture should be consumable by unit tests, component tests, and selected HA smoke scenarios. Fixtures must not contain credentials, tokens, coordinates, serial numbers, or private diagnostics.
+The same fixture should be consumable by unit tests, component tests, and selected HA smoke scenarios. Fixtures must not contain credentials, tokens, coordinates, serial numbers, or private diagnostics. Unknown future fixture schema versions must be rejected before reaching any consumer.
 
 ## Quality gates by change type
 
-| Change type                                                                  | Required evidence                                                                         |
+The following table describes the target state after the relevant test-foundation issues are complete:
+
+| Change type                                                                  | Target required evidence                                                                  |
 | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | Documentation or governance only                                             | Static checks and relevant repository tests                                               |
 | Pure source resolution, formatting, or payload logic                         | Unit or contract regression tests plus static checks                                      |
 | Lit lifecycle, rendering, focus, keyboard, or availability                   | Real browser component test plus static checks                                            |
-| Home Assistant resource, editor, registry, service, or WebSocket integration | Component tests and pinned HA smoke test                                                  |
-| New integration or vendor compatibility claim                                | Sanitized fixture, contract or component test, and targeted HA verification when feasible |
-| Release or supported HA baseline update                                      | Full required suite and explicit smoke-baseline review                                    |
+| Home Assistant resource, editor, registry, service, or WebSocket integration | Component tests and immutable digest-pinned HA smoke test                                 |
+| New integration or vendor compatibility claim                                | Versioned sanitized fixture, contract or component test, and targeted HA verification     |
+| Release or supported HA baseline update                                      | Full required suite, digest validation, and explicit smoke-baseline review                |
+
+## Interim rules before target layers exist
 
 ### Interim lifecycle rule
 
@@ -155,15 +164,28 @@ This is a temporary exception for urgent maintenance, security, or compatibility
 
 After the component layer is available, the real browser component test is mandatory for lifecycle, DOM, focus, keyboard, availability, accessibility, or interaction changes. A full HA smoke scenario is additionally required only when the change crosses a Home Assistant resource, editor, registry, service, WebSocket, or other integration boundary.
 
+### Interim Home Assistant smoke rule
+
+Until the immutable baseline issue is merged, the existing required `ha-smoke` job remains the enforceable integration gate even though its configured `stable` source tag is mutable.
+
+For each resource, editor, registry, service, WebSocket, or integration-boundary pull request during this interim period:
+
+- the current required smoke job must pass;
+- the pull request or workflow evidence must record the resolved image identifier or digest reported by Docker or the workflow, not only `:stable`;
+- a change in the resolved image between otherwise identical runs must be treated as baseline drift and investigated;
+- the pull request must not claim that a reproducible pinned baseline was used.
+
+After the immutable baseline issue is complete, the required job must use `@sha256:` and tag-only references are rejected. Moving channels then run only as non-blocking canaries.
+
 ## Required sequence before major development
 
 ### Before the external-entity reactivity fix
 
-Add the real browser component harness and reproduce the stale external-entity scenario as a failing test. The fix should then make that test pass without relying only on direct method calls.
+Add the real browser component harness and encode the stale external-entity behavior as a regression test whose passing condition is that replacing only the referenced state updates visible DOM. The runtime fix should make that test pass without relying only on direct method calls.
 
 ### Before broad v4.7.0 implementation
 
-Introduce reusable entity fixtures and use them for source resolution, formatting, controls, and editor serialization. The entity-aware row design may proceed in parallel, but implementation should not accumulate new inline vendor-shaped mocks.
+Introduce reusable versioned entity fixtures and use them for source resolution, formatting, controls, and editor serialization. The entity-aware row design may proceed in parallel, but implementation should not accumulate new inline vendor-shaped mocks.
 
 ### Before v4.8.0 actions and area cleaning
 
@@ -171,17 +193,18 @@ Extend component tests with pointer, keyboard, confirmation, disabled-state, and
 
 ### In parallel with the first P0 work
 
-Pin the required HA smoke baseline, separate moving-channel canaries, and upload Playwright and HA failure artifacts.
+Pin the required HA smoke baseline by immutable digest, separate moving-channel canaries, and upload Playwright and HA failure artifacts.
 
 ## CI recommendations
 
 - Keep `checks` as the fast first stage.
 - Add a required browser component-test job after unit tests.
-- Keep one required pinned-HA smoke job after the fast checks.
+- Keep one required immutable digest-pinned HA smoke job after the fast checks when the corresponding backlog item is complete.
+- Until then, retain the current `ha-smoke` check name and record its resolved image identifier in evidence.
 - Add `concurrency` with cancellation for superseded pull-request runs.
 - Upload Playwright traces, screenshots, reports, and Home Assistant logs on failure.
 - Run moving HA channels on a schedule or manual dispatch rather than as the only required baseline.
-- Make the tested Home Assistant version visible in job names and summaries.
+- Make the tested Home Assistant digest and human-readable release visible in job summaries.
 - Preserve a stable check name when conditional execution is introduced so branch protection remains predictable.
 
 ## Deferred improvements
@@ -206,7 +229,7 @@ The testing architecture is tracked by these canonical backlog items:
 - `test: make Home Assistant smoke tests reproducible and diagnostic`;
 - `test: introduce reusable entity fixtures and scenario matrix`.
 
-The real component harness is a prerequisite for the external-entity reactivity issue. The fixture matrix is shared with the entity-aware rows and integration compatibility epics.
+The real component harness is a prerequisite for the external-entity reactivity issue. The fixture matrix is shared with the entity-aware rows and integration compatibility epics. The immutable smoke issue converts the interim integration gate into the target reproducible gate.
 
 ## Review triggers
 
