@@ -109,9 +109,18 @@ This layer should cover behavior such as:
 
 ### Layer 3: immutable Home Assistant smoke baseline
 
-Keep a required Chromium smoke test against an immutable Home Assistant container digest such as `ghcr.io/home-assistant/home-assistant@sha256:<digest>`. A human-readable Home Assistant release is recorded alongside the digest, but a tag alone is not the runtime identity.
+Keep a required Chromium smoke test against an immutable Home Assistant container digest:
 
-It should continue to verify:
+```text
+ghcr.io/home-assistant/home-assistant@sha256:<64-lowercase-hex-characters>
+```
+
+The pinned baseline reference is configured in `.github/workflows/ci.yml`:
+
+- **Runtime image**: `ghcr.io/home-assistant/home-assistant@sha256:59aa8824955c9db491b75d2eebe42bd68494f80c2ec69ec0d66d9dae37d37514`
+- **Baseline release**: Home Assistant `2026.6.1`
+
+It continues to verify:
 
 - loading the HACS-style distributed resource;
 - registration and rendering inside Home Assistant;
@@ -120,7 +129,40 @@ It should continue to verify:
 - at least one real state update and one service or action dispatch;
 - absence of fatal browser errors.
 
-Repository validation must reject tag-only references for the required smoke job. The required digest should be updated intentionally through a reviewed pull request that records how the digest was resolved.
+Repository validation rejects tag-only and mutable references for the required smoke job.
+
+#### Baseline digest update procedure
+
+To update the pinned Home Assistant baseline digest intentionally:
+
+1. Identify the target release and pull its image:
+
+   ```bash
+   docker pull ghcr.io/home-assistant/home-assistant:2026.X.Y
+   ```
+
+2. Resolve the immutable repository digest:
+
+   ```bash
+   docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/home-assistant/home-assistant:2026.X.Y
+   ```
+
+3. Verify locally that the smoke test passes against the resolved digest:
+
+   ```bash
+   npm run test:ha-smoke
+   ```
+
+4. Update `HA_IMAGE` and `HA_BASELINE_RELEASE` in `.github/workflows/ci.yml`.
+5. Run `npm test` to verify that `tests/ha-smoke-governance.test.mjs` accepts the new digest and release.
+6. Submit a pull request recording the release notes, resolved digest, and smoke verification output.
+
+#### Readiness verification design
+
+Both workflow-level and test-level readiness checks are deliberately retained for complementary diagnostic purposes:
+
+- **Workflow readiness check (`Wait for Home Assistant` in `ci.yml`)**: polls `/manifest.json` via curl before launching Playwright. If Home Assistant fails to boot within the deadline, it outputs container logs immediately and fails the step, isolating startup failures from test logic.
+- **Test readiness check (`waitForHomeAssistant` in `xiaomi-vacuum-card.spec.mjs`)**: validates HTTP connectivity and readiness from the Playwright request context directly before initiating the onboarding flow, ensuring the test client is synchronized.
 
 ### Layer 4: compatibility canaries
 
@@ -175,7 +217,12 @@ For each resource, editor, registry, service, WebSocket, or integration-boundary
 - a change in the resolved image between otherwise identical runs must be treated as baseline drift and investigated;
 - the pull request must not claim that a reproducible pinned baseline was used.
 
-After the immutable baseline issue is complete, the required job must use `@sha256:` and tag-only references are rejected. Moving channels then run only as non-blocking canaries.
+After the immutable baseline issue is complete, the required job in `ci.yml` enforces the immutable digest baseline:
+
+- every pull request must pass against the pinned `ghcr.io/home-assistant/home-assistant@sha256:...` reference;
+- mutable channel tags (`:stable`, `:beta`, `:dev`) and unpinned release tags are prohibited for the required check and rejected by repository tests;
+- moving channels run independently as scheduled or manually dispatched canaries in `.github/workflows/ha-canary.yml`;
+- on failure, Playwright traces, screenshots, HTML report, and Home Assistant container logs are uploaded as workflow artifacts.
 
 ## Required sequence before major development
 

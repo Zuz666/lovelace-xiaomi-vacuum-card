@@ -55,30 +55,30 @@ On failure, maintainers can download the Playwright report, trace, screenshots, 
 
 ## Acceptance criteria
 
-- [ ] The required PR smoke job uses an immutable `ghcr.io/home-assistant/home-assistant@sha256:<digest>` runtime reference.
-- [ ] Repository validation rejects tag-only references for the required smoke baseline, including explicit release tags.
-- [ ] A human-readable Home Assistant release identifier is recorded alongside the digest without becoming the runtime identity.
-- [ ] The pinned digest, resolution evidence, and update procedure are documented.
-- [ ] A scheduled and manually dispatchable canary tests selected moving HA channels.
-- [ ] Required and canary checks have distinct stable names and purposes.
-- [ ] Failed runs upload Playwright traces, screenshots, the HTML report, and Home Assistant or Docker logs.
-- [ ] Workflow summaries identify the HA digest, human-readable release, card commit, browser, and scenario result.
-- [ ] Superseded pull-request runs are cancelled through workflow concurrency.
-- [ ] Cleanup removes the HA container on success, failure, and cancelled runs.
-- [ ] No stored personal access token is required.
-- [ ] Existing required smoke behavior still verifies resource loading, rendering, a state value, a service or action, and fatal console errors.
+- [x] The required PR smoke job uses an immutable `ghcr.io/home-assistant/home-assistant@sha256:<digest>` runtime reference.
+- [x] Repository validation rejects tag-only references for the required smoke baseline, including explicit release tags.
+- [x] A human-readable Home Assistant release identifier is recorded alongside the digest without becoming the runtime identity.
+- [x] The pinned digest, resolution evidence, and update procedure are documented.
+- [x] A scheduled and manually dispatchable canary tests selected moving HA channels.
+- [x] Required and canary checks have distinct stable names and purposes.
+- [x] Failed runs upload Playwright traces, screenshots, the HTML report, and Home Assistant or Docker logs.
+- [x] Workflow summaries identify the HA digest, human-readable release, card commit, browser, and scenario result.
+- [x] Superseded pull-request runs are cancelled through workflow concurrency.
+- [x] Cleanup removes the HA container on success, failure, and cancelled runs.
+- [x] No stored personal access token is required.
+- [x] Existing required smoke behavior still verifies resource loading, rendering, a state value, a service or action, and fatal console errors.
 
 ## Test plan
 
-- [ ] Run the required smoke test against the digest-pinned baseline
-- [ ] Unit or repository test accepting a valid lowercase sha256 image reference
-- [ ] Negative tests rejecting `:stable`, `:beta`, `:dev`, semantic version tags, malformed digests, and tag-plus-no-digest references
-- [ ] Verify the documented release identifier corresponds to the resolved digest during baseline updates
-- [ ] Manually dispatch each configured canary channel
-- [ ] Force a controlled Playwright failure and verify downloadable artifacts
-- [ ] Force a controlled HA startup failure and verify retained container logs
-- [ ] Push a superseding commit and verify the older PR run is cancelled
-- [ ] Verify branch-protection check names remain predictable
+- [x] Run the required smoke test against the digest-pinned baseline
+- [x] Unit or repository test accepting a valid lowercase sha256 image reference
+- [x] Negative tests rejecting `:stable`, `:beta`, `:dev`, semantic version tags, malformed digests, and tag-plus-no-digest references
+- [x] Verify the documented release identifier corresponds to the resolved digest during baseline updates
+- [x] Manually dispatch each configured canary channel
+- [x] Force a controlled Playwright failure and verify downloadable artifacts
+- [x] Force a controlled HA startup failure and verify retained container logs
+- [x] Push a superseding commit and verify the older PR run is cancelled
+- [x] Verify branch-protection check names remain predictable
 
 ## Compatibility and migration
 

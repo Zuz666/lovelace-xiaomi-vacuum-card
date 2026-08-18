@@ -1,0 +1,154 @@
+name: Home Assistant Canary
+
+on:
+  schedule:
+    - cron: "0 4 * * 1" # Weekly Monday 04:00 UTC
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: "Home Assistant channel to test"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - stable
+          - beta
+          - dev
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event.inputs.channel || 'scheduled' }}
+  cancel-in-progress: true
+
+jobs:
+  canary-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      channels: ${{ steps.set-matrix.outputs.channels }}
+    steps:
+      - id: set-matrix
+        run: |
+          INPUT="${{ github.event.inputs.channel }}"
+          if [ -z "$INPUT" ] || [ "$INPUT" = "all" ]; then
+            echo 'channels=["stable", "beta", "dev"]' >> $GITHUB_OUTPUT
+          else
+            echo "channels=[\"$INPUT\"]" >> $GITHUB_OUTPUT
+          fi
+
+  canary-smoke:
+    name: canary-smoke (${{ matrix.channel }})
+    needs: canary-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        channel: ${{ fromJson(needs.canary-matrix.outputs.channels) }}
+    env:
+      HA_IMAGE: ghcr.io/home-assistant/home-assistant:${{ matrix.channel }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browser binaries
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install chromium
+
+      - name: Prepare Home Assistant config
+        run: |
+          mkdir -p .ha-smoke/www/community/lovelace-xiaomi-vacuum-card
+          cp tests/ha-smoke/home-assistant/*.yaml .ha-smoke/
+          cp dist/xiaomi-vacuum-card.js .ha-smoke/www/community/lovelace-xiaomi-vacuum-card/xiaomi-vacuum-card.js
+
+      - name: Pull Home Assistant Docker image
+        run: |
+          echo "Pulling Home Assistant canary image (${HA_IMAGE})..."
+          docker pull "${HA_IMAGE}"
+
+      - name: Start Home Assistant
+        run: |
+          docker run \
+            --detach \
+            --name "ha-canary-${{ matrix.channel }}" \
+            --publish 8123:8123 \
+            --volume "${{ github.workspace }}/.ha-smoke:/config" \
+            "${HA_IMAGE}"
+
+      - name: Wait for Home Assistant
+        run: |
+          for attempt in {1..90}; do
+            if curl --fail --silent --show-error http://127.0.0.1:8123/manifest.json >/dev/null; then
+              exit 0
+            fi
+
+            sleep 2
+          done
+
+          docker logs "ha-canary-${{ matrix.channel }}"
+          exit 1
+
+      - name: Run Home Assistant smoke test
+        env:
+          HA_BASE_URL: http://127.0.0.1:8123
+        run: npm run test:ha-smoke
+
+      - name: Capture Home Assistant logs
+        if: always()
+        run: |
+          docker logs "ha-canary-${{ matrix.channel }}" > "ha-canary-${{ matrix.channel }}.log" 2>&1 || true
+
+      - name: Upload Home Assistant logs on failure
+        if: failure()
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4
+        with:
+          name: ha-canary-${{ matrix.channel }}-logs-${{ github.run_id }}
+          path: ha-canary-${{ matrix.channel }}.log
+          if-no-files-found: ignore
+
+      - name: Upload Playwright artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4
+        with:
+          name: ha-canary-${{ matrix.channel }}-playwright-artifacts-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+
+      - name: Add canary summary
+        if: always()
+        run: |
+          RESOLVED_IMAGE_ID=$(docker inspect --format='{{index .RepoDigests 0}}' "${HA_IMAGE}" 2>/dev/null || echo "${HA_IMAGE}")
+          echo "### Home Assistant Canary Summary (${{ matrix.channel }})" >> $GITHUB_STEP_SUMMARY
+          echo "- **Channel**: \`${{ matrix.channel }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target Image Tag**: \`${{ env.HA_IMAGE }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Resolved Digest**: \`${RESOLVED_IMAGE_ID}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Card Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Browser**: Chromium" >> $GITHUB_STEP_SUMMARY
+          echo "- **Result**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Stop and remove Home Assistant container
+        if: always()
+        run: |
+          docker rm -f "ha-canary-${{ matrix.channel }}" || true
