@@ -8,6 +8,9 @@ This directory contains the versioned source for the repository's initial canoni
 - Each sibling Markdown file is the canonical body source for one bootstrapped issue.
 - `.github/milestones.json` declares milestone keys, titles, and descriptions.
 - `.github/labels.json` declares the managed label taxonomy.
+- `docs/maintainers/testing-strategy.md` records the test-system review, target layers, and pre-development quality gates referenced by the testing backlog.
+
+The initial bootstrap contains five epics and seven implementation or design work items. Later backlog additions should be created only when their scope, dependencies, acceptance criteria, and release intent are sufficiently clear.
 
 ## Creating or reconciling the backlog
 
@@ -42,3 +45,5 @@ Managed issue bodies may locally disable markdownlint rule `MD034` so exact upst
 7. Open a pull request and run the bootstrap workflow only after merge.
 
 For lifecycle, priority, Definition of Ready, Definition of Done, and GitHub Project rules, see `docs/maintainers/backlog-governance.md`.
+
+For test-layer responsibilities and the required sequence before major runtime development, see `docs/maintainers/testing-strategy.md`.
