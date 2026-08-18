@@ -79,6 +79,27 @@ jobs:
           cp tests/ha-smoke/home-assistant/*.yaml .ha-smoke/
           cp dist/xiaomi-vacuum-card.js .ha-smoke/www/community/lovelace-xiaomi-vacuum-card/xiaomi-vacuum-card.js
 
+      - name: Cache Home Assistant Docker image
+        uses: actions/cache@v4
+        id: ha-docker-cache
+        with:
+          path: /tmp/ha-docker-cache
+          key: ${{ runner.os }}-ha-docker-${{ hashFiles('tests/ha-smoke/home-assistant/*') }}
+          restore-keys: |
+            ${{ runner.os }}-ha-docker-
+
+      - name: Load or pull Home Assistant Docker image
+        run: |
+          if [ "${{ steps.ha-docker-cache.outputs.cache-hit }}" = "true" ] && [ -f /tmp/ha-docker-cache/ha.tar ]; then
+            echo "Loading Home Assistant image from cache..."
+            docker load -i /tmp/ha-docker-cache/ha.tar
+          else
+            echo "Pulling Home Assistant image..."
+            docker pull ghcr.io/home-assistant/home-assistant:stable
+            mkdir -p /tmp/ha-docker-cache
+            docker save ghcr.io/home-assistant/home-assistant:stable -o /tmp/ha-docker-cache/ha.tar
+          fi
+
       - name: Start Home Assistant
         run: |
           docker run \
@@ -87,7 +108,6 @@ jobs:
             --publish 8123:8123 \
             --volume "${{ github.workspace }}/.ha-smoke:/config" \
             ghcr.io/home-assistant/home-assistant:stable
-
       - name: Wait for Home Assistant
         run: |
           for attempt in {1..90}; do
