@@ -142,6 +142,47 @@ test("canonical maintainer templates contain required planning sections", async 
   }
 });
 
+test("testing strategy and critical test backlog remain declared", async () => {
+  const [labels, issues, strategy, reactiveIssue] = await Promise.all([
+    readJson(".github/labels.json"),
+    readJson(".github/backlog/issues.json"),
+    readText("docs/maintainers/testing-strategy.md"),
+    readText(".github/backlog/p0-reactive-external-entities.md"),
+  ]);
+
+  const labelNames = new Set(labels.map((label) => label.name));
+  const issueKeys = new Set(issues.map((issue) => issue.key));
+
+  assert.ok(labelNames.has("area:testing"), "Testing work requires area:testing");
+
+  for (const key of [
+    "epic-testing-architecture",
+    "p0-real-lit-component-tests",
+    "p1-reproducible-ha-smoke",
+    "p1-entity-fixture-matrix",
+  ]) {
+    assert.ok(issueKeys.has(key), `Testing backlog is missing ${key}`);
+  }
+
+  for (const heading of [
+    "## Decision",
+    "## Current test system",
+    "## Findings and risks",
+    "## Target test architecture",
+    "## Quality gates by change type",
+    "## Required sequence before major development",
+    "## CI recommendations",
+    "## Backlog mapping",
+  ]) {
+    assert.ok(strategy.includes(heading), `Testing strategy is missing ${heading}`);
+  }
+
+  assert.ok(
+    reactiveIssue.includes("{{issue:p0-real-lit-component-tests}}"),
+    "External-entity reactivity must depend on the real Lit component harness",
+  );
+});
+
 test("bootstrap workflows remain manual and least-privileged", async () => {
   const [syncLabels, bootstrapBacklog] = await Promise.all([
     readText(".github/workflows/sync-labels.yml"),
