@@ -116,7 +116,22 @@ jobs:
         id: ha-docker-cache
         with:
           path: /tmp/ha-docker-cache
- @ours
+          key: ${{ runner.os }}-ha-docker-${{ env.HA_IMAGE }}-${{ hashFiles('tests/ha-smoke/home-assistant/*') }}
+          restore-keys: |
+            ${{ runner.os }}-ha-docker-${{ env.HA_IMAGE }}-
+
+      - name: Load or pull Home Assistant Docker image
+        env:
+          CACHE_HIT: ${{ steps.ha-docker-cache.outputs.cache-hit }}
+        run: |
+          if [ "${CACHE_HIT}" = "true" ] && [ -f /tmp/ha-docker-cache/ha.tar ]; then
+            echo "Loading Home Assistant image from cache..."
+            docker load -i /tmp/ha-docker-cache/ha.tar
+          else
+            echo "Pulling Home Assistant image (${HA_IMAGE})..."
+            docker pull "${HA_IMAGE}"
+            mkdir -p /tmp/ha-docker-cache
+            docker save "${HA_IMAGE}" -o /tmp/ha-docker-cache/ha.tar
           fi
 
       - name: Start Home Assistant

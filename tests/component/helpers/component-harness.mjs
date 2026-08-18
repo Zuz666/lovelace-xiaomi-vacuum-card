@@ -183,7 +183,6 @@ export async function updateEntityState(page, entityId, stateData) {
 export async function getCardRenderCount(page) {
   return page.evaluate(() => window.__componentHarness?.renderCount || 0);
 }
-
 /**
  * Retrieves all recorded `callService` invocations.
  */
@@ -191,19 +190,19 @@ export async function getRecordedServiceCalls(page) {
   return page.evaluate(() => window.__componentHarness?.serviceCalls || []);
 }
 
-/**
- * Simulates a dynamic template update to active subscriptions.
- */
 export async function emitTemplateUpdate(page, result) {
   await page.waitForFunction(
     () => (window.__componentHarness?.templateSubscriptions?.length || 0) > 0,
   );
-  await page.evaluate((res) => {
+  await page.evaluate(async (res) => {
     const subs = window.__componentHarness?.templateSubscriptions || [];
     for (const sub of subs) {
       if (!sub.unsubscribed && typeof sub.callback === "function") {
         sub.callback({ result: res });
       }
+    }
+    if (window.__activeCard?.updateComplete) {
+      await window.__activeCard.updateComplete;
     }
   }, result);
 }

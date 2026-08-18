@@ -75,6 +75,12 @@ export function createComponentServer() {
     if (!customElements.get("ha-icon-button")) {
       customElements.define("ha-icon-button", class extends HTMLElement {
         static get observedAttributes() { return ["label", "title", "disabled"]; }
+        constructor() {
+          super();
+          this._shadow = this.attachShadow({ mode: "open" });
+          this._shadow.innerHTML = \`<button type="button" style="width:100%;height:100%;background:none;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;"><slot></slot></button>\`;
+          this._btn = this._shadow.querySelector("button");
+        }
         connectedCallback() {
           this.style.display = "inline-flex";
           this.style.alignItems = "center";
@@ -82,9 +88,21 @@ export function createComponentServer() {
           this.style.width = "40px";
           this.style.height = "40px";
           this.style.cursor = "pointer";
-          if (!this.shadowRoot) {
-            const shadow = this.attachShadow({ mode: "open" });
-            shadow.innerHTML = \`<button type="button" style="width:100%;height:100%;background:none;border:none;cursor:pointer;"><slot></slot></button>\`;
+          this._syncAttributes();
+        }
+        attributeChangedCallback() {
+          this._syncAttributes();
+        }
+        _syncAttributes() {
+          if (!this._btn) return;
+          this._btn.disabled = this.hasAttribute("disabled");
+          const label = this.getAttribute("label") || this.getAttribute("title") || "";
+          if (label) {
+            this._btn.setAttribute("aria-label", label);
+            this._btn.title = label;
+          } else {
+            this._btn.removeAttribute("aria-label");
+            this._btn.removeAttribute("title");
           }
         }
       });
@@ -99,9 +117,23 @@ export function createComponentServer() {
     }
     if (!customElements.get("ha-button")) {
       customElements.define("ha-button", class extends HTMLElement {
+        static get observedAttributes() { return ["disabled"]; }
+        constructor() {
+          super();
+          this._shadow = this.attachShadow({ mode: "open" });
+          this._shadow.innerHTML = \`<button type="button" style="background:none;border:none;cursor:pointer;font:inherit;color:inherit;padding:0;"><slot></slot></button>\`;
+          this._btn = this._shadow.querySelector("button");
+        }
         connectedCallback() {
           this.style.display = "inline-block";
-          this.style.cursor = "pointer";
+          this._syncAttributes();
+        }
+        attributeChangedCallback() {
+          this._syncAttributes();
+        }
+        _syncAttributes() {
+          if (!this._btn) return;
+          this._btn.disabled = this.hasAttribute("disabled");
         }
       });
     }
@@ -131,7 +163,7 @@ export function createComponentServer() {
       return;
     }
 
-    // Safe file serving within repository root
+    // Safe file serving within repository root avoiding TOCTOU race conditions
     const normalizedPath = path.normalize(pathname).replace(/^(\.\.[/\\])+/, "");
     const filePath = path.join(rootDir, normalizedPath);
 
@@ -141,7 +173,20 @@ export function createComponentServer() {
       return;
     }
 
-    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    let fd;
+    try {
+      fd = fs.openSync(filePath, "r");
+      const stat = fs.fstatSync(fd);
+      if (!stat.isFile()) {
+        fs.closeSync(fd);
+        res.writeHead(404, { "Content-Type": "text/plain" });
+        res.end("Not found");
+        return;
+      }
+      const content = fs.readFileSync(fd);
+      fs.closeSync(fd);
+      fd = undefined;
+
       const ext = path.extname(filePath).toLowerCase();
       const contentTypes = {
         ".js": "application/javascript; charset=utf-8",
@@ -154,18 +199,37 @@ export function createComponentServer() {
       };
       const contentType = contentTypes[ext] || "text/plain; charset=utf-8";
       res.writeHead(200, { "Content-Type": contentType });
-      res.end(fs.readFileSync(filePath));
-      return;
+      res.end(content);
+    } catch (err) {
+      if (fd !== undefined) {
+        try {
+          fs.closeSync(fd);
+        } catch (_) {}
+      }
+      if (err.code === "ENOENT" || err.code === "EISDIR" || err.code === "ENOTDIR") {
+        res.writeHead(404, { "Content-Type": "text/plain" });
+        res.end("Not found");
+      } else {
+        res.writeHead(500, { "Content-Type": "text/plain" });
+        res.end("Internal Server Error");
+      }
     }
-
-    res.writeHead(404, { "Content-Type": "text/plain" });
-    res.end("Not found");
   });
 }
 
 // Standalone execution when run via `node server.mjs`
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
-  const port = Number(process.env.COMPONENT_SERVER_PORT || 5178);
+  let port = Number(process.env.COMPONENT_SERVER_PORT || 5178);
+  if (process.env.COMPONENT_BASE_URL) {
+    try {
+      const url = new URL(process.env.COMPONENT_BASE_URL);
+      if (url.port) {
+        port = Number(url.port);
+      } else {
+        port = url.protocol === "https:" ? 443 : 80;
+      }
+    } catch (_) {}
+  }
   const server = createComponentServer();
   server.listen(port, "127.0.0.1", () => {
     console.log(`Component test server listening on http://127.0.0.1:${port}`);

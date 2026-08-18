@@ -52,10 +52,10 @@ and other contracts that do not require a real browser.
 The VM harness is intentionally not a real Lit or DOM implementation. It does
 not prove reactive updates, Shadow DOM output, focus, keyboard behavior, event
 propagation, accessibility roles, or user-visible interaction state. Do not add
-more fake browser behavior to make a lifecycle-sensitive test pass. Until the
-real browser component layer is implemented, use targeted Home Assistant smoke
-coverage for urgent lifecycle-sensitive changes and record the missing component
-regression in the issue.
+more fake browser behavior to make a lifecycle-sensitive test pass. Use the real
+browser component layer (`npm run test:component`) for lifecycle and DOM
+assertions, while full Home Assistant smoke coverage (`npm run test:ha-smoke`)
+verifies integration, resource loading, and container-level boundaries.
 
 ## Browser Component Tests
 
