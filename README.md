@@ -432,6 +432,8 @@ Contributions and bug reports are welcome! Please consult the documentation befo
 - [Contributing Guidelines](CONTRIBUTING.md)
 - [Testing Instructions](TESTING.md)
 - [Home Assistant 2026.8 Battery Compatibility Specification](docs/specs/ha-2026-8-battery-compatibility.md)
+- [Release Workflow](docs/release-workflow.md)
+- [Dependency Workflow](docs/dependency-workflow.md)
 
 ---
 
