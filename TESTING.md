@@ -96,14 +96,14 @@ The setup copies `tests/ha-smoke/home-assistant/configuration.yaml`,
 `dist/xiaomi-vacuum-card.js` into `.ha-smoke` and its Home Assistant
 `www/community/lovelace-xiaomi-vacuum-card` resource directory.
 
-PowerShell example for the current interim setup:
+PowerShell example for the pinned baseline setup (Home Assistant 2026.6.1):
 
 ```powershell
 Remove-Item -Recurse -Force ".ha-smoke" -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Path ".ha-smoke\www\community\lovelace-xiaomi-vacuum-card"
 Copy-Item -Recurse "tests\ha-smoke\home-assistant\*" ".ha-smoke\"
 Copy-Item "dist\xiaomi-vacuum-card.js" ".ha-smoke\www\community\lovelace-xiaomi-vacuum-card\xiaomi-vacuum-card.js"
-docker run --rm -d --name xiaomi-vacuum-card-ha-smoke -p 8123:8123 -v "${PWD}\.ha-smoke:/config" ghcr.io/home-assistant/home-assistant:stable
+docker run --rm -d --name xiaomi-vacuum-card-ha-smoke -p 8123:8123 -v "${PWD}\.ha-smoke:/config" ghcr.io/home-assistant/home-assistant@sha256:59aa8824955c9db491b75d2eebe42bd68494f80c2ec69ec0d66d9dae37d37514
 npx playwright install chromium
 npm run test:ha-smoke
 docker stop xiaomi-vacuum-card-ha-smoke

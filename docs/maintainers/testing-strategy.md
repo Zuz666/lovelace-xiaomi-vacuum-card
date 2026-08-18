@@ -147,10 +147,16 @@ To update the pinned Home Assistant baseline digest intentionally:
    docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/home-assistant/home-assistant:2026.X.Y
    ```
 
-3. Verify locally that the smoke test passes against the resolved digest:
+3. Prepare the Home Assistant configuration and verify locally that the smoke test passes against the resolved digest:
 
    ```bash
+   mkdir -p .ha-smoke/www/community/lovelace-xiaomi-vacuum-card
+   cp tests/ha-smoke/home-assistant/*.yaml .ha-smoke/
+   cp dist/xiaomi-vacuum-card.js .ha-smoke/www/community/lovelace-xiaomi-vacuum-card/xiaomi-vacuum-card.js
+   docker run --detach --name ha-smoke-verify --publish 8123:8123 --volume "$(pwd)/.ha-smoke:/config" ghcr.io/home-assistant/home-assistant@sha256:<digest>
+   for attempt in $(seq 1 90); do curl -fsS http://127.0.0.1:8123/manifest.json >/dev/null && break || sleep 2; done
    npm run test:ha-smoke
+   docker rm -f ha-smoke-verify || true
    ```
 
 4. Update `HA_IMAGE` and `HA_BASELINE_RELEASE` in `.github/workflows/ci.yml`.

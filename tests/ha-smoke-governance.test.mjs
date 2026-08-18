@@ -16,6 +16,9 @@ export const HA_IMMUTABLE_IMAGE_PATTERN =
 
 export const HA_BASELINE_RELEASE_PATTERN = /^\d{4}\.\d+\.\d+(?:b\d+)?$/;
 
+export const EXPECTED_BASELINE_RELEASE = "2026.6.1";
+export const EXPECTED_BASELINE_DIGEST =
+  "ghcr.io/home-assistant/home-assistant@sha256:59aa8824955c9db491b75d2eebe42bd68494f80c2ec69ec0d66d9dae37d37514";
 export function validateHomeAssistantBaselineImage(imageReference) {
   if (typeof imageReference !== "string" || !imageReference.trim()) {
     throw new Error("Home Assistant baseline image reference must be a non-empty string");
@@ -123,6 +126,17 @@ test("required CI ha-smoke job uses pinned digest and recorded release", async (
   assert.ok(release, "ci.yml ha-smoke job must define HA_BASELINE_RELEASE");
 
   assert.equal(
+    release,
+    EXPECTED_BASELINE_RELEASE,
+    `ci.yml HA_BASELINE_RELEASE must equal expected baseline release ${EXPECTED_BASELINE_RELEASE}: ${release}`,
+  );
+  assert.equal(
+    image,
+    EXPECTED_BASELINE_DIGEST,
+    `ci.yml HA_IMAGE must equal expected baseline digest ${EXPECTED_BASELINE_DIGEST}: ${image}`,
+  );
+
+  assert.equal(
     validateHomeAssistantBaselineImage(image),
     true,
     `ci.yml HA_IMAGE must be a valid immutable sha256 reference: ${image}`,
@@ -149,28 +163,31 @@ test("ci.yml has pull-request concurrency cancellation, artifact upload, and con
     "ci.yml must cancel in-progress runs on pull requests",
   );
 
-  assert.ok(
-    ciWorkflow.includes("Upload Home Assistant logs on failure"),
-    "ci.yml must upload HA logs on failure",
-  );
-  assert.ok(
-    ciWorkflow.includes("Upload Playwright artifacts on failure"),
-    "ci.yml must upload Playwright report and artifacts on failure",
-  );
-  assert.ok(
-    ciWorkflow.includes("Stop and remove Home Assistant container"),
-    "ci.yml must stop and remove HA container",
+  assert.match(
+    ciWorkflow,
+    /name:\s*Capture Home Assistant logs\s*\n\s*if:\s*always\(\)\s*\n\s*run:\s*\|\s*\n\s*docker logs ha-smoke > ha-smoke\.log/,
+    "ci.yml must capture HA logs on always() condition",
   );
   assert.match(
     ciWorkflow,
-    /docker rm -f ha-smoke/,
-    "ci.yml must force-remove ha-smoke container on cleanup",
+    /name:\s*Upload Home Assistant logs on failure\s*\n\s*if:\s*failure\(\)\s*\n\s*uses:\s*actions\/upload-artifact@[0-9a-f]{40}[\s\S]*?path:\s*ha-smoke\.log/,
+    "ci.yml must upload ha-smoke.log on failure() condition",
   );
-  assert.ok(
-    ciWorkflow.includes("Add smoke test summary"),
-    "ci.yml must generate a step summary with baseline release and digest",
+  assert.match(
+    ciWorkflow,
+    /name:\s*Upload Playwright artifacts on failure\s*\n\s*if:\s*failure\(\)\s*\n\s*uses:\s*actions\/upload-artifact@[0-9a-f]{40}[\s\S]*?path:\s*\|\s*\n\s*playwright-report\/\s*\n\s*test-results\//,
+    "ci.yml must upload playwright-report and test-results on failure() condition",
   );
-
+  assert.match(
+    ciWorkflow,
+    /name:\s*Add smoke test summary\s*\n\s*if:\s*always\(\)[\s\S]*?\${{\s*env\.HA_BASELINE_RELEASE\s*}}[\s\S]*?\${{\s*env\.HA_IMAGE\s*}}/,
+    "ci.yml must write summary with baseline release and digest on always() condition",
+  );
+  assert.match(
+    ciWorkflow,
+    /name:\s*Stop and remove Home Assistant container\s*\n\s*if:\s*always\(\)\s*\n\s*run:\s*\|\s*\n\s*docker rm -f ha-smoke/,
+    "ci.yml must force-remove ha-smoke container on always() condition",
+  );
   const actionMatches = [...ciWorkflow.matchAll(/uses:\s*([^@\s]+)@([^\s#]+)/g)];
   for (const match of actionMatches) {
     const actionName = match[1];
