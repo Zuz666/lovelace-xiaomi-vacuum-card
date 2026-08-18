@@ -173,5 +173,5 @@ You can interact with Dependabot directly by commenting on any Dependabot pull r
 ### Issue: Playwright Browser Download Failure in CI
 
 1. Check if `@playwright/test` was bumped to a version requiring newer browser binaries.
-2. Ensure `.github/workflows/ci.yml` retains `npx playwright install --with-deps chromium`.
+2. Ensure `.github/workflows/ci.yml` retains `npx playwright install chromium`.
 3. Verify local smoke test passes: `npm run test:ha-smoke`.
