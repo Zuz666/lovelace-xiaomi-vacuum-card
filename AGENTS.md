@@ -33,6 +33,10 @@
 - All development happens in the `Zuz666/lovelace-xiaomi-vacuum-card` repository.
 - Changes must be done via feature branches and merged into `main` via PRs with passing CI checks. There is no separate `release` branch.
 - Pull requests must follow the guidelines in `CONTRIBUTING.md` and populate all sections from `.github/PULL_REQUEST_TEMPLATE.md` (`## Summary`, `## Target`, `## Visual Proof`, `## Test Plan`, `## HACS And Release Impact`, `## AI Disclosure`, `## Checklist`, `## Review`) using `--body-file` or complete multiline text, avoiding single-line placeholders.
+- Maintainer leaf issues must use `.github/ISSUE_TEMPLATE/work_item.md`; epics must use `.github/ISSUE_TEMPLATE/epic.md`.
+- Follow `docs/maintainers/backlog-governance.md` for priority, type, area, milestones, Project lifecycle, Definition of Ready, Definition of Done, and upstream consolidation rules.
+- The initial managed backlog is declared in `.github/backlog/issues.json` with Markdown bodies in `.github/backlog/`. Change managed issue bodies, labels, or milestones through those source files and rerun the manual **Bootstrap backlog** workflow after merge.
+- Do not create one issue per historical upstream report. Consolidate related evidence into current canonical issues and distinguish existing fork behavior from proposed work.
 - Project docs and finalized plans belong in the public `docs/` folder.
 - Private notes, scratchpads, and transcripts belong in `/.local/`, which is ignored by Git. Do not commit secrets.
 - Every release requires updating `package.json`, `dist/xiaomi-vacuum-card.js`, and `CHANGELOG.md` following Keep a Changelog. See `docs/release-workflow.md` for full release steps.
