@@ -154,3 +154,25 @@ vulnerability does not create an expectation of monetary compensation.
 
 Reporters of accepted vulnerabilities may be credited in the GitHub Security
 Advisory, release notes, and `CHANGELOG.md`, subject to their preference.
+
+## Automated Security Scanning
+
+To maintain a strong security posture and prevent vulnerabilities from entering
+the codebase, this repository employs continuous automated security scanning:
+
+- **GitHub CodeQL (Code Scanning)**: Static Application Security Testing (SAST)
+  runs via `.github/workflows/codeql.yml` on every push and pull request to
+  `main`, as well as on a weekly schedule. CodeQL analyzes JavaScript/TypeScript
+  code with the `security-extended` query suite (detecting DOM XSS, prototype
+  pollution, unsafe regular expressions, and injection vectors) and scans
+  GitHub Actions workflows for execution vulnerabilities.
+- **Dependabot**: Automated dependency tracking monitors `devDependencies` and
+  GitHub Actions for published security advisories (GHSA / CVE).
+- **CodeRabbit**: Automated code review inspects pull requests for security
+  regressions and logic issues.
+- **CI Security & Smoke Tests**: Automated pipelines verify syntax, version
+  synchronization, unit test assertions, and containerized Home Assistant
+  integration before changes can be merged.
+
+Pull requests introducing high- or critical-severity CodeQL alerts will be
+blocked from merging until resolved or formally triaged.
