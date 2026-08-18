@@ -10,6 +10,8 @@ const readText = (relativePath) => readFile(path.join(repositoryRoot, relativePa
 
 const readJson = async (relativePath) => JSON.parse(await readText(relativePath));
 
+const normalizeWhitespace = (value) => value.replace(/\s+/g, " ");
+
 const assertUnique = (values, description) => {
   assert.equal(
     new Set(values).size,
@@ -167,6 +169,8 @@ test("initial backlog references declared labels, milestones, bodies, and issue 
 test("canonical maintainer templates contain required planning and label guidance", async () => {
   const workItem = await readText(".github/ISSUE_TEMPLATE/work_item.md");
   const epic = await readText(".github/ISSUE_TEMPLATE/epic.md");
+  const normalizedWorkItem = normalizeWhitespace(workItem);
+  const normalizedEpic = normalizeWhitespace(epic);
 
   for (const heading of [
     "## Problem",
@@ -198,7 +202,10 @@ test("canonical maintainer templates contain required planning and label guidanc
     "exactly one `type:*` label",
     "one or two `area:*` labels",
   ]) {
-    assert.ok(workItem.includes(metadataRule), `Work item template is missing ${metadataRule}`);
+    assert.ok(
+      normalizedWorkItem.includes(metadataRule),
+      `Work item template is missing ${metadataRule}`,
+    );
   }
 
   for (const heading of [
@@ -218,7 +225,7 @@ test("canonical maintainer templates contain required planning and label guidanc
     "one or two `area:*` labels",
     "do not require a `type:*` label",
   ]) {
-    assert.ok(epic.includes(metadataRule), `Epic template is missing ${metadataRule}`);
+    assert.ok(normalizedEpic.includes(metadataRule), `Epic template is missing ${metadataRule}`);
   }
 });
 
