@@ -16,6 +16,8 @@ The initial bootstrap contains five epics and seven implementation or design wor
 
 Make backlog declaration changes on a feature branch, open a pull request targeting `main`, and wait for all required CI checks to pass. Merge the reviewed pull request into `main`. Only then run the **Bootstrap backlog** workflow manually from `main` in GitHub Actions.
 
+Both metadata-mutating workflows validate `GITHUB_REF` and fail with an error unless it is exactly `refs/heads/main`. Selecting a feature branch in the manual workflow dispatcher cannot bypass the merge and CI gate.
+
 The workflow:
 
 1. creates or updates managed labels;
