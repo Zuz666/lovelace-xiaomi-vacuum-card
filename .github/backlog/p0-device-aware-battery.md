@@ -18,12 +18,12 @@ Modern vacuum integrations may also expose charging state as a separate `binary_
 
 - Discover battery entities attached to the same Home Assistant device as the configured vacuum.
 - Use the entity and device registry maps supplied on the Home Assistant frontend object as the registry source.
-- Prefer enabled `sensor` entities with `device_class: battery`, matching Home Assistant frontend conventions.
-- Discover an optional enabled same-device `binary_sensor` with `device_class: battery_charging`.
+- Prefer eligible `sensor` entities with `device_class: battery`, matching Home Assistant frontend conventions.
+- Discover an optional eligible same-device `binary_sensor` with `device_class: battery_charging`.
 - Preserve explicit configuration as the highest precedence.
 - Preserve name-based and legacy attribute fallbacks for compatibility.
 - Integrate discovered entities with the reactive dependency tracker.
-- Add deterministic tests for renamed, missing, unavailable, ambiguous, and registry-unavailable candidates.
+- Add deterministic tests for renamed, missing, unavailable, ambiguous, disabled, hidden, and registry-unavailable candidates.
 
 ## Non-goals
 
@@ -39,15 +39,17 @@ Modern vacuum integrations may also expose charging state as a separate `binary_
 
 1. Read the configured vacuum entry from `hass.entities[config.entity]`.
 2. If the entry has a `device_id`, filter `Object.values(hass.entities)` to entries with the same `device_id`.
-3. Consider an entry automatically discoverable only when:
-   - its domain is the expected `sensor` or `binary_sensor` domain;
-   - it is not marked hidden;
-   - a current state object exists in `hass.states`, which excludes disabled entries that have no runtime entity;
-   - the current state object's `device_class` is exactly `battery` or `battery_charging`.
-4. Use `hass.devices` to validate or diagnose the referenced device when available, but do not fail only because the display device map is absent.
-5. Do not call `config/entity_registry/list` or maintain an independent registry subscription in this issue. Current frontend registry maps are refreshed as part of the `hass` lifecycle.
-6. Recompute registry candidates when the configured vacuum changes or the `hass.entities` registry-map reference changes. Resolve candidate availability and device class from the current `hass.states` on each relevant update. Any memoization must be keyed by these inputs and must not outlive them.
-7. If `hass.entities`, the vacuum registry entry, or its `device_id` is unavailable on an older supported frontend, skip same-device discovery and continue through name-based and legacy fallbacks without failing the card.
+3. Evaluate registry metadata and runtime state as separate eligibility checks:
+   - the entity domain must be the expected `sensor` or `binary_sensor` domain;
+   - when a full registry entry exposes `disabled_by`, it must be `null`;
+   - when a full registry entry exposes `hidden_by`, it must be `null`; when the frontend display map exposes only `hidden`, it must not be `true`;
+   - a current state object must exist at `hass.states[entity_id]`;
+   - `hass.states[entity_id].attributes.device_class` must be exactly `battery` for a `sensor` or `battery_charging` for a `binary_sensor`.
+4. Do not treat state presence as proof that `disabled_by` is `null`. State presence is an independent runtime-discoverability requirement. When the public frontend display map omits full `disabled_by` or `hidden_by` fields, use the available display metadata plus the required live state object without inventing missing registry values.
+5. Use `hass.devices` to validate or diagnose the referenced device when available, but do not fail only because the display device map is absent.
+6. Do not call `config/entity_registry/list` or maintain an independent registry subscription in this issue. Current frontend registry maps are refreshed as part of the `hass` lifecycle.
+7. Recompute registry candidates when the configured vacuum changes or the `hass.entities` registry-map reference changes. Resolve candidate availability and device class from the current `hass.states` on each relevant update. Any memoization must be keyed by these inputs and must not outlive them.
+8. If `hass.entities`, the vacuum registry entry, or its `device_id` is unavailable on an older supported frontend, skip same-device discovery and continue through name-based and legacy fallbacks without failing the card.
 
 ### Candidate selection and diagnostics
 
@@ -64,7 +66,7 @@ Diagnostics must not include state values, tokens, device identifiers beyond the
 Battery source precedence:
 
 1. explicit configured battery entity;
-2. same-device enabled `sensor` with `device_class: battery`;
+2. same-device eligible `sensor` with `device_class: battery`;
 3. `sensor.<vacuum_object_id>_battery`;
 4. `sensor.<vacuum_object_id>_battery_level`;
 5. legacy vacuum `battery_level` attribute;
@@ -73,8 +75,16 @@ Battery source precedence:
 Charging source precedence:
 
 1. explicit future charging entity configuration, if introduced by the design;
-2. same-device enabled `binary_sensor` with `device_class: battery_charging`;
+2. same-device eligible `binary_sensor` with `device_class: battery_charging`;
 3. legacy battery icon or charging metadata fallback on older entity shapes.
+
+Source precedence selects an entity identity or legacy attribute source. The current value of a selected source does not reorder that precedence.
+
+### Unavailable and unknown state policy
+
+An explicit or automatically selected entity that still exists and remains structurally eligible stays selected when its state becomes `unavailable` or `unknown`. The card displays the localized unavailable state and must not demote the source to a lower-priority name-based or legacy attribute fallback.
+
+Fallback continues only when the higher-priority source is absent or no longer structurally eligible, for example because the entity was removed, disabled, hidden, moved to another device, changed domain, or no longer has the required `device_class`. This prevents transient state changes from making the displayed battery source flap between modern and legacy contracts.
 
 ## Acceptance criteria
 
@@ -84,7 +94,10 @@ Charging source precedence:
 - [ ] Legacy name and vacuum attribute fallbacks remain functional for older supported entity shapes.
 - [ ] A same-device charging binary sensor influences the rendered battery icon or charging presentation.
 - [ ] Registry data absent from the frontend object degrades to existing fallbacks without a failed render or extra private API dependency.
-- [ ] Hidden, disabled, missing, unknown, and unavailable entities are handled safely.
+- [ ] A full registry entry with non-null `disabled_by` or `hidden_by` is excluded; a display entry with `hidden: true` is excluded.
+- [ ] Runtime state presence and `attributes.device_class` are checked independently from registry enabled or hidden metadata.
+- [ ] Missing or structurally ineligible entities fall through safely to the next source.
+- [ ] A selected entity in `unavailable` or `unknown` state remains selected and renders unavailable instead of switching to a lower-priority fallback.
 - [ ] Multiple candidate selection follows the documented platform and `entity_id` ordering and emits a sanitized diagnostic.
 - [ ] Registry-map replacement invalidates candidate discovery.
 - [ ] Battery and charging state updates refresh the card through tracked dependencies.
@@ -93,10 +106,14 @@ Charging source precedence:
 
 - [ ] Shared entity-registry fixture for a renamed same-device battery sensor
 - [ ] Fixture for a same-device charging binary sensor
+- [ ] Fixture with full registry entries covering `disabled_by` and `hidden_by`
+- [ ] Fixture with display-map entries that expose `hidden` but omit full registry fields
 - [ ] Fixture with no frontend registry maps, proving fallback behavior
 - [ ] Source-precedence unit tests
 - [ ] Registry refresh and memoization invalidation tests
 - [ ] Ambiguous candidate, platform preference, diagnostic, and unavailable-state tests
+- [ ] Test that `unavailable` and `unknown` selected entities do not demote to name or legacy fallbacks
+- [ ] Test that removed, disabled, hidden, wrong-domain, and wrong-device-class entities do fall through
 - [ ] Backward-compatibility tests for current naming and legacy attribute fallbacks
 - [ ] Real browser component tests for battery and charging updates
 - [ ] Home Assistant smoke test using modern diagnostic entities where feasible
@@ -118,5 +135,5 @@ Charging source precedence:
 
 - Target milestone: v4.6.3 — Runtime correctness
 - Changelog entry required: Yes
-- Documentation update required: Yes, document registry access, source precedence, renamed-entity support, and legacy fallback limits
+- Documentation update required: Yes, document registry access, source precedence, unavailable-state stability, renamed-entity support, and legacy fallback limits
 - HACS or release asset impact: canonical `dist/xiaomi-vacuum-card.js` changes; asset name remains unchanged
