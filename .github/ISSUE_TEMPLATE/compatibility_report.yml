@@ -1,0 +1,115 @@
+name: Compatibility report
+description: Report verified behavior for a Home Assistant vacuum integration and model.
+title: "compat: "
+labels: ["area:compatibility"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for integration- and model-specific compatibility evidence. Remove credentials, tokens, coordinates, serial numbers, and other private data before submitting.
+
+  - type: dropdown
+    id: result
+    attributes:
+      label: Compatibility result
+      options:
+        - Works as expected
+        - Partially works
+        - Does not work
+    validations:
+      required: true
+
+  - type: input
+    id: integration
+    attributes:
+      label: Home Assistant integration or platform
+      description: Examples include Roborock, Xiaomi Miio, Dreame Vacuum, Ecovacs, Valetudo, or a template vacuum.
+      placeholder: Roborock
+    validations:
+      required: true
+
+  - type: input
+    id: manufacturer-model
+    attributes:
+      label: Manufacturer and vacuum model
+      placeholder: Roborock Q Revo
+    validations:
+      required: true
+
+  - type: input
+    id: home-assistant-version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.8.0"
+    validations:
+      required: true
+
+  - type: input
+    id: card-version
+    attributes:
+      label: Card version or commit
+      placeholder: "v4.6.2 or commit SHA"
+    validations:
+      required: true
+
+  - type: input
+    id: firmware-version
+    attributes:
+      label: Vacuum firmware version
+      description: Optional, but useful when entity availability depends on firmware.
+
+  - type: textarea
+    id: configuration
+    attributes:
+      label: Card configuration YAML
+      description: Include the smallest configuration that demonstrates the result.
+      render: yaml
+    validations:
+      required: true
+
+  - type: textarea
+    id: vacuum-state
+    attributes:
+      label: Vacuum entity state and attributes
+      description: Paste sanitized Developer Tools → States output for the vacuum entity.
+      render: yaml
+    validations:
+      required: true
+
+  - type: textarea
+    id: related-entities
+    attributes:
+      label: Related device entities
+      description: List sanitized sensor, binary_sensor, select, button, number, camera, and other entities attached to the same device.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: observed-behavior
+    attributes:
+      label: Observed behavior
+      description: State what renders and which controls work or fail.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: Explain the expected card behavior for this entity model.
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Browser console or Home Assistant logs
+      description: Include only relevant, sanitized messages.
+      render: text
+
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I removed tokens, credentials, coordinates, serial numbers, and other private data.
+          required: true
