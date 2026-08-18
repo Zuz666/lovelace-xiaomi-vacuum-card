@@ -1,0 +1,36 @@
+name: Format testing strategy
+
+on:
+  push:
+    branches:
+      - agent/backlog-bootstrap
+
+permissions:
+  contents: read
+
+jobs:
+  format-testing-strategy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Format strategy
+        run: npx prettier --write docs/maintainers/testing-strategy.md
+
+      - name: Print formatted strategy
+        run: |
+          echo "FORMAT_FILE_BEGIN"
+          base64 -w 0 docs/maintainers/testing-strategy.md
+          echo
+          echo "FORMAT_FILE_END"
