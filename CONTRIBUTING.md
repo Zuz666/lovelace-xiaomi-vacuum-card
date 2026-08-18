@@ -93,6 +93,24 @@ Every pull request must target the `main` branch of `Zuz666/lovelace-xiaomi-vacu
 
 Do not use single-line placeholders or empty stubs in `--body`. Use `--body-file` or a full multiline description when submitting pull requests with the `gh` CLI.
 
+## Automated Code Review
+
+Pull requests may be reviewed automatically by CodeRabbit.
+
+CodeRabbit feedback is advisory and does not replace maintainer review.
+Authors should address actionable findings or briefly explain why a finding
+does not apply.
+
+Useful pull request commands:
+
+- `@coderabbitai review` — review changes added since the previous review.
+- `@coderabbitai full review` — review the complete pull request again.
+- `@coderabbitai pause` — pause automatic reviews while making several updates.
+- `@coderabbitai resume` — resume automatic reviews.
+
+Do not apply automatically generated fixes without reviewing the resulting
+diff and running the repository validation suite.
+
 ## Changelog & Release Workflow
 
 `CHANGELOG.md` is the authoritative source for all notable project changes.

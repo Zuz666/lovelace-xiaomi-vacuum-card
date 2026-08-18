@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "en-US"
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  collapse_walkthrough: true
+  in_progress_fortune: false
+  poem: false
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+  path_filters:
+    - "dist/xiaomi-vacuum-card.js"
+  path_instructions:
+    - path: "dist/xiaomi-vacuum-card.js"
+      instructions: |
+        Review with high rigor:
+        - Ensure compatibility with direct browser execution as an ES module in Home Assistant Lovelace.
+        - Reject assumptions about bundlers, build pipelines, transpilers, or Node.js runtime globals.
+        - Prevent DOM injection and XSS vulnerabilities; verify proper HTML/attribute escaping and safe template handling.
+        - Validate handling of untrusted entity states, attributes, user-supplied labels, and dynamic template output.
+        - Enforce URL and media-source validation; reject unsafe protocols (e.g. javascript:) or unvalidated remote resources.
+        - Verify Home Assistant service calls (domain, service names, target entities, data payload structure).
+        - Ensure resilient handling of unavailable, unknown, or malformed entities and missing state attributes.
+        - Check keyboard navigation and ARIA accessibility standards for interactive controls (e.g. fan speed combobox).
+        - Ensure card runtime version string remains in sync with release metadata and package.json.
+    - path: "tests/**"
+      instructions: |
+        - Ensure regression test coverage for bug fixes, edge cases, and new capabilities.
+        - Test handling of malformed service data, unexpected template outputs, unsafe URLs, and unavailable entities.
+        - Verify keyboard interaction and accessibility behavior coverage where applicable.
+        - Test against varied Home Assistant data formats and compatibility scenarios.
+        - Avoid brittle tests that only test implementation details instead of observable contracts.
+    - path: ".github/workflows/**"
+      instructions: |
+        - Enforce principle of least privilege for GitHub Actions GITHUB_TOKEN permissions.
+        - Prevent script injection and unsafe evaluation of untrusted pull request data (e.g. branch names, PR titles/bodies).
+        - Guard against potential secret leakage in logs or artifacts.
+        - Verify release asset integrity, version alignment, and workflow security best practices (e.g. pinned actions).
+    - path: "**/*.md"
+      instructions: |
+        - Verify documentation accurately matches actual card configuration, options, and runtime behavior.
+        - Check correctness of Home Assistant and HACS setup instructions and YAML examples.
+        - Ensure consistency with SECURITY.md and repository governance guidelines.
+        - Verify accurate version numbers and release references in documentation.
+chat:
+  auto_reply: false
