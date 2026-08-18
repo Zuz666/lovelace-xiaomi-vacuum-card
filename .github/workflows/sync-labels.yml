@@ -1,0 +1,52 @@
+name: Sync labels
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync-labels:
+    name: Sync repository labels
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate label definition
+        run: jq empty .github/labels.json
+
+      - name: Create or update labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          jq -c '.[]' .github/labels.json | while IFS= read -r label; do
+            name="$(jq -r '.name' <<<"${label}")"
+            color="$(jq -r '.color' <<<"${label}")"
+            description="$(jq -r '.description' <<<"${label}")"
+
+            echo "Synchronizing ${name}"
+            gh label create "${name}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --color "${color}" \
+              --description "${description}" \
+              --force
+          done
+
+      - name: Report unmanaged labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          managed="$(jq -r '.[].name' .github/labels.json | sort)"
+          existing="$(gh label list --repo "${GITHUB_REPOSITORY}" --limit 1000 --json name --jq '.[].name' | sort)"
+          unmanaged="$(comm -13 <(printf '%s\n' "${managed}") <(printf '%s\n' "${existing}"))"
+
+          if [ -n "${unmanaged}" ]; then
+            echo "The following labels are not managed by .github/labels.json and were left unchanged:"
+            printf '%s\n' "${unmanaged}"
+          else
+            echo "No unmanaged labels found."
+          fi
