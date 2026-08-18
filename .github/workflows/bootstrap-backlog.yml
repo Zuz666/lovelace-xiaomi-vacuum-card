@@ -1,0 +1,214 @@
+name: Bootstrap backlog
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync-labels:
+    name: Synchronize labels
+    uses: ./.github/workflows/sync-labels.yml
+    permissions:
+      contents: read
+      issues: write
+
+  bootstrap:
+    name: Create milestones and canonical issues
+    needs: sync-labels
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate backlog declarations
+        run: |
+          set -euo pipefail
+
+          jq empty .github/labels.json
+          jq empty .github/milestones.json
+          jq empty .github/backlog/issues.json
+
+          jq -e '
+            type == "array" and
+            length > 0 and
+            (map(.key) | length) == (map(.key) | unique | length) and
+            (map(.title) | length) == (map(.title) | unique | length)
+          ' .github/milestones.json >/dev/null
+
+          jq -e '
+            type == "array" and
+            length > 0 and
+            (map(.key) | length) == (map(.key) | unique | length) and
+            (map(.title) | length) == (map(.title) | unique | length) and
+            all(.[]; (.labels | type) == "array" and (.body_file | type) == "string")
+          ' .github/backlog/issues.json >/dev/null
+
+          while IFS= read -r body_file; do
+            if [ ! -f "${body_file}" ]; then
+              echo "Missing backlog body file: ${body_file}" >&2
+              exit 1
+            fi
+          done < <(jq -r '.[].body_file' .github/backlog/issues.json)
+
+          while IFS= read -r label; do
+            if ! jq -e --arg label "${label}" 'any(.[]; .name == $label)' .github/labels.json >/dev/null; then
+              echo "Issue manifest references undeclared label: ${label}" >&2
+              exit 1
+            fi
+          done < <(jq -r '.[].labels[]' .github/backlog/issues.json | sort -u)
+
+          while IFS= read -r milestone; do
+            if ! jq -e --arg milestone "${milestone}" 'any(.[]; .key == $milestone)' .github/milestones.json >/dev/null; then
+              echo "Issue manifest references undeclared milestone: ${milestone}" >&2
+              exit 1
+            fi
+          done < <(jq -r '.[].milestone // empty' .github/backlog/issues.json | sort -u)
+
+      - name: Create or update milestones and issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          work_dir="${RUNNER_TEMP}/backlog-bootstrap"
+          mkdir -p "${work_dir}"
+          milestone_map="${work_dir}/milestones.json"
+          issue_map="${work_dir}/issues.json"
+          printf '{}\n' >"${milestone_map}"
+          printf '{}\n' >"${issue_map}"
+
+          existing_milestones="$(gh api "repos/${GITHUB_REPOSITORY}/milestones?state=all&per_page=100")"
+
+          while IFS= read -r milestone; do
+            key="$(jq -r '.key' <<<"${milestone}")"
+            title="$(jq -r '.title' <<<"${milestone}")"
+            description="$(jq -r '.description' <<<"${milestone}")"
+            number="$(jq -r --arg title "${title}" '.[] | select(.title == $title) | .number' <<<"${existing_milestones}" | head -n 1)"
+
+            if [ -z "${number}" ]; then
+              echo "Creating milestone: ${title}"
+              response="$(
+                jq -n \
+                  --arg title "${title}" \
+                  --arg description "${description}" \
+                  '{title: $title, description: $description, state: "open"}' |
+                  gh api --method POST "repos/${GITHUB_REPOSITORY}/milestones" --input -
+              )"
+              number="$(jq -r '.number' <<<"${response}")"
+            else
+              echo "Updating milestone #${number}: ${title}"
+              jq -n \
+                --arg title "${title}" \
+                --arg description "${description}" \
+                '{title: $title, description: $description, state: "open"}' |
+                gh api --method PATCH "repos/${GITHUB_REPOSITORY}/milestones/${number}" --input - >/dev/null
+            fi
+
+            tmp="$(mktemp)"
+            jq --arg key "${key}" --argjson number "${number}" '. + {($key): $number}' "${milestone_map}" >"${tmp}"
+            mv "${tmp}" "${milestone_map}"
+          done < <(jq -c '.[]' .github/milestones.json)
+
+          existing_issues="$(gh issue list --repo "${GITHUB_REPOSITORY}" --state all --limit 1000 --json number,title)"
+
+          while IFS= read -r item; do
+            key="$(jq -r '.key' <<<"${item}")"
+            title="$(jq -r '.title' <<<"${item}")"
+            body_file="$(jq -r '.body_file' <<<"${item}")"
+            labels_json="$(jq -c '.labels' <<<"${item}")"
+            milestone_key="$(jq -r '.milestone // empty' <<<"${item}")"
+            number="$(jq -r --arg title "${title}" '.[] | select(.title == $title) | .number' <<<"${existing_issues}" | head -n 1)"
+
+            if [ -n "${milestone_key}" ]; then
+              milestone_number="$(jq -r --arg key "${milestone_key}" '.[$key]' "${milestone_map}")"
+            else
+              milestone_number="null"
+            fi
+
+            if [ -z "${number}" ]; then
+              echo "Creating issue: ${title}"
+              body_json="$(jq -Rs . <"${body_file}")"
+              response="$(
+                jq -n \
+                  --arg title "${title}" \
+                  --argjson body "${body_json}" \
+                  --argjson labels "${labels_json}" \
+                  --argjson milestone "${milestone_number}" \
+                  '{title: $title, body: $body, labels: $labels, milestone: $milestone}' |
+                  gh api --method POST "repos/${GITHUB_REPOSITORY}/issues" --input -
+              )"
+              number="$(jq -r '.number' <<<"${response}")"
+            else
+              echo "Found canonical issue #${number}: ${title}"
+            fi
+
+            tmp="$(mktemp)"
+            jq --arg key "${key}" --argjson number "${number}" '. + {($key): $number}' "${issue_map}" >"${tmp}"
+            mv "${tmp}" "${issue_map}"
+          done < <(jq -c '.[]' .github/backlog/issues.json)
+
+          while IFS= read -r item; do
+            key="$(jq -r '.key' <<<"${item}")"
+            title="$(jq -r '.title' <<<"${item}")"
+            body_file="$(jq -r '.body_file' <<<"${item}")"
+            labels_json="$(jq -c '.labels' <<<"${item}")"
+            milestone_key="$(jq -r '.milestone // empty' <<<"${item}")"
+            number="$(jq -r --arg key "${key}" '.[$key]' "${issue_map}")"
+            resolved_body="${work_dir}/${key}.md"
+
+            python3 - "${body_file}" "${issue_map}" "${resolved_body}" "${key}" <<'PY'
+          import json
+          import pathlib
+          import re
+          import sys
+
+          source_path = pathlib.Path(sys.argv[1])
+          issue_map_path = pathlib.Path(sys.argv[2])
+          output_path = pathlib.Path(sys.argv[3])
+          item_key = sys.argv[4]
+
+          issue_numbers = json.loads(issue_map_path.read_text(encoding="utf-8"))
+          source = source_path.read_text(encoding="utf-8")
+
+          def replace_issue(match: re.Match[str]) -> str:
+              key = match.group(1)
+              if key not in issue_numbers:
+                  raise SystemExit(f"Unknown issue template reference: {key}")
+              return f"#{issue_numbers[key]}"
+
+          resolved = re.sub(r"\{\{issue:([a-z0-9-]+)\}\}", replace_issue, source)
+          marker = f"<!-- managed-by: .github/backlog/issues.json key={item_key} -->\n\n"
+          output_path.write_text(marker + resolved, encoding="utf-8")
+          PY
+
+            if [ -n "${milestone_key}" ]; then
+              milestone_number="$(jq -r --arg key "${milestone_key}" '.[$key]' "${milestone_map}")"
+            else
+              milestone_number="null"
+            fi
+
+            body_json="$(jq -Rs . <"${resolved_body}")"
+            echo "Reconciling issue #${number}: ${title}"
+            jq -n \
+              --arg title "${title}" \
+              --argjson body "${body_json}" \
+              --argjson labels "${labels_json}" \
+              --argjson milestone "${milestone_number}" \
+              '{title: $title, body: $body, labels: $labels, milestone: $milestone}' |
+              gh api --method PATCH "repos/${GITHUB_REPOSITORY}/issues/${number}" --input - >/dev/null
+          done < <(jq -c '.[]' .github/backlog/issues.json)
+
+          {
+            echo "## Backlog bootstrap result"
+            echo
+            while IFS= read -r item; do
+              key="$(jq -r '.key' <<<"${item}")"
+              title="$(jq -r '.title' <<<"${item}")"
+              number="$(jq -r --arg key "${key}" '.[$key]' "${issue_map}")"
+              echo "- [#${number}](https://github.com/${GITHUB_REPOSITORY}/issues/${number}) — ${title}"
+            done < <(jq -c '.[]' .github/backlog/issues.json)
+          } >>"${GITHUB_STEP_SUMMARY}"
