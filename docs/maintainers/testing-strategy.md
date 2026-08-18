@@ -145,14 +145,14 @@ The same fixture should be consumable by unit tests, component tests, and select
 
 The following table describes the target state after the relevant test-foundation issues are complete:
 
-| Change type                                                                  | Target required evidence                                                                  |
-| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Documentation or governance only                                             | Static checks and relevant repository tests                                               |
-| Pure source resolution, formatting, or payload logic                         | Unit or contract regression tests plus static checks                                      |
-| Lit lifecycle, rendering, focus, keyboard, or availability                   | Real browser component test plus static checks                                            |
-| Home Assistant resource, editor, registry, service, or WebSocket integration | Component tests and immutable digest-pinned HA smoke test                                 |
-| New integration or vendor compatibility claim                                | Versioned sanitized fixture, contract or component test, and targeted HA verification     |
-| Release or supported HA baseline update                                      | Full required suite, digest validation, and explicit smoke-baseline review                |
+| Change type                                                                  | Target required evidence                                                              |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Documentation or governance only                                             | Static checks and relevant repository tests                                           |
+| Pure source resolution, formatting, or payload logic                         | Unit or contract regression tests plus static checks                                  |
+| Lit lifecycle, rendering, focus, keyboard, or availability                   | Real browser component test plus static checks                                        |
+| Home Assistant resource, editor, registry, service, or WebSocket integration | Component tests and immutable digest-pinned HA smoke test                             |
+| New integration or vendor compatibility claim                                | Versioned sanitized fixture, contract or component test, and targeted HA verification |
+| Release or supported HA baseline update                                      | Full required suite, digest validation, and explicit smoke-baseline review            |
 
 ## Interim rules before target layers exist
 

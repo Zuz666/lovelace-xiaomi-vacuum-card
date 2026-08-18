@@ -6,7 +6,10 @@ import { fileURLToPath } from "node:url";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-const readText = (relativePath) => readFile(path.join(repositoryRoot, relativePath), "utf8");
+const readText = async (relativePath) => {
+  const content = await readFile(path.join(repositoryRoot, relativePath), "utf8");
+  return content.replace(/\r\n/g, "\n");
+};
 
 const readJson = async (relativePath) => JSON.parse(await readText(relativePath));
 
@@ -97,20 +100,14 @@ const assertAllowedWorkflowPermissions = (workflow, name) => {
 
     for (const { access, scope } of block.entries) {
       assert.ok(allowed.has(scope), `${name} requests disallowed permission scope ${scope}`);
-      assert.equal(
-        access,
-        allowed.get(scope),
-        `${name} requests disallowed ${scope}: ${access}`,
-      );
+      assert.equal(access, allowed.get(scope), `${name} requests disallowed ${scope}: ${access}`);
     }
   }
 
   const workflowLevel = blocks.filter((block) => block.indent === 0);
   assert.equal(workflowLevel.length, 1, `${name} must have one workflow-level permissions block`);
   assert.deepEqual(
-    workflowLevel[0].entries
-      .map((entry) => `${entry.scope}:${entry.access}`)
-      .sort(),
+    workflowLevel[0].entries.map((entry) => `${entry.scope}:${entry.access}`).sort(),
     ["contents:read", "issues:write"],
     `${name} workflow-level permissions must match the complete allowlist`,
   );

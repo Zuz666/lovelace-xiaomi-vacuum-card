@@ -10,13 +10,7 @@
     "key": "p0-reactive-external-entities",
     "title": "fix: update card when referenced external entities change",
     "body_file": ".github/backlog/p0-reactive-external-entities.md",
-    "labels": [
-      "priority:P0",
-      "type:bug",
-      "area:runtime",
-      "area:entities",
-      "source:upstream"
-    ],
+    "labels": ["priority:P0", "type:bug", "area:runtime", "area:entities", "source:upstream"],
     "milestone": "runtime-correctness"
   },
   {
@@ -37,13 +31,7 @@
     "key": "p0-device-aware-battery",
     "title": "fix: discover battery and charging entities through device registry",
     "body_file": ".github/backlog/p0-device-aware-battery.md",
-    "labels": [
-      "priority:P0",
-      "type:bug",
-      "area:entities",
-      "area:compatibility",
-      "source:upstream"
-    ],
+    "labels": ["priority:P0", "type:bug", "area:entities", "area:compatibility", "source:upstream"],
     "milestone": "runtime-correctness"
   },
   {
