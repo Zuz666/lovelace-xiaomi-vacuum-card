@@ -29,6 +29,8 @@ Maintainer-authored work must use the versioned templates in `.github/ISSUE_TEMP
 
 The canonical work item template is intentionally stored in the issue-template directory rather than only in this document. This keeps it visible in the GitHub issue chooser, reviewable through pull requests, and synchronized with the repository workflow.
 
+Maintainer strategies and reviews that define cross-cutting quality gates belong under `docs/maintainers/`. The current test-system review and target architecture are stored in `docs/maintainers/testing-strategy.md`.
+
 ## Backlog lifecycle
 
 Use the following Project status values:
@@ -55,6 +57,8 @@ Every leaf issue must have exactly one priority label.
 
 An epic uses the highest priority currently present on its critical path. Priority describes urgency and impact, not implementation size.
 
+Test infrastructure may be P0 when it is the only reliable way to verify a current P0 correctness defect. Priority describes the risk on the delivery path, not whether the issue directly changes the UI.
+
 ## Type labels
 
 A leaf issue must normally have exactly one type label:
@@ -80,7 +84,8 @@ An issue may have one or two area labels:
 - `area:editor` — visual editor, selectors, schemas, and configuration UX;
 - `area:compatibility` — Home Assistant or integration compatibility;
 - `area:vendor` — vendor- or model-specific compatibility profiles;
-- `area:ci-release` — CI, dependencies, HACS, release, and publishing.
+- `area:ci-release` — CI, dependencies, HACS, release, and publishing;
+- `area:testing` — test harnesses, fixtures, browser and HA tests, and quality gates.
 
 More than two area labels usually indicates that the issue should be split.
 
@@ -111,7 +116,7 @@ The initial release milestones are declared in `.github/milestones.json`:
 - **v4.7.0 — Entity-aware rows and controls** — entity-aware row model, formatting, external controls, and supporting architecture;
 - **v4.8.0 — Actions and area cleaning** — standard Lovelace actions, responsive action layout, conditions, and native area cleaning.
 
-P3 work and unverified vendor requests remain without a milestone until there is evidence and release capacity. Do not use a generic `Backlog` milestone.
+P3 work, cross-release epics, and unverified vendor requests may remain without a milestone until there is evidence and release capacity. Do not use a generic `Backlog` milestone.
 
 ## GitHub Project configuration
 
@@ -131,7 +136,26 @@ Recommended views:
 | Roadmap             | Group by milestone                                  |
 | Compatibility       | Filter `area:compatibility` or `area:vendor`        |
 
+Add a **Testing and quality** view filtered by `area:testing` so cross-release prerequisites are visible independently from product epics.
+
 Project creation is a one-time owner-level GitHub operation. Repository labels, milestones, and initial issues are bootstrapped by repository workflows; Project fields and views are configured in the GitHub UI so no broad personal access token is stored in repository automation.
+
+## Testing governance
+
+The repository uses a layered testing strategy defined in `docs/maintainers/testing-strategy.md`:
+
+1. static repository checks;
+2. Node unit and contract tests;
+3. real browser component tests with actual Lit and DOM behavior;
+4. a required pinned Home Assistant smoke baseline;
+5. scheduled or manually dispatched moving-channel compatibility canaries;
+6. sanitized fixtures shared across appropriate layers.
+
+Do not expand the VM harness into a fake browser or fake Home Assistant frontend. Keep it for pure contracts and move lifecycle, DOM, focus, keyboard, accessibility, and interaction behavior to real browser component tests.
+
+Before lifecycle-sensitive runtime work is marked Ready, the issue must identify the real browser regression that proves it. Before a compatibility claim is marked Ready, it must identify the sanitized fixture and expected contract. Full HA smoke tests should remain small and prove integration boundaries rather than duplicate every component scenario.
+
+A mutable Home Assistant channel should not be the only required pull-request baseline. Moving channels belong in canaries; the required smoke version changes through an explicit reviewed update.
 
 ## Definition of Ready
 
@@ -140,10 +164,11 @@ An issue may move to **Ready** only when:
 - the user or technical outcome is clear;
 - scope and non-goals are explicit;
 - acceptance criteria are observable;
-- the test plan matches the risk;
+- the test plan identifies the correct test layer for each material risk;
+- lifecycle or interaction changes identify a real browser component scenario;
 - priority, type, area, and target milestone are assigned where applicable;
 - dependencies and blockers are recorded;
-- compatibility work includes an integration, model, entity fixture, and service or control contract;
+- compatibility work includes an integration, model, sanitized entity fixture, and service or control contract;
 - potential migration or breaking impact is documented.
 
 ## Definition of Done
@@ -153,10 +178,12 @@ An issue is done when:
 - the implementation is merged into `main`;
 - the pull request references `Closes #<issue>` or the issue is otherwise explicitly resolved;
 - acceptance criteria are satisfied;
-- tests are added or their absence is justified;
-- Home Assistant smoke tests pass for UI, lifecycle, and integration changes;
+- tests are added at the layer that can actually observe the changed behavior, or their absence is justified;
+- real browser component tests pass for lifecycle, DOM, focus, keyboard, accessibility, and interaction changes;
+- the pinned Home Assistant smoke test passes for resource, editor, registry, service, WebSocket, and integration-boundary changes;
 - README, contributor documentation, and changelog are updated when required;
 - backward compatibility or migration behavior is verified;
+- compatibility claims link to reviewed fixtures and tested expectations;
 - the parent epic and Project status are updated.
 
 ## Epic rules
@@ -164,6 +191,8 @@ An issue is done when:
 An epic describes an outcome and shared exit criteria. It should contain links to its leaf issues, not duplicate all implementation details.
 
 Use native GitHub sub-issues when maintaining the backlog interactively. The bootstrap workflow also writes a Markdown checklist into each initial epic so the relationship remains visible to readers and tools that do not expose sub-issues.
+
+Cross-release quality epics may remain without a milestone while their leaf issues are assigned to concrete release milestones.
 
 ## Upstream traceability
 
@@ -193,5 +222,6 @@ For each new public issue:
 3. reproduce or apply `status:needs-reproduction`;
 4. consolidate duplicates into a canonical issue;
 5. assign priority, type, and area;
-6. place accepted but incomplete work in Backlog;
-7. move to Ready only after the Definition of Ready is met.
+6. identify whether the risk needs contract, component, HA smoke, or compatibility-fixture coverage;
+7. place accepted but incomplete work in Backlog;
+8. move to Ready only after the Definition of Ready is met.
