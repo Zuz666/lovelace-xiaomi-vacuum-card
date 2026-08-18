@@ -6,8 +6,7 @@ import { fileURLToPath } from "node:url";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-const readText = (relativePath) =>
-  readFile(path.join(repositoryRoot, relativePath), "utf8");
+const readText = (relativePath) => readFile(path.join(repositoryRoot, relativePath), "utf8");
 
 const readJson = async (relativePath) => JSON.parse(await readText(relativePath));
 
@@ -154,9 +153,15 @@ test("bootstrap workflows remain manual and least-privileged", async () => {
     ["Bootstrap backlog", bootstrapBacklog],
   ]) {
     assert.ok(workflow.includes("workflow_dispatch:"), `${name} must be manually dispatchable`);
-    assert.ok(workflow.includes("contents: read"), `${name} must use read-only contents permission`);
+    assert.ok(
+      workflow.includes("contents: read"),
+      `${name} must use read-only contents permission`,
+    );
     assert.ok(workflow.includes("issues: write"), `${name} requires issues write permission`);
-    assert.ok(!workflow.includes("pull_request_target"), `${name} must not use pull_request_target`);
+    assert.ok(
+      !workflow.includes("pull_request_target"),
+      `${name} must not use pull_request_target`,
+    );
     assert.ok(!workflow.includes("secrets."), `${name} must not require a stored personal token`);
   }
 });

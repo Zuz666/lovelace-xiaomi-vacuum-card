@@ -6,14 +6,14 @@ This document defines how Xiaomi Vacuum Card Reborn turns user reports, upstream
 
 The repository uses separate GitHub objects for separate concerns:
 
-| Object | Purpose | Source-of-truth rule |
-| --- | --- | --- |
-| Issue | One implementable and verifiable work item | A leaf issue should normally fit in one pull request or a short explicitly ordered series |
-| Epic issue | A product or architecture outcome spanning multiple issues | Tracks child issues and shared exit criteria; it is not an implementation dump |
-| Milestone | A concrete release boundary | Contains only work planned for that release |
-| Label | Classification | Priority, type, area, and exceptional state are independent dimensions |
-| GitHub Project | Workflow visibility | Shows movement through intake, planning, implementation, and review |
-| Documentation or research | Evidence and decisions | Supports issues but does not replace issue acceptance criteria |
+| Object                    | Purpose                                                    | Source-of-truth rule                                                                      |
+| ------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Issue                     | One implementable and verifiable work item                 | A leaf issue should normally fit in one pull request or a short explicitly ordered series |
+| Epic issue                | A product or architecture outcome spanning multiple issues | Tracks child issues and shared exit criteria; it is not an implementation dump            |
+| Milestone                 | A concrete release boundary                                | Contains only work planned for that release                                               |
+| Label                     | Classification                                             | Priority, type, area, and exceptional state are independent dimensions                    |
+| GitHub Project            | Workflow visibility                                        | Shows movement through intake, planning, implementation, and review                       |
+| Documentation or research | Evidence and decisions                                     | Supports issues but does not replace issue acceptance criteria                            |
 
 A historical upstream issue or pull request is evidence, not automatically a backlog item. Related reports should be consolidated into one canonical issue that describes the current fork behavior and the modern Home Assistant contract.
 
@@ -46,12 +46,12 @@ Do not duplicate these statuses with labels such as `in-progress`, `review`, or 
 
 Every leaf issue must have exactly one priority label.
 
-| Label | Meaning |
-| --- | --- |
+| Label         | Meaning                                                                            |
+| ------------- | ---------------------------------------------------------------------------------- |
 | `priority:P0` | Incorrect data, broken primary behavior, or current Home Assistant incompatibility |
-| `priority:P1` | Required for the next planned minor release |
-| `priority:P2` | Valuable work that does not block the primary user journey |
-| `priority:P3` | Nice-to-have, experimental, or primarily visual improvement |
+| `priority:P1` | Required for the next planned minor release                                        |
+| `priority:P2` | Valuable work that does not block the primary user journey                         |
+| `priority:P3` | Nice-to-have, experimental, or primarily visual improvement                        |
 
 An epic uses the highest priority currently present on its critical path. Priority describes urgency and impact, not implementation size.
 
@@ -124,12 +124,12 @@ Priority remains label-backed and target release remains milestone-backed; do no
 
 Recommended views:
 
-| View | Configuration |
-| --- | --- |
-| Current release | Filter by the current milestone and group by Status |
-| Prioritized backlog | Filter to Backlog and Ready; sort P0 through P3 |
-| Roadmap | Group by milestone |
-| Compatibility | Filter `area:compatibility` or `area:vendor` |
+| View                | Configuration                                       |
+| ------------------- | --------------------------------------------------- |
+| Current release     | Filter by the current milestone and group by Status |
+| Prioritized backlog | Filter to Backlog and Ready; sort P0 through P3     |
+| Roadmap             | Group by milestone                                  |
+| Compatibility       | Filter `area:compatibility` or `area:vendor`        |
 
 Project creation is a one-time owner-level GitHub operation. Repository labels, milestones, and initial issues are bootstrapped by repository workflows; Project fields and views are configured in the GitHub UI so no broad personal access token is stored in repository automation.
 
