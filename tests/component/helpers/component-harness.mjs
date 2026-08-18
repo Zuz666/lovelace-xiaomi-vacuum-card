@@ -178,6 +178,25 @@ export async function updateEntityState(page, entityId, stateData) {
 }
 
 /**
+ * Removes an entity from `hass.states` while retaining references to all other entities.
+ */
+export async function removeEntityState(page, entityId) {
+  await page.evaluate(async (targetId) => {
+    const card = window.__activeCard;
+    const currentHass = window.__activeHass;
+    const nextStates = { ...currentHass.states };
+    delete nextStates[targetId];
+    const nextHass = {
+      ...currentHass,
+      states: nextStates,
+    };
+    window.__activeHass = nextHass;
+    card.hass = nextHass;
+    await card.updateComplete;
+  }, entityId);
+}
+
+/**
  * Retrieves the total count of renders performed by the mounted card.
  */
 export async function getCardRenderCount(page) {

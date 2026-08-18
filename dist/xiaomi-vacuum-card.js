@@ -705,8 +705,78 @@
             return document.createElement('xiaomi-vacuum-card-editor');
         }
 
+        getReferencedEntities() {
+            if (!this.config) return [];
+            const entities = new Set();
+
+            if (this.config.entity) {
+                entities.add(this.config.entity);
+            }
+
+            if (this.config.image && String(this.config.image).startsWith('media-source://image/')) {
+                const imageEntityId = this.getImageEntityId(this.config.image);
+                if (imageEntityId) entities.add(imageEntityId);
+            }
+
+            const vacuumEntityId = (this.stateObj && this.stateObj.entity_id) || this.config.entity || '';
+            const vacuumObjectId = vacuumEntityId.includes('.') ? vacuumEntityId.split('.')[1] : vacuumEntityId;
+
+            const collectRowEntities = (rowGroup) => {
+                if (!rowGroup || typeof rowGroup !== 'object') return;
+                Object.entries(rowGroup).forEach(([id, data]) => {
+                    if (!data || data.show === false) return;
+                    if (data.entity) {
+                        entities.add(data.entity);
+                        return;
+                    }
+                    const isBattery = id === 'battery' || data.id === 'battery' || data.key === 'battery_level' || data.key === 'battery';
+                    if (isBattery) {
+                        if (vacuumObjectId) {
+                            entities.add(`sensor.${vacuumObjectId}_battery`);
+                            entities.add(`sensor.${vacuumObjectId}_battery_level`);
+                        }
+                    } else if (data.key && this.config.sensorEntity) {
+                        entities.add(`${this.config.sensorEntity}_${data.key}`);
+                    }
+                });
+            };
+
+            if (!this.config.show || this.config.show.state !== false) {
+                collectRowEntities(this.config.state);
+            }
+            if (!this.config.show || this.config.show.attributes !== false) {
+                collectRowEntities(this.config.attributes);
+            }
+
+            return Array.from(entities);
+        }
+
         shouldUpdate(changedProps) {
-            return changedProps.has('stateObj') || changedProps.has('config') || changedProps.has('_dropdown') || changedProps.has('_resolvedImage');
+            if (changedProps.has('stateObj') || changedProps.has('config') || changedProps.has('_dropdown') || changedProps.has('_resolvedImage')) {
+                return true;
+            }
+
+            if (changedProps.has('_hass')) {
+                const oldHass = changedProps.get('_hass');
+                const newHass = this._hass;
+                if (!oldHass || !newHass) return true;
+
+                if (oldHass.language !== newHass.language || oldHass.locale !== newHass.locale) {
+                    return true;
+                }
+
+                const oldStates = oldHass.states || {};
+                const newStates = newHass.states || {};
+
+                const trackedEntities = this.getReferencedEntities();
+                for (const entityId of trackedEntities) {
+                    if (oldStates[entityId] !== newStates[entityId]) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         updated() {
