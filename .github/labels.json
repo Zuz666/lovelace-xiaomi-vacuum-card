@@ -95,6 +95,11 @@
     "description": "CI, HACS validation, dependencies, release, or publishing."
   },
   {
+    "name": "area:testing",
+    "color": "0B7285",
+    "description": "Test harnesses, fixtures, browser or HA tests, and quality gates."
+  },
+  {
     "name": "status:needs-info",
     "color": "D876E3",
     "description": "Required environment, configuration, or diagnostics are missing."
