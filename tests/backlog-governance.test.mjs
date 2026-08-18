@@ -22,11 +22,55 @@ const workflowTriggerKeys = (workflow, name) => {
   const triggerBlock = workflow.match(/^on:\n([\s\S]*?)^permissions:/m);
   assert.ok(triggerBlock, `${name} must have an on block before permissions`);
 
-  return [...triggerBlock[1].matchAll(/^ {2}([A-Za-z_][A-Za-z0-9_]*):/gm)].map((match) => match[1]);
+  const triggerPattern = /^ {2}(?:"([^"]+)"|'([^']+)'|([A-Za-z_][A-Za-z0-9_]*)):/gm;
+  return [...triggerBlock[1].matchAll(triggerPattern)].map(
+    (match) => match[1] ?? match[2] ?? match[3],
+  );
+};
+
+const assertAllowedWorkflowTriggers = (workflow, name, allowedTriggers) => {
+  assert.deepEqual(
+    workflowTriggerKeys(workflow, name).sort(),
+    [...allowedTriggers].sort(),
+    `${name} has an automatic or unsupported trigger`,
+  );
 };
 
 const workflowUses = (workflow) =>
   [...workflow.matchAll(/^\s*uses:\s*([^\s#]+)/gm)].map((match) => match[1]);
+
+const workflowApiPayloads = (workflow) => {
+  const lines = workflow.split("\n");
+  const payloads = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const apiCall = lines[index].match(/gh api --method (POST|PATCH) "([^"]+)"/);
+    if (!apiCall) continue;
+
+    const payloadLine = lines
+      .slice(Math.max(0, index - 16), index)
+      .reverse()
+      .find((line) => /^'\{.*\}' \|$/.test(line.trim()));
+
+    assert.ok(payloadLine, `Missing jq payload for ${apiCall[1]} ${apiCall[2]}`);
+    payloads.push({
+      endpoint: apiCall[2],
+      method: apiCall[1],
+      payload: payloadLine.trim(),
+    });
+  }
+
+  return payloads;
+};
+
+const requireWorkflowApiPayload = (payloads, method, endpoint) => {
+  const matches = payloads.filter(
+    (payload) => payload.method === method && payload.endpoint === endpoint,
+  );
+
+  assert.equal(matches.length, 1, `Expected one ${method} payload for ${endpoint}`);
+  return matches[0].payload;
+};
 
 test("managed labels use valid unique names, colors, and descriptions", async () => {
   const labels = await readJson(".github/labels.json");
@@ -120,7 +164,7 @@ test("initial backlog references declared labels, milestones, bodies, and issue 
   }
 });
 
-test("canonical maintainer templates contain required planning sections", async () => {
+test("canonical maintainer templates contain required planning and label guidance", async () => {
   const workItem = await readText(".github/ISSUE_TEMPLATE/work_item.md");
   const epic = await readText(".github/ISSUE_TEMPLATE/epic.md");
 
@@ -149,6 +193,14 @@ test("canonical maintainer templates contain required planning sections", async 
     assert.ok(workItem.includes(testLayer), `Work item template is missing ${testLayer}`);
   }
 
+  for (const metadataRule of [
+    "exactly one `priority:*` label",
+    "exactly one `type:*` label",
+    "one or two `area:*` labels",
+  ]) {
+    assert.ok(workItem.includes(metadataRule), `Work item template is missing ${metadataRule}`);
+  }
+
   for (const heading of [
     "## Outcome",
     "## Why this matters",
@@ -159,6 +211,31 @@ test("canonical maintainer templates contain required planning sections", async 
     "## Release plan",
   ]) {
     assert.ok(epic.includes(heading), `Epic template is missing ${heading}`);
+  }
+
+  for (const metadataRule of [
+    "one `priority:*` label",
+    "one or two `area:*` labels",
+    "do not require a `type:*` label",
+  ]) {
+    assert.ok(epic.includes(metadataRule), `Epic template is missing ${metadataRule}`);
+  }
+});
+
+test("bootstrap guide scopes issue bodies and enforces the main merge gate", async () => {
+  const guide = await readText(".github/backlog/bootstrap-guide.md");
+
+  for (const requirement of [
+    "referenced by `body_file` in `issues.json`",
+    "feature branch",
+    "pull request targeting `main`",
+    "required CI checks to pass",
+    "Merge the reviewed pull request into `main`",
+    "workflow manually from `main`",
+    "every `{{issue:<key>}}` reference resolves to a declared key",
+    "every `body_file` exists",
+  ]) {
+    assert.ok(guide.includes(requirement), `Bootstrap guide is missing ${requirement}`);
   }
 });
 
@@ -203,7 +280,21 @@ test("testing strategy and critical test backlog remain declared", async () => {
   );
 });
 
-test("bootstrap workflows use only allowed manual triggers and pinned external actions", async () => {
+test("workflow trigger allowlist rejects quoted automatic triggers", () => {
+  const workflow = `on:
+  "push":
+  'workflow_dispatch':
+permissions:
+  contents: read
+`;
+
+  assert.throws(
+    () => assertAllowedWorkflowTriggers(workflow, "Quoted trigger fixture", ["workflow_dispatch"]),
+    /automatic or unsupported trigger/,
+  );
+});
+
+test("bootstrap workflows use allowed triggers and pinned actions", async () => {
   const [syncLabels, bootstrapBacklog] = await Promise.all([
     readText(".github/workflows/sync-labels.yml"),
     readText(".github/workflows/bootstrap-backlog.yml"),
@@ -223,11 +314,7 @@ test("bootstrap workflows use only allowed manual triggers and pinned external a
   ];
 
   for (const { name, workflow, allowedTriggers } of workflows) {
-    assert.deepEqual(
-      workflowTriggerKeys(workflow, name).sort(),
-      [...allowedTriggers].sort(),
-      `${name} has an automatic or unsupported trigger`,
-    );
+    assertAllowedWorkflowTriggers(workflow, name, allowedTriggers);
     assert.ok(
       workflow.includes("contents: read"),
       `${name} must use read-only contents permission`,
@@ -254,14 +341,45 @@ test("bootstrap workflows use only allowed manual triggers and pinned external a
   }
 });
 
-test("backlog bootstrap preserves milestone state and reconciles issues by marker", async () => {
+test("backlog bootstrap preserves milestone and issue state by command", async () => {
+  const bootstrap = await readText(".github/workflows/bootstrap-backlog.yml");
+  const payloads = workflowApiPayloads(bootstrap);
+
+  const milestoneCreate = requireWorkflowApiPayload(
+    payloads,
+    "POST",
+    "repos/${GITHUB_REPOSITORY}/milestones",
+  );
+  const milestoneUpdate = requireWorkflowApiPayload(
+    payloads,
+    "PATCH",
+    "repos/${GITHUB_REPOSITORY}/milestones/${number}",
+  );
+  const issueCreate = requireWorkflowApiPayload(
+    payloads,
+    "POST",
+    "repos/${GITHUB_REPOSITORY}/issues",
+  );
+  const issueUpdate = requireWorkflowApiPayload(
+    payloads,
+    "PATCH",
+    "repos/${GITHUB_REPOSITORY}/issues/${number}",
+  );
+
+  assert.match(milestoneCreate, /state: "open"/, "Milestone creation must set open state");
+
+  for (const [name, payload] of [
+    ["milestone update", milestoneUpdate],
+    ["issue creation", issueCreate],
+    ["issue reconciliation", issueUpdate],
+  ]) {
+    assert.doesNotMatch(payload, /state: "open"/, `${name} must not set open state`);
+  }
+});
+
+test("backlog bootstrap reconciles issues only by managed marker", async () => {
   const bootstrap = await readText(".github/workflows/bootstrap-backlog.yml");
 
-  assert.equal(
-    (bootstrap.match(/state: "open"/g) || []).length,
-    1,
-    "Only milestone creation may set state to open",
-  );
   assert.ok(
     bootstrap.includes("contains($marker)"),
     "Managed issues must be discovered by their stable marker",
