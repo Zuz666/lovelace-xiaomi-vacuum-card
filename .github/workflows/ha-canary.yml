@@ -30,12 +30,17 @@ jobs:
       channels: ${{ steps.set-matrix.outputs.channels }}
     steps:
       - id: set-matrix
+        env:
+          CHANNEL_INPUT: ${{ inputs.channel }}
         run: |
-          INPUT="${{ github.event.inputs.channel }}"
+          INPUT="$CHANNEL_INPUT"
           if [ -z "$INPUT" ] || [ "$INPUT" = "all" ]; then
-            echo 'channels=["stable", "beta", "dev"]' >> $GITHUB_OUTPUT
+            echo 'channels=["stable", "beta", "dev"]' >> "$GITHUB_OUTPUT"
+          elif [ "$INPUT" = "stable" ] || [ "$INPUT" = "beta" ] || [ "$INPUT" = "dev" ]; then
+            printf 'channels=["%s"]\n' "$INPUT" >> "$GITHUB_OUTPUT"
           else
-            echo "channels=[\"$INPUT\"]" >> $GITHUB_OUTPUT
+            echo "::error::Invalid Home Assistant channel: $INPUT" >&2
+            exit 1
           fi
 
   canary-smoke:
@@ -98,7 +103,7 @@ jobs:
       - name: Wait for Home Assistant
         run: |
           for attempt in {1..90}; do
-            if curl --fail --silent --show-error http://127.0.0.1:8123/manifest.json >/dev/null; then
+            if curl --connect-timeout 2 --max-time 5 --fail --silent --show-error http://127.0.0.1:8123/manifest.json >/dev/null; then
               exit 0
             fi
 

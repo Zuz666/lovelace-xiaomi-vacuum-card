@@ -69,6 +69,22 @@ const extractHaSmokeEnv = (workflowText) => {
   };
 };
 
+const assertStrictContentsReadPermissions = (workflowText, workflowName) => {
+  const permissionsMatch = workflowText.match(/^permissions:\s*\n([\s\S]*?)(?=\n[A-Za-z_]|$)/m);
+  assert.ok(permissionsMatch, `${workflowName} must define top-level permissions block`);
+
+  const lines = permissionsMatch[1]
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#"));
+
+  assert.deepEqual(
+    lines,
+    ["contents: read"],
+    `${workflowName} permissions must strictly be 'contents: read' with no extra or elevated scopes: ${lines.join(", ")}`,
+  );
+};
+
 test("validateHomeAssistantBaselineImage accepts valid immutable sha256 reference", () => {
   const validDigest =
     "ghcr.io/home-assistant/home-assistant@sha256:59aa8824955c9db491b75d2eebe42bd68494f80c2ec69ec0d66d9dae37d37514";
@@ -151,6 +167,8 @@ test("required CI ha-smoke job uses pinned digest and recorded release", async (
 
 test("ci.yml has pull-request concurrency cancellation, artifact upload, and container cleanup", async () => {
   const ciWorkflow = await readText(".github/workflows/ci.yml");
+  assertStrictContentsReadPermissions(ciWorkflow, "ci.yml");
+  assert.doesNotMatch(ciWorkflow, /secrets\./, "ci.yml must not require personal access tokens");
 
   assert.match(
     ciWorkflow,
@@ -224,11 +242,7 @@ test("ha-canary.yml exists with allowed triggers, permissions, and failure handl
     "ha-canary.yml must not run on pull_request to keep PR checks deterministic",
   );
 
-  assert.match(
-    canaryWorkflow,
-    /permissions:\s*\n\s*contents:\s*read/,
-    "ha-canary.yml must use contents: read permissions",
-  );
+  assertStrictContentsReadPermissions(canaryWorkflow, "ha-canary.yml");
   assert.doesNotMatch(
     canaryWorkflow,
     /secrets\./,
