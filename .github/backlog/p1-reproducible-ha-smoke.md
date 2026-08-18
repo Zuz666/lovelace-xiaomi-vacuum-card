@@ -16,16 +16,19 @@ Moving Home Assistant channels are valuable compatibility signals, but they shou
 
 ## Scope
 
-- Select and document an explicit supported Home Assistant image tag or immutable digest for the required PR smoke job.
+- Select and document an immutable Home Assistant container image reference for the required PR smoke job.
+- Require the runtime image to use `ghcr.io/home-assistant/home-assistant@sha256:<digest>` rather than a tag-only reference.
 - Make the required image reference a visible workflow variable rather than an embedded moving tag.
+- Add validation that rejects missing digests and mutable tag-only references in the required smoke configuration.
+- Record a human-readable Home Assistant release or source tag alongside the digest for maintenance context without using that tag as the runtime identity.
 - Add a scheduled and manually dispatchable compatibility canary for selected moving channels such as stable and beta or development.
 - Keep canary results visible but separate from deterministic branch-protection checks.
 - Upload Playwright traces, screenshots, videos when enabled, HTML reports, and Home Assistant logs on failure.
-- Include the tested HA image and card commit in the workflow summary.
+- Include the tested HA image digest, human-readable release, and card commit in the workflow summary.
 - Add a pull-request concurrency group with cancellation for superseded runs.
 - Ensure the HA container is force-removed during cleanup even after partial startup failures.
 - Remove duplicate readiness work where it does not improve diagnostics, or document why both workflow and test readiness checks are retained.
-- Document the process for intentionally updating the pinned HA baseline.
+- Document the process for intentionally resolving and updating the pinned HA baseline digest.
 
 ## Non-goals
 
@@ -34,10 +37,17 @@ Moving Home Assistant channels are valuable compatibility signals, but they shou
 - Replacing the faster real-browser component tests.
 - Claiming integration compatibility from a single demo vacuum scenario.
 - Automatically updating the required HA baseline without review.
+- Treating a semantic version tag as immutable merely because it is more specific than `stable`.
 
 ## Proposed behavior
 
-Pull requests run one reproducible HA smoke job whose image version changes only through a reviewed repository update. The job name or summary clearly identifies that version.
+Pull requests run one reproducible HA smoke job with a runtime reference such as:
+
+```text
+ghcr.io/home-assistant/home-assistant@sha256:<64-lowercase-hex-characters>
+```
+
+The digest changes only through a reviewed repository update. A separate variable or comment records the corresponding Home Assistant release for readability. A repository test validates the digest form and fails when the required job uses only `:stable`, `:beta`, `:dev`, a semantic version tag, or any other tag without `@sha256:`.
 
 A separate scheduled or manually dispatched canary runs against moving channels. A canary failure retains diagnostics and creates a visible maintenance signal, but it does not retroactively make an unrelated pull request nondeterministic.
 
@@ -45,12 +55,14 @@ On failure, maintainers can download the Playwright report, trace, screenshots, 
 
 ## Acceptance criteria
 
-- [ ] The required PR smoke job uses an explicit HA tag or digest, not only `:stable`, `:beta`, or `:dev`.
-- [ ] The pinned baseline and update procedure are documented.
+- [ ] The required PR smoke job uses an immutable `ghcr.io/home-assistant/home-assistant@sha256:<digest>` runtime reference.
+- [ ] Repository validation rejects tag-only references for the required smoke baseline, including explicit release tags.
+- [ ] A human-readable Home Assistant release identifier is recorded alongside the digest without becoming the runtime identity.
+- [ ] The pinned digest, resolution evidence, and update procedure are documented.
 - [ ] A scheduled and manually dispatchable canary tests selected moving HA channels.
 - [ ] Required and canary checks have distinct stable names and purposes.
 - [ ] Failed runs upload Playwright traces, screenshots, the HTML report, and Home Assistant or Docker logs.
-- [ ] Workflow summaries identify the HA image, card commit, browser, and scenario result.
+- [ ] Workflow summaries identify the HA digest, human-readable release, card commit, browser, and scenario result.
 - [ ] Superseded pull-request runs are cancelled through workflow concurrency.
 - [ ] Cleanup removes the HA container on success, failure, and cancelled runs.
 - [ ] No stored personal access token is required.
@@ -58,7 +70,10 @@ On failure, maintainers can download the Playwright report, trace, screenshots, 
 
 ## Test plan
 
-- [ ] Run the required smoke test against the pinned baseline
+- [ ] Run the required smoke test against the digest-pinned baseline
+- [ ] Unit or repository test accepting a valid lowercase sha256 image reference
+- [ ] Negative tests rejecting `:stable`, `:beta`, `:dev`, semantic version tags, malformed digests, and tag-plus-no-digest references
+- [ ] Verify the documented release identifier corresponds to the resolved digest during baseline updates
 - [ ] Manually dispatch each configured canary channel
 - [ ] Force a controlled Playwright failure and verify downloadable artifacts
 - [ ] Force a controlled HA startup failure and verify retained container logs
@@ -67,15 +82,15 @@ On failure, maintainers can download the Playwright report, trace, screenshots, 
 
 ## Compatibility and migration
 
-- Minimum or targeted Home Assistant version: the explicit baseline selected by the issue implementation
+- Minimum or targeted Home Assistant version: the human-readable release corresponding to the immutable digest selected by the issue implementation
 - Existing configuration impact: none
-- Deprecations: none
-- Breaking change: No
+- Deprecations: mutable tag-only references are not accepted for the required smoke baseline after this issue is complete
+- Breaking change: No runtime card change
 
 ## Dependencies
 
 - Blocked by: none
-- Blocks: reliable large-scale runtime and editor development; intentional supported-HA baseline management
+- Blocks: deterministic large-scale runtime and editor development; intentional supported-HA baseline management
 - Related epic: {{issue:epic-testing-architecture}}
 
 ## Release impact
