@@ -48,6 +48,23 @@ Use Conventional Commits so history and automated changelogs remain structured a
 - `test:` for adding or updating tests (e.g., `test: add ha-smoke coverage`)
 - `chore:` for tooling and maintenance (e.g., `chore: update dependencies`)
 
+## Issue and Backlog Guidelines
+
+Public bug, feature, and compatibility reports must use the structured forms under `.github/ISSUE_TEMPLATE/`.
+
+Maintainer-authored work uses these versioned templates:
+
+- `.github/ISSUE_TEMPLATE/work_item.md` for implementation-ready leaf issues;
+- `.github/ISSUE_TEMPLATE/epic.md` for multi-issue outcomes.
+
+The work item template is the canonical artifact for problem, evidence, scope, non-goals, proposed behavior, acceptance criteria, test plan, compatibility, dependencies, and release impact. Do not replace it with an unversioned personal template or a one-line issue body.
+
+Initial roadmap issues are declared under `.github/backlog/` and created by the manual **Bootstrap backlog** workflow after the declarations are merged into `main`. Managed issue bodies contain a source marker; edit their Markdown source through a pull request and rerun the workflow rather than changing the generated body only in GitHub.
+
+Every implementation issue must satisfy the Definition of Ready before work begins and the Definition of Done before closure. Priority, type, area, milestone, Project lifecycle, epic, and triage rules are defined in [docs/maintainers/backlog-governance.md](docs/maintainers/backlog-governance.md).
+
+Do not copy historical upstream issues one-for-one. Consolidate related evidence into one current canonical issue, describe what the maintained fork already solves, and verify the modern Home Assistant entity and service contract.
+
 ## Pull Request Guidelines
 
 Every pull request must target the `main` branch of `Zuz666/lovelace-xiaomi-vacuum-card` and completely fill out all sections from `.github/PULL_REQUEST_TEMPLATE.md`:
