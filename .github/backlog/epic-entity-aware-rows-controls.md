@@ -8,15 +8,19 @@ Rows and controls use a consistent, Home Assistant-aware model that can display 
 
 Modern integrations expose related functionality through `sensor`, `binary_sensor`, `select`, `button`, `number`, and image entities. The current compact configuration remains useful, but source resolution, formatting, dropdown behavior, service targets, editor serialization, and reactivity need a shared architecture before the card grows further.
 
+The implementation also needs reusable entity fixtures and real browser component tests. Adding more inline mocks to the VM harness would not validate Lit lifecycle, DOM controls, focus, or editor behavior and would make integration scenarios diverge across test layers.
+
 ## Scope
 
 - approve the entity-aware row and control design;
+- introduce reusable entity fixtures and a shared scenario matrix;
 - introduce maintainable source-module and build boundaries;
 - format values using Home Assistant entity metadata;
 - support external `select.*` controls with native target and payload semantics;
 - discover suitable same-device entities in the visual editor;
 - normalize current YAML into the new internal model without losing unknown fields;
-- define migration and deprecation policy.
+- define migration and deprecation policy;
+- cover rendering, controls, availability, and editor round trips in the real browser component layer.
 
 ## Non-goals
 
@@ -28,6 +32,11 @@ Modern integrations expose related functionality through `sensor`, `binary_senso
 ## Child issues
 
 - [ ] {{issue:p1-entity-aware-row-design}} — define the entity-aware row model and migration strategy
+- [ ] {{issue:p1-entity-fixture-matrix}} — introduce reusable entity fixtures and a scenario matrix
+
+Shared testing prerequisite:
+
+- [ ] {{issue:p0-real-lit-component-tests}} — provide real Lit and DOM component coverage
 
 Planned decomposition after the design is approved:
 
@@ -39,11 +48,12 @@ Planned decomposition after the design is approved:
 ## Exit criteria
 
 - [ ] The design specification is approved and implemented by independently testable issues.
+- [ ] Shared fixtures cover representative modern, legacy, unavailable, and controllable entity shapes.
 - [ ] Existing supported YAML is normalized and remains compatible.
 - [ ] External read-only and controllable entities share one predictable model.
 - [ ] Formatting respects Home Assistant metadata before card-specific fallbacks.
 - [ ] Visual-editor round trips preserve supported and unknown configuration fields.
-- [ ] Unit and Home Assistant smoke suites pass.
+- [ ] Contract, component, pinned HA smoke, HACS, and CodeQL checks pass.
 - [ ] Migration and contributor documentation is complete.
 
 ## Upstream and Home Assistant references
@@ -54,5 +64,6 @@ Planned decomposition after the design is approved:
 ## Release plan
 
 - Target milestone: v4.7.0 — Entity-aware rows and controls
-- Critical path: design → source/build boundaries and migration layer → formatter and controls → editor discovery
+- Critical path: design and fixture schema → source/build boundaries and migration layer → formatter and controls → editor discovery
+- Testing gate: real component harness must exist before lifecycle- or interaction-sensitive implementation is merged
 - Known blockers: runtime correctness must be stable enough to define dependency behavior
