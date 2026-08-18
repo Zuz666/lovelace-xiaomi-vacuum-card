@@ -29,7 +29,7 @@ Deep sub-dependencies of our developer tooling (e.g. `brace-expansion`, `js-yaml
 
 ### 3. GitHub Actions (`.github/workflows/*.yml`)
 
-Pre-built actions used in CI pipelines (e.g. `actions/checkout`, `actions/setup-node`, `DavidAnson/markdownlint-cli2-action`, `hacs/action`).
+Pre-built actions used in CI pipelines (e.g. `actions/checkout`, `actions/setup-node`, `github/codeql-action`, `hacs/action`).
 
 ---
 
