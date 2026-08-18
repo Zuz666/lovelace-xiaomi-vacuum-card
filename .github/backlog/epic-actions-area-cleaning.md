@@ -8,6 +8,8 @@ Users can configure standard Home Assistant Lovelace interactions and launch roo
 
 Historical requests for custom services, confirmation, `fire-dom-event`, room buttons, and second button rows describe one broader need: a standard interaction model and a layout that remains usable as actions grow. Home Assistant now provides standard Lovelace actions and native vacuum area-cleaning capabilities that should be preferred over ad hoc card-only contracts.
 
+These interactions require real browser tests. Direct method calls in the VM harness cannot validate focus, pointer and keyboard handling, event propagation, disabled state, confirmation, or the accessibility tree.
+
 ## Scope
 
 - standard Lovelace `tap_action`, `hold_action`, and `double_tap_action` support for buttons, rows, and appropriate card surfaces;
@@ -16,7 +18,8 @@ Historical requests for custom services, confirmation, `fire-dom-event`, room bu
 - responsive action grid or wrapping layout;
 - native `vacuum.clean_area` controls when supported;
 - documented vendor-command fallback where native area cleaning is unavailable;
-- conditions and active-state styling for rows and actions.
+- conditions and active-state styling for rows and actions;
+- real browser component tests for pointer, keyboard, focus, confirmation, availability, and accessibility behavior.
 
 ## Non-goals
 
@@ -33,15 +36,20 @@ Planned decomposition after the entity-aware control interfaces are stable:
 - [ ] Add a responsive action grid and native `vacuum.clean_area` controls.
 - [ ] Add conditions and active-state styling.
 
+Shared testing prerequisites:
+
+- [ ] {{issue:p0-real-lit-component-tests}} — provide real DOM, focus, keyboard, and accessibility assertions
+- [ ] {{issue:p1-entity-fixture-matrix}} — provide deterministic capability and availability scenarios
+
 ## Exit criteria
 
 - [ ] Supported interactions follow Home Assistant Lovelace action semantics.
 - [ ] Confirmation and unavailable states suppress unsafe dispatches.
 - [ ] Five or more actions remain usable on narrow and Sections dashboards.
 - [ ] Native area cleaning is capability-aware and integration-neutral.
-- [ ] Vendor fallback behavior is explicit, tested, and optional.
-- [ ] Mouse, touch, and keyboard behavior is accessible.
-- [ ] Unit and Home Assistant smoke suites pass.
+- [ ] Vendor fallback behavior is explicit, fixture-backed, tested, and optional.
+- [ ] Mouse, touch, keyboard, focus, and accessibility behavior is covered in real browser tests.
+- [ ] Contract, component, pinned HA smoke, HACS, and CodeQL checks pass.
 - [ ] README examples cover standard actions and area cleaning.
 
 ## Upstream and Home Assistant references
@@ -53,4 +61,5 @@ Planned decomposition after the entity-aware control interfaces are stable:
 
 - Target milestone: v4.8.0 — Actions and area cleaning
 - Critical path: entity-aware control interfaces → standard actions → responsive area controls → conditions and active state
+- Testing gate: real component harness and capability fixtures must exist before interaction-heavy implementation is merged
 - Known blockers: the v4.7.0 row/control architecture must expose stable interaction hooks
