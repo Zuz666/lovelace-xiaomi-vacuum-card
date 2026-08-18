@@ -1,0 +1,17 @@
+[
+  {
+    "key": "runtime-correctness",
+    "title": "v4.6.3 — Runtime correctness",
+    "description": "Correctness fixes for reactive entity updates, native vacuum activity and feature-aware actions, and device-aware battery discovery. No intentional configuration break."
+  },
+  {
+    "key": "entity-aware-rows-controls",
+    "title": "v4.7.0 — Entity-aware rows and controls",
+    "description": "Entity-aware row architecture, Home Assistant metadata formatting, external select controls, visual-editor discovery, and backward-compatible migration support."
+  },
+  {
+    "key": "actions-area-cleaning",
+    "title": "v4.8.0 — Actions and area cleaning",
+    "description": "Standard Lovelace actions, responsive action layout, conditions and active state, and native Home Assistant area-cleaning controls."
+  }
+]
