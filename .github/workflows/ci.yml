@@ -72,12 +72,13 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+
       - name: Install Chromium
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install chromium
+
       - name: Run component tests
         run: npm run test:component
-
   ha-smoke:
     runs-on: ubuntu-latest
     needs: checks
@@ -124,6 +125,9 @@ jobs:
           key: ${{ runner.os }}-ha-docker-${{ env.HA_IMAGE }}-${{ hashFiles('tests/ha-smoke/home-assistant/*') }}
           restore-keys: |
             ${{ runner.os }}-ha-docker-${{ env.HA_IMAGE }}-
+
+      - name: Load or pull Home Assistant Docker image
+        env:
           CACHE_HIT: ${{ steps.ha-docker-cache.outputs.cache-hit }}
         run: |
           if [ "${CACHE_HIT}" = "true" ] && [ -f /tmp/ha-docker-cache/ha.tar ]; then
@@ -135,7 +139,6 @@ jobs:
             mkdir -p /tmp/ha-docker-cache
             docker save "${HA_IMAGE}" -o /tmp/ha-docker-cache/ha.tar
           fi
-
       - name: Start Home Assistant
         run: |
           docker run \
