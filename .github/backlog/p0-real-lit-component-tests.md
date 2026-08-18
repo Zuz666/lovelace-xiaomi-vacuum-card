@@ -46,7 +46,7 @@ The harness should use public inputs expected by a Lovelace card and remain inde
 - [ ] The shipped card element mounts with an actual Lit reactive lifecycle and Shadow DOM.
 - [ ] Tests can assign initial and updated Home Assistant state maps deterministically.
 - [ ] Tests can inspect visible text, icons, roles, labels, disabled state, and focus.
-- [ ] A regression test fails when an external sensor changes without causing the card DOM to update.
+- [ ] Replacing only a referenced external sensor state updates the card's visible DOM; the regression test passes after the runtime fix and fails if that behavior regresses.
 - [ ] A regression test detects unnecessary rendering when only an unrelated entity changes.
 - [ ] At least one ARIA combobox keyboard and focus scenario executes against real DOM.
 - [ ] Service and WebSocket calls can be asserted without a real Home Assistant backend.
