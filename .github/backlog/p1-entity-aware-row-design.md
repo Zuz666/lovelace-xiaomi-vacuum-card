@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD034 -->
+
 ## Problem
 
 The current row model grew from vacuum attributes and later added explicit external entities, custom services, units, icons, and dropdown behavior. Modern Home Assistant integrations now distribute vacuum functionality across `vacuum`, `sensor`, `binary_sensor`, `select`, `button`, `number`, and image or camera entities. Adding more vendor presets or special-case compute functions would make the configuration and runtime increasingly inconsistent.

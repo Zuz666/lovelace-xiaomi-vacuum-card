@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD034 -->
+
 ## Outcome
 
 Xiaomi Vacuum Card Reborn renders and controls modern Home Assistant vacuum entities correctly, reacts to every entity it displays, and no longer depends on legacy vacuum attributes or fragile object-ID naming as its primary behavior.

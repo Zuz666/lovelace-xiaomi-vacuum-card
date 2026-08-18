@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD034 -->
+
 ## Problem
 
 The default status row reads the legacy `status` attribute, while modern Home Assistant `StateVacuumEntity` integrations expose the canonical activity in the entity state (`cleaning`, `docked`, `idle`, `paused`, `returning`, or `error`). This can render `Unavailable` for otherwise valid vacuum entities.

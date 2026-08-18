@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD034 -->
+
 ## Outcome
 
 Users can configure standard Home Assistant Lovelace interactions and launch room or area cleaning from a responsive action layout without relying on a large map or vendor-specific button rows as the primary path.

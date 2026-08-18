@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD034 -->
+
 ## Outcome
 
 The project publishes and maintains evidence-based compatibility profiles and fixtures for major Home Assistant vacuum integrations without treating one model-specific patch as support for an entire vendor.

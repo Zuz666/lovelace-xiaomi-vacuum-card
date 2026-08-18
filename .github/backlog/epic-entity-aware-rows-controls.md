@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD034 -->
+
 ## Outcome
 
 Rows and controls use a consistent, Home Assistant-aware model that can display and control entities across modern vacuum integrations without accumulating vendor-specific special cases.

@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD034 -->
+
 ## Problem
 
 The card can read explicitly configured external entities and auto-discovered battery sensors, but the render lifecycle is primarily driven by the main `vacuum.*` state object. When a referenced `sensor.*`, `binary_sensor.*`, image entity, or future `select.*` changes without changing the vacuum entity object, the displayed value can remain stale.

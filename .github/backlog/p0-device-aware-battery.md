@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD034 -->
+
 ## Problem
 
 The fork already supports explicit battery entities and name-based fallbacks such as `sensor.<vacuum_object_id>_battery`, but Home Assistant entity IDs are user-editable and are not a stable relationship key. A renamed battery sensor attached to the same Home Assistant device can therefore be missed even though its `device_class` identifies it correctly.
