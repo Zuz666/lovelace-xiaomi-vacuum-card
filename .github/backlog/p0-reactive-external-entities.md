@@ -41,24 +41,24 @@ Changing an unrelated entity must not re-render the card. Changing a referenced 
 
 ## Acceptance criteria
 
-- [ ] A row backed by an explicit external `sensor.*` updates without a vacuum state change.
-- [ ] A row backed by an explicit `binary_sensor.*` updates without a vacuum state change.
-- [ ] An auto-discovered battery entity update refreshes the battery value and icon.
-- [ ] A referenced image entity update refreshes the image URL when applicable.
-- [ ] Removing or making a referenced entity unavailable refreshes the displayed unavailable state.
-- [ ] Unrelated Home Assistant entity changes do not trigger a card render.
-- [ ] The regression is asserted against visible real-browser DOM, not only direct method results.
-- [ ] Existing supported YAML remains compatible.
+- [x] A row backed by an explicit external `sensor.*` updates without a vacuum state change.
+- [x] A row backed by an explicit `binary_sensor.*` updates without a vacuum state change.
+- [x] An auto-discovered battery entity update refreshes the battery value and icon.
+- [x] A referenced image entity update refreshes the image URL when applicable.
+- [x] Removing or making a referenced entity unavailable refreshes the displayed unavailable state.
+- [x] Unrelated Home Assistant entity changes do not trigger a card render.
+- [x] The regression is asserted against visible real-browser DOM, not only direct method results.
+- [x] Existing supported YAML remains compatible.
 
 ## Test plan
 
-- [ ] Real browser component test reproducing the stale external sensor before the fix
-- [ ] Component test for explicit `binary_sensor.*` updates
-- [ ] Component test for auto-discovered dependency changes
-- [ ] Component test for removed or unavailable dependencies
-- [ ] Render-count or equivalent test proving unrelated state changes do not trigger an update
-- [ ] Targeted HA smoke scenario if registry or full frontend behavior is required
-- [ ] Existing contract, lint, formatting, component, and smoke suites pass
+- [x] Real browser component test reproducing the stale external sensor before the fix
+- [x] Component test for explicit `binary_sensor.*` updates
+- [x] Component test for auto-discovered dependency changes
+- [x] Component test for removed or unavailable dependencies
+- [x] Render-count or equivalent test proving unrelated state changes do not trigger an update
+- [x] Targeted HA smoke scenario if registry or full frontend behavior is required
+- [x] Existing contract, lint, formatting, component, and smoke suites pass
 
 ## Compatibility and migration
 

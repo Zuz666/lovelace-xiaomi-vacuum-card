@@ -31,8 +31,8 @@ The existing VM harness cannot validate actual Lit update behavior. This epic th
 
 ## Child issues
 
-- [ ] {{issue:p0-real-lit-component-tests}} — add real Lit browser component tests for lifecycle and interactions
-- [ ] {{issue:p0-reactive-external-entities}} — update the card when referenced external entities change
+- [x] {{issue:p0-real-lit-component-tests}} — add real Lit browser component tests for lifecycle and interactions
+- [x] {{issue:p0-reactive-external-entities}} — update the card when referenced external entities change
 - [ ] {{issue:p0-native-vacuum-state-features}} — use native vacuum activity and supported feature flags
 - [ ] {{issue:p0-device-aware-battery}} — discover battery and charging entities through the device registry
 - [ ] {{issue:p1-reproducible-ha-smoke}} — make HA smoke tests reproducible and diagnostic
