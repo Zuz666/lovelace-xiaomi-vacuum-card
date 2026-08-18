@@ -36,10 +36,14 @@ Planned decomposition after the entity-aware control interfaces are stable:
 - [ ] Add a responsive action grid and native `vacuum.clean_area` controls.
 - [ ] Add conditions and active-state styling.
 
-Shared testing prerequisites:
+## Shared external prerequisites
+
+The following reusable testing infrastructure is owned and prioritized by the testing architecture epic. These issues gate safe implementation, but they are not child deliverables of this v4.8 feature outcome and their priority labels do not automatically promote every downstream epic that consumes them.
 
 - [ ] {{issue:p0-real-lit-component-tests}} — provide real DOM, focus, keyboard, and accessibility assertions
 - [ ] {{issue:p1-entity-fixture-matrix}} — provide deterministic capability and availability scenarios
+
+The component harness is P0 because it is required to verify current P0 runtime-correctness work. This epic remains P1 because its own planned action and area-cleaning deliverables are next-minor feature work rather than a current correctness defect.
 
 ## Exit criteria
 
@@ -60,6 +64,7 @@ Shared testing prerequisites:
 ## Release plan
 
 - Target milestone: v4.8.0 — Actions and area cleaning
+- Priority rationale: P1 reflects the highest priority of this epic's own action and area-cleaning deliverables; shared testing prerequisites retain their independent priorities
 - Critical path: entity-aware control interfaces → standard actions → responsive area controls → conditions and active state
 - Testing gate: real component harness and capability fixtures must exist before interaction-heavy implementation is merged
 - Known blockers: the v4.7.0 row/control architecture must expose stable interaction hooks
