@@ -6,6 +6,8 @@ The card can read explicitly configured external entities and auto-discovered ba
 
 The current implementation declares `_hass` as a reactive property but `shouldUpdate()` does not treat `_hass` as a reason to render. Assigning the same `stateObj` reference therefore does not guarantee an update for external dependencies.
 
+The existing VM harness cannot prove the browser behavior because it uses a fake `LitElement` whose `requestUpdate()` method is a no-op. This issue therefore depends on the real Lit browser component-test layer.
+
 ## Evidence and upstream references
 
 - Upstream issue(s): https://github.com/benct/lovelace-xiaomi-vacuum-card/issues/118, https://github.com/benct/lovelace-xiaomi-vacuum-card/issues/124
@@ -20,7 +22,8 @@ The current implementation declares `_hass` as a reactive property but `shouldUp
 - Include explicit row entities, auto-discovered battery and charging entities, and image entities.
 - Re-render when a tracked entity state object changes.
 - Avoid re-rendering for unrelated Home Assistant state changes.
-- Add lifecycle regression coverage in the card harness and Home Assistant smoke test where appropriate.
+- Reproduce and verify the behavior in the real browser component harness.
+- Add a targeted Home Assistant smoke scenario only where it proves integration behavior not covered by the component layer.
 
 ## Non-goals
 
@@ -28,6 +31,7 @@ The current implementation declares `_hass` as a reactive property but `shouldUp
 - Adding external `select.*` controls.
 - Adding vendor-specific entity discovery beyond dependencies already resolved by the card.
 - Replacing Lit or introducing a framework-level state manager.
+- Expanding the fake VM harness to emulate Lit lifecycle behavior.
 
 ## Proposed behavior
 
@@ -43,15 +47,18 @@ Changing an unrelated entity must not re-render the card. Changing a referenced 
 - [ ] A referenced image entity update refreshes the image URL when applicable.
 - [ ] Removing or making a referenced entity unavailable refreshes the displayed unavailable state.
 - [ ] Unrelated Home Assistant entity changes do not trigger a card render.
+- [ ] The regression is asserted against visible real-browser DOM, not only direct method results.
 - [ ] Existing supported YAML remains compatible.
 
 ## Test plan
 
-- [ ] Card-harness tests for explicit external entity changes
-- [ ] Card-harness tests for auto-discovered dependency changes
-- [ ] Test for unrelated state changes not triggering a render
-- [ ] Home Assistant smoke test covering at least one external entity update
-- [ ] Existing unit, lint, formatting, and smoke suites pass
+- [ ] Real browser component test reproducing the stale external sensor before the fix
+- [ ] Component test for explicit `binary_sensor.*` updates
+- [ ] Component test for auto-discovered dependency changes
+- [ ] Component test for removed or unavailable dependencies
+- [ ] Render-count or equivalent test proving unrelated state changes do not trigger an update
+- [ ] Targeted HA smoke scenario if registry or full frontend behavior is required
+- [ ] Existing contract, lint, formatting, component, and smoke suites pass
 
 ## Compatibility and migration
 
@@ -62,9 +69,9 @@ Changing an unrelated entity must not re-render the card. Changing a referenced 
 
 ## Dependencies
 
-- Blocked by: none
-- Blocks: device-aware battery and charging entity discovery; external entity controls
-- Related epic: {{issue:epic-modern-ha-entities}}
+- Blocked by: {{issue:p0-real-lit-component-tests}}
+- Blocks: {{issue:p0-device-aware-battery}}; external entity controls
+- Related epics: {{issue:epic-modern-ha-entities}} and {{issue:epic-testing-architecture}}
 
 ## Release impact
 
