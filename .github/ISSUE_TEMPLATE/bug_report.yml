@@ -1,49 +1,110 @@
 name: Bug report
 description: Report a reproducible problem with Xiaomi Vacuum Card Reborn.
 title: "fix: "
-labels: ["bug"]
+labels: ["type:bug"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Provide a minimal reproduction and sanitized Home Assistant diagnostics. Do not include credentials, access tokens, coordinates, serial numbers, or other private data.
+
   - type: textarea
     id: summary
     attributes:
-      label: Summary
-      description: Describe the problem and what you expected to happen.
+      label: Problem summary
+      description: Describe the incorrect behavior and its user impact.
     validations:
       required: true
+
+  - type: textarea
+    id: expected-actual
+    attributes:
+      label: Expected and actual behavior
+      description: State what you expected and what happened instead.
+      placeholder: |
+        Expected: ...
+        Actual: ...
+    validations:
+      required: true
+
   - type: input
     id: home-assistant-version
     attributes:
       label: Home Assistant version
-      placeholder: "2026.6.0"
+      placeholder: "2026.8.0"
     validations:
       required: true
+
   - type: input
     id: card-version-commit
     attributes:
-      label: Card version/commit
-      placeholder: "v1.0.0 or commit SHA"
+      label: Card version or commit
+      placeholder: "v4.6.2 or commit SHA"
     validations:
       required: true
+
+  - type: input
+    id: integration-model
+    attributes:
+      label: Integration, manufacturer, and model
+      description: Example: Roborock integration, Roborock Q Revo.
+      placeholder: Roborock / Roborock Q Revo
+    validations:
+      required: true
+
+  - type: input
+    id: client
+    attributes:
+      label: Browser or Companion App
+      placeholder: Chrome 148 on Windows 11, or Home Assistant Companion 2026.8 on Android
+    validations:
+      required: true
+
   - type: textarea
     id: card-configuration
     attributes:
       label: Card configuration YAML
-      description: Paste the relevant Lovelace card configuration.
+      description: Paste the smallest Lovelace configuration that reproduces the problem.
       render: yaml
+    validations:
+      required: true
+
   - type: textarea
-    id: logs
+    id: entity-diagnostics
     attributes:
-      label: Browser console or HA logs
-      description: Paste any browser console output or Home Assistant log entries.
-      render: text
+      label: Vacuum state, supported features, and related entities
+      description: Paste sanitized Developer Tools → States output and list relevant sensor, binary_sensor, select, button, number, or camera entities from the same device.
+      render: yaml
+    validations:
+      required: true
+
   - type: textarea
     id: reproduction-steps
     attributes:
       label: Reproduction steps
-      description: List the smallest set of steps needed to reproduce the issue.
+      description: List the smallest deterministic sequence needed to reproduce the issue.
       placeholder: |
-        1. Go to ...
-        2. Click ...
-        3. See ...
+        1. Add the card with the YAML above.
+        2. Change ...
+        3. Observe ...
     validations:
       required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Browser console or Home Assistant logs
+      description: Paste only relevant, sanitized output. Write N/A when no error is logged.
+      render: text
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: verification
+    attributes:
+      label: Verification
+      options:
+        - label: I reproduced this with the latest available card release or a current commit.
+          required: true
+        - label: I removed credentials, tokens, coordinates, serial numbers, and other private data.
+          required: true
