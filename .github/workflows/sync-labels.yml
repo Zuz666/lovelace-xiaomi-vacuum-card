@@ -9,8 +9,21 @@ permissions:
   issues: write
 
 jobs:
+  validate-ref:
+    name: Require main branch
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Reject non-main invocation
+        run: |
+          if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+            echo "Sync labels mutates repository metadata and must run from refs/heads/main; got ${GITHUB_REF}." >&2
+            exit 1
+          fi
+
   sync-labels:
     name: Sync repository labels
+    needs: validate-ref
     runs-on: ubuntu-latest
 
     steps:
