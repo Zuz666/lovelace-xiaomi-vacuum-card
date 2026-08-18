@@ -22,7 +22,7 @@ const workflowTriggerKeys = (workflow, name) => {
   const triggerBlock = workflow.match(/^on:\n([\s\S]*?)^permissions:/m);
   assert.ok(triggerBlock, `${name} must have an on block before permissions`);
 
-  return [...triggerBlock[1].matchAll(/^  ([A-Za-z_][A-Za-z0-9_]*):/gm)].map(
+  return [...triggerBlock[1].matchAll(/^ {2}([A-Za-z_][A-Za-z0-9_]*):/gm)].map(
     (match) => match[1],
   );
 };
