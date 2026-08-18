@@ -2,10 +2,6 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-function escapeRegex(string) {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
 test("CHANGELOG.md adheres to Keep a Changelog conventions", async () => {
   const rawChangelog = await readFile(new URL("../CHANGELOG.md", import.meta.url), "utf8");
   const changelog = rawChangelog.replace(/\r\n/g, "\n");
@@ -26,7 +22,7 @@ test("CHANGELOG.md contains release sections and link references for recent vers
 
   const currentVersion = packageJson.version;
   const versionRegex = new RegExp(
-    `##\\s+\\[${escapeRegex(currentVersion)}\\]\\s+-\\s+\\d{4}-\\d{2}-\\d{2}`,
+    `##\\s+\\[${currentVersion.replace(/\./g, "\\.")}\\]\\s+-\\s+\\d{4}-\\d{2}-\\d{2}`,
   );
   assert.ok(
     versionRegex.test(changelog),
@@ -34,7 +30,7 @@ test("CHANGELOG.md contains release sections and link references for recent vers
   );
 
   const linkRegex = new RegExp(
-    `^\\[${escapeRegex(currentVersion)}\\]:\\s+https://github\\.com/`,
+    `^\\[${currentVersion.replace(/\./g, "\\.")}\\]:\\s+https://github\\.com/`,
     "m",
   );
   assert.ok(
@@ -48,7 +44,7 @@ test("Extracting release notes for a version retrieves release section content",
   const changelog = rawChangelog.replace(/\r\n/g, "\n");
 
   function extractReleaseNotes(content, version) {
-    const escaped = escapeRegex(version);
+    const escaped = version.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const regex = new RegExp(
       `(?:^|\\n)##\\s+\\[?${escaped}\\]?(?:\\s+-[^\\n]*)?\\n([\\s\\S]*?)(?=\\n##\\s+|\n\\[[^\\]]+\\]:|$)`,
     );
