@@ -48,10 +48,21 @@ before publishing the issue.
 
 ## Test plan
 
-- [ ] Unit or card-harness regression tests
-- [ ] Home Assistant smoke test for UI, lifecycle, or integration behavior
-- [ ] Manual browser or Companion App verification when applicable
-- [ ] Fixtures cover affected integrations or entity shapes when applicable
+<!--
+Select the layers that can actually observe the material risks. Mark an item N/A
+with a reason rather than checking an irrelevant test. See
+`docs/maintainers/testing-strategy.md`.
+-->
+
+- [ ] Node unit or contract tests for configuration, source resolution, formatting, payloads, or error paths
+- [ ] Real browser component tests for Lit lifecycle, visible DOM, focus, keyboard, availability, accessibility, or interaction behavior
+- [ ] Pinned Home Assistant smoke test for resource loading, editor or registry integration, service, WebSocket, or other HA boundaries
+- [ ] Shared sanitized fixtures for affected integrations, entity shapes, feature flags, or expected controls
+- [ ] Manual browser or Companion App verification when automation cannot fully represent the scenario
+
+Test-layer rationale:
+
+<!-- Explain briefly why the selected layers can detect the regression or prove the behavior. -->
 
 ## Compatibility and migration
 
