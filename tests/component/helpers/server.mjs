@@ -220,6 +220,7 @@ export function createComponentServer() {
 // Standalone execution when run via `node server.mjs`
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   let port = Number(process.env.COMPONENT_SERVER_PORT || 5178);
+  let host = "127.0.0.1";
   if (process.env.COMPONENT_BASE_URL) {
     try {
       const url = new URL(process.env.COMPONENT_BASE_URL);
@@ -228,10 +229,13 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
       } else {
         port = url.protocol === "https:" ? 443 : 80;
       }
+      if (url.hostname) {
+        host = url.hostname;
+      }
     } catch (_) {}
   }
   const server = createComponentServer();
-  server.listen(port, "127.0.0.1", () => {
-    console.log(`Component test server listening on http://127.0.0.1:${port}`);
+  server.listen(port, host, () => {
+    console.log(`Component test server listening on http://${host}:${port}`);
   });
 }
