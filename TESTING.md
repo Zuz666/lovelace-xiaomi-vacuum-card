@@ -59,6 +59,12 @@ verifies integration, resource loading, and container-level boundaries.
 
 ## Browser Component Tests
 
+Install the Chromium browser once:
+
+```sh
+npx playwright install chromium
+```
+
 Run the real-browser component test layer with:
 
 ```sh
