@@ -1,23 +1,23 @@
-name: Format diagnostics
+name: Format bootstrap branch
 
 on:
-  pull_request:
-    branches:
-      - main
   push:
     branches:
       - agent/backlog-bootstrap
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  format-diagnostics:
+  format-bootstrap:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout bootstrap branch
         uses: actions/checkout@v7
+        with:
+          ref: agent/backlog-bootstrap
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Format changed governance files
+      - name: Format governance files
         run: |
           npx prettier --write \
             .github/ISSUE_TEMPLATE/bug_report.yml \
@@ -38,17 +38,22 @@ jobs:
             docs/maintainers/backlog-governance.md \
             tests/backlog-governance.test.mjs
 
-      - name: Print formatted files as base64
+      - name: Commit formatting changes
         run: |
-          for file in \
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
             .github/ISSUE_TEMPLATE/bug_report.yml \
             .github/ISSUE_TEMPLATE/feature_request.yml \
             .github/ISSUE_TEMPLATE/compatibility_report.yml \
             .github/backlog/issues.json \
             docs/maintainers/backlog-governance.md \
-            tests/backlog-governance.test.mjs; do
-            echo "FORMAT_FILE_BEGIN:${file}"
-            base64 -w 0 "${file}"
-            echo
-            echo "FORMAT_FILE_END:${file}"
-          done
+            tests/backlog-governance.test.mjs
+
+          if git diff --cached --quiet; then
+            echo "Governance files already match Prettier."
+            exit 0
+          fi
+
+          git commit -m "style: format backlog governance"
+          git push origin HEAD:agent/backlog-bootstrap
