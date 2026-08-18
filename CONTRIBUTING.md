@@ -85,11 +85,11 @@ Every pull request must target the `main` branch of `Zuz666/lovelace-xiaomi-vacu
 
 ### 7. Checklist (`## Checklist`)
 
-- Verify that Conventional Commits are used, browser ES module compatibility is maintained, and tests/docs are updated.
+- Verify that Conventional Commits are used, browser ES module compatibility is maintained, tests/docs are updated, and automated review findings (CodeRabbit) are reviewed.
 
 ### 8. Review (`## Review`)
 
-- Include notes for reviewers, self-review highlights, or specific areas needing closer inspection.
+- Include notes for reviewers, self-review highlights, specific areas needing closer inspection, or explanations regarding automated review findings.
 
 Do not use single-line placeholders or empty stubs in `--body`. Use `--body-file` or a full multiline description when submitting pull requests with the `gh` CLI.
 
