@@ -193,7 +193,7 @@ When `service_data_mode` is set to `dynamic`, the card renders `service_data_tem
 The card supports custom background images configured via YAML or the visual media selector:
 
 - Local files: `/local/images/vacuum.png` (stored in `<config>/www/images/vacuum.png`)
-- Media source: `media-source://image_upload/...` or `media-source://media_source/...`
+- Media source & Image entities: `media-source://image_upload/...`, `media-source://image/image.<vacuum>_live_map`, or full HA media selector objects
 - HACS assets: `/hacsfiles/...`
 - HTTPS URLs: `https://example.com/vacuum.png`
 
@@ -254,17 +254,22 @@ state:
 
 ---
 
-### 4. Custom External Entity Row
+### 4. Custom External Entity Rows (Room Name & Map Extractor Sensors)
 
-Adds a custom row to the card backed by an external Home Assistant entity. You can specify **any** arbitrary sensor or entity in the `entity:` field (such as a template sensor, room temperature `sensor.living_room_temperature`, dustbin status, or mop water level) completely independent of the vacuum cleaner itself.
+Adds custom rows to the card backed by external Home Assistant entities. You can specify **any** arbitrary sensor or entity in the `entity:` field — for example, diagnostic sensors provided by companion integrations like [Xiaomi Cloud Map Extractor](https://github.com/PiotrMachowski/Home-Assistant-custom-components-Xiaomi-Cloud-Map-Extractor) (such as the current room name `sensor.my_vacuum_room_name`), template sensors, room temperature, dustbin status, or mop water level.
 
 _Tip: Place the custom row under `attributes:` to display it in the right column, or under `state:` to display it in the left column._
 
-> **Displaying attributes of external entities:** The `entity:` field reads the primary state of the referenced entity. If you want to display an attribute of a third-party entity (such as `current_humidity` from `climate.living_room`), the standard Home Assistant method is to create a one-line Template Sensor (`state: "{{ state_attr('climate.living_room', 'current_humidity') }}"`) and pass its entity ID to `entity:`.
+> **Displaying attributes of external entities:** The `entity:` field reads the primary state of the referenced entity. If you want to display an attribute from an external accessory (such as the `water_level` attribute from `sensor.my_vacuum_dock`), the standard Home Assistant method is to create a one-line Template Sensor (`state: "{{ state_attr('sensor.my_vacuum_dock', 'water_level') }}"`) and pass its entity ID to `entity:`. (To display native attributes of your main vacuum entity itself, simply use the `key:` field without defining `entity:`).
 
 ```yaml
 type: custom:xiaomi-vacuum-card
 entity: vacuum.my_vacuum
+state:
+  current_room:
+    entity: sensor.my_vacuum_room_name
+    icon: mdi:floor-plan
+    label: "Room: "
 attributes:
   cleaned_area:
     entity: sensor.my_vacuum_cleaned_area
@@ -335,6 +340,33 @@ buttons:
     show: true
     label: Return vacuum to dock
 ```
+
+---
+
+### 8. Live Vacuum Map as Background (Xiaomi Cloud Map Extractor & Media Source)
+
+You can display a live, auto-updating cleaning map directly on the card background using Home Assistant's media source and integrations such as [Xiaomi Cloud Map Extractor](https://github.com/PiotrMachowski/Home-Assistant-custom-components-Xiaomi-Cloud-Map-Extractor).
+
+When configured via the visual card editor's media picker (or YAML), the card accepts both concise media URIs and full Home Assistant media selector metadata objects. The card automatically resolves the image entity stream and live access tokens in real time as the vacuum cleans:
+
+```yaml
+type: custom:xiaomi-vacuum-card
+entity: vacuum.my_vacuum
+image:
+  media_content_id: media-source://image/image.my_vacuum_live_map
+  media_content_type: image/png
+  metadata:
+    title: Vacuum Live Map
+    thumbnail: /api/image_proxy/image.my_vacuum_live_map
+    media_class: image
+    children_media_class: null
+    navigateIds:
+      - {}
+      - media_content_type: app
+        media_content_id: media-source://image
+```
+
+> **Tip:** You can also write the shorthand string format `image: media-source://image/image.my_vacuum_live_map` — both formats are fully supported.
 
 ---
 
