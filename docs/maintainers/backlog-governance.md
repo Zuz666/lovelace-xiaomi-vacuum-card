@@ -55,9 +55,9 @@ Every leaf issue must have exactly one priority label.
 | `priority:P2` | Valuable work that does not block the primary user journey                         |
 | `priority:P3` | Nice-to-have, experimental, or primarily visual improvement                        |
 
-An epic uses the highest priority currently present on its critical path. Priority describes urgency and impact, not implementation size.
+An epic uses the highest priority among its own child deliverables and blockers whose urgency is caused by that epic's outcome. Priority describes urgency and impact, not implementation size.
 
-Test infrastructure may be P0 when it is the only reliable way to verify a current P0 correctness defect. Priority describes the risk on the delivery path, not whether the issue directly changes the UI.
+A shared cross-release prerequisite keeps its own independently justified priority and does not automatically promote every downstream epic that consumes it. For example, a browser test harness may be P0 because it is the only reliable way to verify a current P0 correctness defect, while a later feature epic that reuses the same harness remains P1. Promote the downstream epic only when its own deliverables or an epic-specific blocker have the higher urgency.
 
 ## Type labels
 
@@ -106,6 +106,10 @@ Use GitHub's native close reasons for completed, duplicate, and not-planned issu
 - `good first issue` — isolated and documented work suitable for a new contributor;
 - `help wanted` — maintainer requests implementation help or device-specific evidence.
 
+A canonical leaf issue that cites historical `benct/lovelace-xiaomi-vacuum-card` issues or pull requests as the origin of its work must use `source:upstream`. If the upstream links are contextual rather than the origin, state that distinction explicitly in the body.
+
+A leaf issue whose compatibility section says `Breaking change: Potential` or `Breaking change: Yes`, or whose default presentation or configuration behavior may change incompatibly, must use `breaking-change` until the migration risk is resolved. The label records risk for review; it does not assert that the final release will necessarily break users.
+
 Do not create a label for every vacuum vendor until there are enough active issues to justify that taxonomy. Use `area:vendor` and name the verified integration or model in the issue body.
 
 ## Milestones
@@ -142,20 +146,41 @@ Project creation is a one-time owner-level GitHub operation. Repository labels, 
 
 ## Testing governance
 
-The repository uses a layered testing strategy defined in `docs/maintainers/testing-strategy.md`:
+The target layered architecture is defined in `docs/maintainers/testing-strategy.md`:
 
 1. static repository checks;
 2. Node unit and contract tests;
 3. real browser component tests with actual Lit and DOM behavior;
-4. a required pinned Home Assistant smoke baseline;
+4. a required immutable-digest-pinned Home Assistant smoke baseline;
 5. scheduled or manually dispatched moving-channel compatibility canaries;
 6. sanitized fixtures shared across appropriate layers.
 
-Do not expand the VM harness into a fake browser or fake Home Assistant frontend. Keep it for pure contracts and move lifecycle, DOM, focus, keyboard, accessibility, and interaction behavior to real browser component tests.
+The component harness and digest-pinned Home Assistant baseline are target capabilities delivered by canonical backlog issues. Governance must not describe them as already available.
 
-Before lifecycle-sensitive runtime work is marked Ready, the issue must identify the real browser regression that proves it. Before a compatibility claim is marked Ready, it must identify the sanitized fixture and expected contract. Full HA smoke tests should remain small and prove integration boundaries rather than duplicate every component scenario.
+Do not expand the VM harness into a fake browser or fake Home Assistant frontend. Keep it for pure contracts and move lifecycle, DOM, focus, keyboard, accessibility, and interaction behavior to real browser component tests when that layer exists.
 
-A mutable Home Assistant channel should not be the only required pull-request baseline. Moving channels belong in canaries; the required smoke version changes through an explicit reviewed update.
+Before lifecycle-sensitive runtime work is marked Ready, the issue must identify the browser-observable regression that proves it. Before a compatibility claim is marked Ready, it must identify the sanitized fixture and expected contract. Full HA smoke tests should remain small and prove integration boundaries rather than duplicate every component scenario.
+
+### Interim quality gates
+
+Until the real browser component-test issue is complete:
+
+- planned lifecycle-heavy work remains blocked when the component layer is the only reliable test seam;
+- an urgent maintenance, security, or compatibility fix may proceed only with targeted Home Assistant smoke coverage that observes the user-visible behavior and a linked issue recording the missing component regression;
+- the VM harness must not be expanded to simulate Lit or DOM behavior.
+
+Until the reproducible Home Assistant smoke issue is complete:
+
+- the existing required `ha-smoke` check using the current configured image must pass for resource, editor, registry, service, WebSocket, and integration-boundary changes;
+- pull-request evidence must record the resolved Home Assistant image identifier or digest reported by Docker or the workflow, not merely the mutable source tag;
+- a failure caused by a newly moved `stable` tag must be triaged as baseline drift rather than silently waived;
+- the immutable digest-pinned baseline is not yet a satisfiable requirement and therefore is not required for interim Done status.
+
+### Target quality gates
+
+After the component-test backlog item is complete, real browser component coverage is mandatory for lifecycle, DOM, focus, keyboard, availability, accessibility, and interaction changes.
+
+After the reproducible smoke backlog item is complete, the required Home Assistant smoke job must run an immutable `@sha256:` image reference. Moving `stable`, `beta`, and development channels belong only in non-blocking canaries; the required digest changes through an explicit reviewed pull request.
 
 ## Definition of Ready
 
@@ -164,12 +189,12 @@ An issue may move to **Ready** only when:
 - the user or technical outcome is clear;
 - scope and non-goals are explicit;
 - acceptance criteria are observable;
-- the test plan identifies the correct test layer for each material risk;
-- lifecycle or interaction changes identify a real browser component scenario;
+- the test plan identifies the correct currently available or explicitly prerequisite test layer for each material risk;
+- lifecycle or interaction changes identify a real browser scenario, with the component-harness dependency recorded when that layer is not yet available;
 - priority, type, area, and target milestone are assigned where applicable;
 - dependencies and blockers are recorded;
 - compatibility work includes an integration, model, sanitized entity fixture, and service or control contract;
-- potential migration or breaking impact is documented.
+- potential migration or breaking impact is documented and labelled where applicable.
 
 ## Definition of Done
 
@@ -179,8 +204,8 @@ An issue is done when:
 - the pull request references `Closes #<issue>` or the issue is otherwise explicitly resolved;
 - acceptance criteria are satisfied;
 - tests are added at the layer that can actually observe the changed behavior, or their absence is justified;
-- real browser component tests pass for lifecycle, DOM, focus, keyboard, accessibility, and interaction changes;
-- the pinned Home Assistant smoke test passes for resource, editor, registry, service, WebSocket, and integration-boundary changes;
+- lifecycle, DOM, focus, keyboard, accessibility, and interaction changes satisfy the applicable component rule: the real browser component tests pass after that layer exists, or the interim targeted-smoke exception and linked missing-regression issue are documented before it exists;
+- resource, editor, registry, service, WebSocket, and integration-boundary changes satisfy the applicable HA smoke rule: before the pinned-baseline issue is complete, the current required smoke test passes and its resolved image identifier is recorded; afterward, the immutable digest-pinned smoke test passes;
 - README, contributor documentation, and changelog are updated when required;
 - backward compatibility or migration behavior is verified;
 - compatibility claims link to reviewed fixtures and tested expectations;
@@ -193,6 +218,8 @@ An epic describes an outcome and shared exit criteria. It should contain links t
 Use native GitHub sub-issues when maintaining the backlog interactively. The bootstrap workflow also writes a Markdown checklist into each initial epic so the relationship remains visible to readers and tools that do not expose sub-issues.
 
 Cross-release quality epics may remain without a milestone while their leaf issues are assigned to concrete release milestones.
+
+Shared external prerequisites should be listed separately from child deliverables. Their independent priority does not automatically set the downstream epic priority unless the prerequisite's urgency is caused by that epic's outcome.
 
 ## Upstream traceability
 
@@ -211,13 +238,15 @@ The repository contains two manual workflows:
 - **Sync labels** — creates or updates labels from `.github/labels.json` and never deletes unmanaged labels;
 - **Bootstrap backlog** — invokes label synchronization, creates or updates milestones from `.github/milestones.json`, and creates or updates the initial issues declared in `.github/backlog/issues.json`.
 
-Both workflows are intentionally limited to `workflow_dispatch`; the label workflow additionally allows `workflow_call` so the backlog workflow can reuse it. External Actions are pinned to full commit SHAs, checkout credentials are not persisted, and the workflows use only `contents: read` and `issues: write`.
+Both workflows are intentionally limited to `workflow_dispatch`; the label workflow additionally allows `workflow_call` so the backlog workflow can reuse it. Each workflow hard-fails unless `github.ref` is exactly `refs/heads/main`, preventing repository metadata from being mutated using unmerged feature-branch declarations.
+
+External Actions are pinned to full commit SHAs, checkout credentials are not persisted, and workflow- and job-level permissions are restricted to the allowlist `contents: read` and `issues: write`. Governance tests reject any additional scope or stronger access level.
 
 The stable manifest key is the identity of a managed issue. Generated issue bodies contain a marker of the form `<!-- managed-by: .github/backlog/issues.json key=<key> -->`. Reruns locate issues by this marker, never by title alone. A same-title unmarked issue or duplicate marker stops the workflow and requires explicit maintainer resolution instead of authorizing an overwrite.
 
 A missing issue is created with its marker in the initial body before references are reconciled. Existing marked issues have their title, body, labels, and milestone reconciled from the repository declarations. Existing milestone titles and descriptions are reconciled without changing whether a milestone is open or closed. The workflows never close issues, reopen milestones, or delete unmanaged labels.
 
-Changing a manifest key changes identity and must be treated as an explicit migration. Review and merge governance changes before running the workflows.
+Changing a manifest key changes identity and must be treated as an explicit migration. Review and merge governance changes into `main` with passing CI before running either workflow from `main`.
 
 ## Triage checklist
 
