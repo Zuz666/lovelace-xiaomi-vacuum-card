@@ -18,6 +18,18 @@ const assertUnique = (values, description) => {
   );
 };
 
+const workflowTriggerKeys = (workflow, name) => {
+  const triggerBlock = workflow.match(/^on:\n([\s\S]*?)^permissions:/m);
+  assert.ok(triggerBlock, `${name} must have an on block before permissions`);
+
+  return [...triggerBlock[1].matchAll(/^  ([A-Za-z_][A-Za-z0-9_]*):/gm)].map(
+    (match) => match[1],
+  );
+};
+
+const workflowUses = (workflow) =>
+  [...workflow.matchAll(/^\s*uses:\s*([^\s#]+)/gm)].map((match) => match[1]);
+
 test("managed labels use valid unique names, colors, and descriptions", async () => {
   const labels = await readJson(".github/labels.json");
 
@@ -129,6 +141,16 @@ test("canonical maintainer templates contain required planning sections", async 
     assert.ok(workItem.includes(heading), `Work item template is missing ${heading}`);
   }
 
+  for (const testLayer of [
+    "Node unit or contract tests",
+    "Real browser component tests",
+    "Pinned Home Assistant smoke test",
+    "Shared sanitized fixtures",
+    "Test-layer rationale",
+  ]) {
+    assert.ok(workItem.includes(testLayer), `Work item template is missing ${testLayer}`);
+  }
+
   for (const heading of [
     "## Outcome",
     "## Why this matters",
@@ -183,17 +205,31 @@ test("testing strategy and critical test backlog remain declared", async () => {
   );
 });
 
-test("bootstrap workflows remain manual and least-privileged", async () => {
+test("bootstrap workflows use only allowed manual triggers and pinned external actions", async () => {
   const [syncLabels, bootstrapBacklog] = await Promise.all([
     readText(".github/workflows/sync-labels.yml"),
     readText(".github/workflows/bootstrap-backlog.yml"),
   ]);
 
-  for (const [name, workflow] of [
-    ["Sync labels", syncLabels],
-    ["Bootstrap backlog", bootstrapBacklog],
-  ]) {
-    assert.ok(workflow.includes("workflow_dispatch:"), `${name} must be manually dispatchable`);
+  const workflows = [
+    {
+      name: "Sync labels",
+      workflow: syncLabels,
+      allowedTriggers: ["workflow_call", "workflow_dispatch"],
+    },
+    {
+      name: "Bootstrap backlog",
+      workflow: bootstrapBacklog,
+      allowedTriggers: ["workflow_dispatch"],
+    },
+  ];
+
+  for (const { name, workflow, allowedTriggers } of workflows) {
+    assert.deepEqual(
+      workflowTriggerKeys(workflow, name).sort(),
+      [...allowedTriggers].sort(),
+      `${name} has an automatic or unsupported trigger`,
+    );
     assert.ok(
       workflow.includes("contents: read"),
       `${name} must use read-only contents permission`,
@@ -204,5 +240,48 @@ test("bootstrap workflows remain manual and least-privileged", async () => {
       `${name} must not use pull_request_target`,
     );
     assert.ok(!workflow.includes("secrets."), `${name} must not require a stored personal token`);
+    assert.ok(
+      workflow.includes("persist-credentials: false"),
+      `${name} checkout must not persist credentials`,
+    );
+
+    for (const uses of workflowUses(workflow)) {
+      if (uses.startsWith("./")) continue;
+      assert.match(
+        uses,
+        /^[^@\s]+@[0-9a-f]{40}$/,
+        `${name} external action must be pinned to a full commit SHA: ${uses}`,
+      );
+    }
   }
+});
+
+test("backlog bootstrap preserves milestone state and reconciles issues by marker", async () => {
+  const bootstrap = await readText(".github/workflows/bootstrap-backlog.yml");
+
+  assert.equal(
+    (bootstrap.match(/state: "open"/g) || []).length,
+    1,
+    "Only milestone creation may set state to open",
+  );
+  assert.ok(
+    bootstrap.includes('contains($marker)'),
+    "Managed issues must be discovered by their stable marker",
+  );
+  assert.ok(
+    bootstrap.includes("Refusing to adopt unmarked issue"),
+    "Unmarked title collisions must stop reconciliation",
+  );
+  assert.ok(
+    bootstrap.includes("Multiple issues contain the managed marker"),
+    "Duplicate managed markers must stop reconciliation",
+  );
+  assert.ok(
+    bootstrap.includes("printf '%s\\n\\n' \"${marker}\""),
+    "New issues must contain their marker from the first API call",
+  );
+  assert.ok(
+    bootstrap.includes("--json number,title,body"),
+    "Issue discovery must read bodies before selecting a managed issue",
+  );
 });
