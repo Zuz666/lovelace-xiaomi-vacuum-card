@@ -29,6 +29,8 @@ Bootstrapped issue bodies contain a `managed-by` marker. Treat the Markdown file
 
 Use issue comments for discussion and implementation updates; the workflow does not modify comments.
 
+Managed issue bodies may locally disable markdownlint rule `MD034` so exact upstream and Home Assistant source URLs remain directly reusable when the workflow publishes the issue. All other Markdown rules continue to apply.
+
 ## Adding another item
 
 1. Start from `.github/ISSUE_TEMPLATE/work_item.md` or `.github/ISSUE_TEMPLATE/epic.md`.
