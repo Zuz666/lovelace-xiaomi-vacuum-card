@@ -10,21 +10,40 @@
     "key": "p0-reactive-external-entities",
     "title": "fix: update card when referenced external entities change",
     "body_file": ".github/backlog/p0-reactive-external-entities.md",
-    "labels": ["priority:P0", "type:bug", "area:runtime", "area:entities"],
+    "labels": [
+      "priority:P0",
+      "type:bug",
+      "area:runtime",
+      "area:entities",
+      "source:upstream"
+    ],
     "milestone": "runtime-correctness"
   },
   {
     "key": "p0-native-vacuum-state-features",
     "title": "fix: use native vacuum activity and supported feature flags",
     "body_file": ".github/backlog/p0-native-vacuum-state-features.md",
-    "labels": ["priority:P0", "type:bug", "area:runtime", "area:controls", "source:upstream"],
+    "labels": [
+      "priority:P0",
+      "type:bug",
+      "area:runtime",
+      "area:controls",
+      "source:upstream",
+      "breaking-change"
+    ],
     "milestone": "runtime-correctness"
   },
   {
     "key": "p0-device-aware-battery",
     "title": "fix: discover battery and charging entities through device registry",
     "body_file": ".github/backlog/p0-device-aware-battery.md",
-    "labels": ["priority:P0", "type:bug", "area:entities", "area:compatibility", "source:upstream"],
+    "labels": [
+      "priority:P0",
+      "type:bug",
+      "area:entities",
+      "area:compatibility",
+      "source:upstream"
+    ],
     "milestone": "runtime-correctness"
   },
   {
@@ -45,7 +64,14 @@
     "key": "p1-entity-aware-row-design",
     "title": "design: define the entity-aware row model and migration strategy",
     "body_file": ".github/backlog/p1-entity-aware-row-design.md",
-    "labels": ["priority:P1", "type:refactor", "area:entities", "area:controls", "breaking-change"],
+    "labels": [
+      "priority:P1",
+      "type:refactor",
+      "area:entities",
+      "area:controls",
+      "breaking-change",
+      "source:upstream"
+    ],
     "milestone": "entity-aware-rows-controls"
   },
   {
