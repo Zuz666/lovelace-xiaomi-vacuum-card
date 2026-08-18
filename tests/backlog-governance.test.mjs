@@ -461,8 +461,16 @@ test("test-foundation issue contracts remain implementation-ready", async () => 
   assert.ok(nativeVacuum.includes("### Legacy toggle-service compatibility"));
   assert.ok(nativeVacuum.includes("must therefore not infer modern automatic capability"));
 
-  assert.ok(component.includes("Replacing only a referenced external sensor state updates"));
-  assert.ok(component.includes("the regression test passes after the runtime fix"));
+  assert.ok(
+    component.includes(
+      "The component harness can express the stale external-entity regression scenario",
+    ),
+  );
+  assert.ok(
+    component.includes(
+      "becomes a required passing test when issue {{issue:p0-reactive-external-entities}} delivers the runtime fix",
+    ),
+  );
 
   assert.ok(fixtures.includes('"schema_version": 1'));
   assert.ok(fixtures.includes('"supported_features": 4096'));

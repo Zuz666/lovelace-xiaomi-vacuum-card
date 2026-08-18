@@ -52,30 +52,38 @@ and other contracts that do not require a real browser.
 The VM harness is intentionally not a real Lit or DOM implementation. It does
 not prove reactive updates, Shadow DOM output, focus, keyboard behavior, event
 propagation, accessibility roles, or user-visible interaction state. Do not add
-more fake browser behavior to make a lifecycle-sensitive test pass. Until the
-real browser component layer is implemented, use targeted Home Assistant smoke
-coverage for urgent lifecycle-sensitive changes and record the missing component
-regression in the issue.
+more fake browser behavior to make a lifecycle-sensitive test pass. Use the real
+browser component layer (`npm run test:component`) for lifecycle and DOM
+assertions, while full Home Assistant smoke coverage (`npm run test:ha-smoke`)
+verifies integration, resource loading, and container-level boundaries.
 
 ## Browser Component Tests
 
-A fast real-browser component layer is planned in the canonical backlog. It will
-load the shipped card with an actual Lit lifecycle and deterministic Home
-Assistant stubs, without starting a full HA container.
+Install the Chromium browser once:
 
-After it is implemented, use it for:
+```sh
+npx playwright install chromium
+```
+
+Run the real-browser component test layer with:
+
+```sh
+npm run test:component
+```
+
+The component harness loads the shipped card (`dist/xiaomi-vacuum-card.js`) into a
+Chromium browser page with an actual LitElement runtime, real Shadow DOM, and
+deterministic Home Assistant object stubs, without starting a full Home Assistant
+container.
+
+Use this layer for:
 
 - reactive `hass` and entity-state updates;
-- visible Shadow DOM output;
-- focus and keyboard behavior;
-- ARIA roles and accessible names;
+- visible Shadow DOM output and DOM assertions;
+- focus, keyboard navigation, and ARIA accessibility roles;
 - unavailable and disabled states;
-- production-shaped optional registry maps;
-- interaction and service dispatch;
-- render-count regressions.
-
-The planned command is `npm run test:component`; do not document it as available
-in pull-request test evidence until the corresponding backlog issue is merged.
+- service and WebSocket action dispatches;
+- render-count and lifecycle regressions.
 
 ## Home Assistant Smoke Test
 
