@@ -111,6 +111,16 @@ Useful pull request commands:
 Do not apply automatically generated fixes without reviewing the resulting
 diff and running the repository validation suite.
 
+## Dependency Management & Automated Pull Requests
+
+The repository relies on Dependabot for automated maintenance of `devDependencies` and GitHub Actions.
+
+- The client card (`dist/xiaomi-vacuum-card.js`) has **zero** runtime npm dependencies. All npm dependencies are development tooling (linters, formatters, test runners).
+- Automated dependency updates must pass all CI checks (`checks`, `ha-smoke`, `validate-hacs`) and automated code reviews.
+- For stale or behind pull requests, trigger `@dependabot rebase` in a comment to bring the branch up to date with `main`.
+- Internal developer tooling updates do not require an entry in `CHANGELOG.md` unless contributor prerequisites change.
+- For full review, verification, and merge procedures, see [docs/dependency-workflow.md](docs/dependency-workflow.md).
+
 ## Changelog & Release Workflow
 
 `CHANGELOG.md` is the authoritative source for all notable project changes.
