@@ -14,6 +14,8 @@ reviews:
     auto_incremental_review: true
   path_filters:
     - "dist/xiaomi-vacuum-card.js"
+    - "!dist/**"
+    - "**"
   path_instructions:
     - path: "dist/xiaomi-vacuum-card.js"
       instructions: |
