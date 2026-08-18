@@ -11,6 +11,10 @@ This is the canonical implementation issue template for maintainers.
 Keep each leaf issue small enough to complete in one pull request or a short,
 explicitly ordered sequence of pull requests. Delete instructional comments
 before publishing the issue.
+
+Before publishing, assign exactly one `priority:*` label, exactly one `type:*`
+label, and one or two `area:*` labels. Assign a target milestone when applicable.
+See `docs/maintainers/backlog-governance.md` for the source-of-truth rules.
 -->
 
 ## Problem
