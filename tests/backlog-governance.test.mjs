@@ -38,6 +38,102 @@ const assertAllowedWorkflowTriggers = (workflow, name, allowedTriggers) => {
   );
 };
 
+const workflowPermissionBlocks = (workflow, name) => {
+  const lines = workflow.split("\n");
+  const blocks = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const header = lines[index].match(/^(\s*)permissions:\s*(.*)$/);
+    if (!header) continue;
+
+    const indent = header[1].length;
+    const scalar = header[2].trim();
+    const entries = [];
+
+    if (scalar) {
+      blocks.push({ entries, indent, scalar });
+      continue;
+    }
+
+    for (let cursor = index + 1; cursor < lines.length; cursor += 1) {
+      const line = lines[cursor];
+      if (!line.trim() || line.trimStart().startsWith("#")) continue;
+
+      const lineIndent = line.match(/^\s*/)[0].length;
+      if (lineIndent <= indent) break;
+
+      assert.equal(
+        lineIndent,
+        indent + 2,
+        `${name} has a nested or malformed permissions entry: ${line.trim()}`,
+      );
+
+      const entry = line.trim().match(/^([A-Za-z0-9_-]+):\s*([A-Za-z0-9_-]+)$/);
+      assert.ok(entry, `${name} has an invalid permissions entry: ${line.trim()}`);
+      entries.push({ access: entry[2], scope: entry[1] });
+    }
+
+    blocks.push({ entries, indent, scalar: null });
+  }
+
+  assert.ok(blocks.length > 0, `${name} must declare permissions`);
+  return blocks;
+};
+
+const assertAllowedWorkflowPermissions = (workflow, name) => {
+  const allowed = new Map([
+    ["contents", "read"],
+    ["issues", "write"],
+  ]);
+  const blocks = workflowPermissionBlocks(workflow, name);
+
+  for (const block of blocks) {
+    assert.equal(block.scalar, null, `${name} must not use scalar permissions shortcuts`);
+    assert.ok(block.entries.length > 0, `${name} has an empty permissions block`);
+    assertUnique(
+      block.entries.map((entry) => entry.scope),
+      `${name} permission scopes`,
+    );
+
+    for (const { access, scope } of block.entries) {
+      assert.ok(allowed.has(scope), `${name} requests disallowed permission scope ${scope}`);
+      assert.equal(
+        access,
+        allowed.get(scope),
+        `${name} requests disallowed ${scope}: ${access}`,
+      );
+    }
+  }
+
+  const workflowLevel = blocks.filter((block) => block.indent === 0);
+  assert.equal(workflowLevel.length, 1, `${name} must have one workflow-level permissions block`);
+  assert.deepEqual(
+    workflowLevel[0].entries
+      .map((entry) => `${entry.scope}:${entry.access}`)
+      .sort(),
+    ["contents:read", "issues:write"],
+    `${name} workflow-level permissions must match the complete allowlist`,
+  );
+};
+
+const assertMainBranchMutationGuard = (workflow, name, guardedJob) => {
+  assert.ok(workflow.includes("validate-ref:"), `${name} must define a ref-validation job`);
+  assert.ok(workflow.includes("name: Require main branch"), `${name} must name the main guard`);
+  assert.ok(
+    workflow.includes('if [ "${GITHUB_REF}" != "refs/heads/main" ]; then'),
+    `${name} must compare GITHUB_REF with refs/heads/main`,
+  );
+  assert.ok(workflow.includes("exit 1"), `${name} non-main guard must fail, not skip`);
+
+  const normalized = normalizeWhitespace(workflow);
+  assert.ok(
+    normalized.includes(`${guardedJob}: name:`) &&
+      normalized.includes(`${guardedJob}: name:`) &&
+      new RegExp(`${guardedJob}:.*?needs: validate-ref`).test(normalized),
+    `${name} mutation job ${guardedJob} must depend on validate-ref`,
+  );
+};
+
 const workflowUses = (workflow) =>
   [...workflow.matchAll(/^\s*uses:\s*([^\s#]+)/gm)].map((match) => match[1]);
 
@@ -166,6 +262,47 @@ test("initial backlog references declared labels, milestones, bodies, and issue 
   }
 });
 
+test("managed leaf labels preserve upstream and breaking-change traceability", async () => {
+  const issues = await readJson(".github/backlog/issues.json");
+
+  for (const issue of issues) {
+    if (issue.labels.includes("epic")) continue;
+
+    const body = await readText(issue.body_file);
+    const originatedUpstream =
+      body.includes("github.com/benct/lovelace-xiaomi-vacuum-card/issues/") ||
+      body.includes("github.com/benct/lovelace-xiaomi-vacuum-card/pull/");
+    const breakingRisk = /Breaking change:\s*(Potential|Yes)\b/.test(body);
+
+    if (originatedUpstream) {
+      assert.ok(
+        issue.labels.includes("source:upstream"),
+        `${issue.key} cites upstream origin without source:upstream`,
+      );
+    }
+
+    if (breakingRisk) {
+      assert.ok(
+        issue.labels.includes("breaking-change"),
+        `${issue.key} declares breaking risk without breaking-change`,
+      );
+    }
+  }
+});
+
+test("action epic keeps feature priority separate from shared test prerequisites", async () => {
+  const issues = await readJson(".github/backlog/issues.json");
+  const epic = issues.find((issue) => issue.key === "epic-actions-area-cleaning");
+
+  assert.ok(epic, "Action and area-cleaning epic must be declared");
+  assert.ok(epic.labels.includes("priority:P1"), "Action epic should remain next-minor P1 work");
+
+  const body = await readText(epic.body_file);
+  assert.ok(body.includes("## Shared external prerequisites"));
+  assert.ok(body.includes("do not automatically promote every downstream epic"));
+  assert.ok(body.includes("The component harness is P0 because"));
+});
+
 test("canonical maintainer templates contain required planning and label guidance", async () => {
   const workItem = await readText(".github/ISSUE_TEMPLATE/work_item.md");
   const epic = await readText(".github/ISSUE_TEMPLATE/epic.md");
@@ -246,11 +383,13 @@ test("bootstrap guide scopes issue bodies and enforces the main merge gate", asy
   }
 });
 
-test("testing strategy and critical test backlog remain declared", async () => {
-  const [labels, issues, strategy, reactiveIssue] = await Promise.all([
+test("testing strategy declares target and interim quality gates", async () => {
+  const [labels, issues, strategy, governance, testing, reactiveIssue] = await Promise.all([
     readJson(".github/labels.json"),
     readJson(".github/backlog/issues.json"),
     readText("docs/maintainers/testing-strategy.md"),
+    readText("docs/maintainers/backlog-governance.md"),
+    readText("TESTING.md"),
     readText(".github/backlog/p0-reactive-external-entities.md"),
   ]);
 
@@ -274,6 +413,8 @@ test("testing strategy and critical test backlog remain declared", async () => {
     "## Findings and risks",
     "## Target test architecture",
     "## Quality gates by change type",
+    "## Interim rules before target layers exist",
+    "### Interim Home Assistant smoke rule",
     "## Required sequence before major development",
     "## CI recommendations",
     "## Backlog mapping",
@@ -281,10 +422,59 @@ test("testing strategy and critical test backlog remain declared", async () => {
     assert.ok(strategy.includes(heading), `Testing strategy is missing ${heading}`);
   }
 
+  for (const requirement of [
+    "### Interim quality gates",
+    "### Target quality gates",
+    "resolved Home Assistant image identifier or digest",
+    "immutable digest-pinned smoke test passes",
+  ]) {
+    assert.ok(governance.includes(requirement), `Backlog governance is missing ${requirement}`);
+  }
+
+  assert.ok(testing.includes("### Interim smoke rule"));
+  assert.ok(testing.includes("### Target smoke rule"));
+  assert.ok(testing.includes("@sha256:<digest>"));
   assert.ok(
     reactiveIssue.includes("{{issue:p0-real-lit-component-tests}}"),
     "External-entity reactivity must depend on the real Lit component harness",
   );
+});
+
+test("test-foundation issue contracts remain implementation-ready", async () => {
+  const [battery, nativeVacuum, component, fixtures, smoke] = await Promise.all([
+    readText(".github/backlog/p0-device-aware-battery.md"),
+    readText(".github/backlog/p0-native-vacuum-state-features.md"),
+    readText(".github/backlog/p0-real-lit-component-tests.md"),
+    readText(".github/backlog/p1-entity-fixture-matrix.md"),
+    readText(".github/backlog/p1-reproducible-ha-smoke.md"),
+  ]);
+
+  for (const requirement of [
+    "## Proposed behavior",
+    "### Home Assistant registry input contract",
+    "getRegistrySnapshot(hass)",
+    "actual `hass` object assigned to the mounted card",
+    "production-shaped registry fixture",
+  ]) {
+    assert.ok(battery.includes(requirement), `Battery issue is missing ${requirement}`);
+  }
+
+  assert.ok(!nativeVacuum.includes("| `vacuum.turn_on`"));
+  assert.ok(!nativeVacuum.includes("| `vacuum.turn_off`"));
+  assert.ok(nativeVacuum.includes("### Legacy toggle-service compatibility"));
+  assert.ok(nativeVacuum.includes("must therefore not infer modern automatic capability"));
+
+  assert.ok(component.includes("Replacing only a referenced external sensor state updates"));
+  assert.ok(component.includes("the regression test passes after the runtime fix"));
+
+  assert.ok(fixtures.includes('"schema_version": 1'));
+  assert.ok(fixtures.includes('"supported_features": 4096'));
+  assert.ok(fixtures.includes("legacy-attribute-vacuum-no-state-feature"));
+  assert.ok(fixtures.includes("reject missing and unknown future schema versions"));
+
+  assert.ok(smoke.includes("@sha256:<digest>"));
+  assert.ok(smoke.includes("rejects tag-only references"));
+  assert.ok(smoke.includes("semantic version tags"));
 });
 
 test("workflow trigger allowlist rejects quoted automatic triggers", () => {
@@ -301,7 +491,26 @@ permissions:
   );
 });
 
-test("bootstrap workflows use allowed triggers and pinned actions", async () => {
+test("workflow permission allowlist rejects extra or elevated scopes", () => {
+  const workflow = `on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+jobs:
+  mutate:
+    permissions:
+      contents: write
+      pull-requests: write
+`;
+
+  assert.throws(
+    () => assertAllowedWorkflowPermissions(workflow, "Unsafe permission fixture"),
+    /disallowed permission|disallowed .*: write/,
+  );
+});
+
+test("bootstrap workflows use main guards, allowed triggers, permissions, and pinned actions", async () => {
   const [syncLabels, bootstrapBacklog] = await Promise.all([
     readText(".github/workflows/sync-labels.yml"),
     readText(".github/workflows/bootstrap-backlog.yml"),
@@ -309,24 +518,23 @@ test("bootstrap workflows use allowed triggers and pinned actions", async () => 
 
   const workflows = [
     {
+      guardedJob: "sync-labels",
       name: "Sync labels",
       workflow: syncLabels,
       allowedTriggers: ["workflow_call", "workflow_dispatch"],
     },
     {
+      guardedJob: "sync-labels",
       name: "Bootstrap backlog",
       workflow: bootstrapBacklog,
       allowedTriggers: ["workflow_dispatch"],
     },
   ];
 
-  for (const { name, workflow, allowedTriggers } of workflows) {
+  for (const { allowedTriggers, guardedJob, name, workflow } of workflows) {
     assertAllowedWorkflowTriggers(workflow, name, allowedTriggers);
-    assert.ok(
-      workflow.includes("contents: read"),
-      `${name} must use read-only contents permission`,
-    );
-    assert.ok(workflow.includes("issues: write"), `${name} requires issues write permission`);
+    assertAllowedWorkflowPermissions(workflow, name);
+    assertMainBranchMutationGuard(workflow, name, guardedJob);
     assert.ok(
       !workflow.includes("pull_request_target"),
       `${name} must not use pull_request_target`,
