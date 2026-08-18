@@ -103,10 +103,13 @@ Remove-Item -Recurse -Force ".ha-smoke" -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Path ".ha-smoke\www\community\lovelace-xiaomi-vacuum-card"
 Copy-Item -Recurse "tests\ha-smoke\home-assistant\*" ".ha-smoke\"
 Copy-Item "dist\xiaomi-vacuum-card.js" ".ha-smoke\www\community\lovelace-xiaomi-vacuum-card\xiaomi-vacuum-card.js"
-docker run --rm -d --name xiaomi-vacuum-card-ha-smoke -p 8123:8123 -v "${PWD}\.ha-smoke:/config" ghcr.io/home-assistant/home-assistant@sha256:59aa8824955c9db491b75d2eebe42bd68494f80c2ec69ec0d66d9dae37d37514
-npx playwright install chromium
-npm run test:ha-smoke
-docker stop xiaomi-vacuum-card-ha-smoke
+docker run -d --name xiaomi-vacuum-card-ha-smoke -p 8123:8123 -v "${PWD}\.ha-smoke:/config" ghcr.io/home-assistant/home-assistant@sha256:59aa8824955c9db491b75d2eebe42bd68494f80c2ec69ec0d66d9dae37d37514
+try {
+  npx playwright install chromium
+  npm run test:ha-smoke
+} finally {
+  docker rm -f xiaomi-vacuum-card-ha-smoke
+}
 ```
 
 The Playwright spec waits for Home Assistant readiness, completes onboarding when
@@ -115,30 +118,22 @@ entity `vacuum.demo_vacuum_0_ground_floor`.
 
 ### Interim smoke rule
 
-The current local example and CI use the moving `stable` image. Until the
-reproducible-smoke backlog item is merged:
-
-- the existing required `ha-smoke` check remains the applicable integration
-  gate;
-- resource, editor, registry, service, WebSocket, and integration-boundary pull
-  requests must record the image identifier or digest actually resolved by
-  Docker or the workflow, not only the `stable` source tag;
-- baseline movement between otherwise identical runs must be investigated;
-- pull-request evidence must not describe the current run as digest-pinned.
+Before the reproducible-smoke backlog item was complete, the required CI smoke
+check ran against the moving `:stable` tag and pull requests recorded the resolved
+image identifier.
 
 ### Target smoke rule
 
-The testing backlog will replace the required CI runtime reference with an
-immutable form:
+The required CI smoke check enforces the immutable digest baseline:
 
 ```text
 ghcr.io/home-assistant/home-assistant@sha256:<digest>
 ```
 
-A human-readable Home Assistant release will be recorded alongside the digest.
-Repository validation will reject tag-only references for the required job, and
-moving `stable`, `beta`, or development channels will run as scheduled or manual
-non-blocking canaries.
+The current baseline uses Home Assistant 2026.6.1 (`@sha256:59aa8824...`).
+Repository validation rejects tag-only references for the required smoke job,
+and moving channels (`stable`, `beta`, `dev`) run separately as scheduled or
+manual non-blocking canaries in `.github/workflows/ha-canary.yml`.
 
 ## Test Data And Compatibility Fixtures
 
