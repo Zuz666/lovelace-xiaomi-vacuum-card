@@ -22,7 +22,9 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Validate backlog declarations
         run: |
@@ -100,11 +102,11 @@ jobs:
               )"
               number="$(jq -r '.number' <<<"${response}")"
             else
-              echo "Updating milestone #${number}: ${title}"
+              echo "Updating milestone metadata without changing state: #${number} ${title}"
               jq -n \
                 --arg title "${title}" \
                 --arg description "${description}" \
-                '{title: $title, description: $description, state: "open"}' |
+                '{title: $title, description: $description}' |
                 gh api --method PATCH "repos/${GITHUB_REPOSITORY}/milestones/${number}" --input - >/dev/null
             fi
 
@@ -113,7 +115,7 @@ jobs:
             mv "${tmp}" "${milestone_map}"
           done < <(jq -c '.[]' .github/milestones.json)
 
-          existing_issues="$(gh issue list --repo "${GITHUB_REPOSITORY}" --state all --limit 1000 --json number,title)"
+          existing_issues="$(gh issue list --repo "${GITHUB_REPOSITORY}" --state all --limit 1000 --json number,title,body)"
 
           while IFS= read -r item; do
             key="$(jq -r '.key' <<<"${item}")"
@@ -121,17 +123,50 @@ jobs:
             body_file="$(jq -r '.body_file' <<<"${item}")"
             labels_json="$(jq -c '.labels' <<<"${item}")"
             milestone_key="$(jq -r '.milestone // empty' <<<"${item}")"
-            number="$(jq -r --arg title "${title}" '.[] | select(.title == $title) | .number' <<<"${existing_issues}" | head -n 1)"
+            marker="<!-- managed-by: .github/backlog/issues.json key=${key} -->"
 
-            if [ -n "${milestone_key}" ]; then
-              milestone_number="$(jq -r --arg key "${milestone_key}" '.[$key]' "${milestone_map}")"
-            else
-              milestone_number="null"
+            managed_matches="$(
+              jq -c --arg marker "${marker}" \
+                '[.[] | select((.body // "") | contains($marker))]' \
+                <<<"${existing_issues}"
+            )"
+            managed_count="$(jq 'length' <<<"${managed_matches}")"
+
+            if [ "${managed_count}" -gt 1 ]; then
+              echo "Multiple issues contain the managed marker for key '${key}'. Resolve the duplicate markers before rerunning." >&2
+              jq -r '.[].number | "- issue #\(.)"' <<<"${managed_matches}" >&2
+              exit 1
             fi
 
-            if [ -z "${number}" ]; then
-              echo "Creating issue: ${title}"
-              body_json="$(jq -Rs . <"${body_file}")"
+            if [ "${managed_count}" -eq 1 ]; then
+              number="$(jq -r '.[0].number' <<<"${managed_matches}")"
+              echo "Found managed issue #${number} for key '${key}'"
+            else
+              title_matches="$(
+                jq -c --arg title "${title}" '[.[] | select(.title == $title)]' \
+                  <<<"${existing_issues}"
+              )"
+              title_match_count="$(jq 'length' <<<"${title_matches}")"
+
+              if [ "${title_match_count}" -gt 0 ]; then
+                echo "Refusing to adopt unmarked issue(s) with managed title '${title}'." >&2
+                echo "Add the exact marker '${marker}' to the intended issue body, or change the manifest key/title explicitly." >&2
+                jq -r '.[].number | "- title collision: issue #\(.)"' <<<"${title_matches}" >&2
+                exit 1
+              fi
+
+              if [ -n "${milestone_key}" ]; then
+                milestone_number="$(jq -r --arg key "${milestone_key}" '.[$key]' "${milestone_map}")"
+              else
+                milestone_number="null"
+              fi
+
+              initial_body="${work_dir}/${key}-initial.md"
+              printf '%s\n\n' "${marker}" >"${initial_body}"
+              cat "${body_file}" >>"${initial_body}"
+              body_json="$(jq -Rs . <"${initial_body}")"
+
+              echo "Creating managed issue: ${title}"
               response="$(
                 jq -n \
                   --arg title "${title}" \
@@ -142,8 +177,11 @@ jobs:
                   gh api --method POST "repos/${GITHUB_REPOSITORY}/issues" --input -
               )"
               number="$(jq -r '.number' <<<"${response}")"
-            else
-              echo "Found canonical issue #${number}: ${title}"
+              existing_issues="$(
+                jq --argjson issue "${response}" \
+                  '. + [{number: $issue.number, title: $issue.title, body: $issue.body}]' \
+                  <<<"${existing_issues}"
+              )"
             fi
 
             tmp="$(mktemp)"
@@ -192,7 +230,7 @@ jobs:
             fi
 
             body_json="$(jq -Rs . <"${resolved_body}")"
-            echo "Reconciling issue #${number}: ${title}"
+            echo "Reconciling managed issue #${number}: ${title}"
             jq -n \
               --arg title "${title}" \
               --argjson body "${body_json}" \
