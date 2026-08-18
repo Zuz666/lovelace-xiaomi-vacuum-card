@@ -132,7 +132,7 @@ jobs:
                   continue
                 fi
               fi
-
+            fi
             echo "Uploading asset to draft release..."
             if ! gh release upload "v${RELEASE_VERSION}" xiaomi-vacuum-card.js --clobber; then
               echo "Asset upload attempt $attempt failed; retrying in 5s..."
