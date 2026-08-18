@@ -211,7 +211,13 @@ The repository contains two manual workflows:
 - **Sync labels** — creates or updates labels from `.github/labels.json` and never deletes unmanaged labels;
 - **Bootstrap backlog** — invokes label synchronization, creates or updates milestones from `.github/milestones.json`, and creates or updates the initial issues declared in `.github/backlog/issues.json`.
 
-Both workflows are intentionally manual (`workflow_dispatch`). Review and merge governance changes before running them. The backlog bootstrap searches exact issue titles across open and closed issues, so rerunning it updates canonical items rather than creating duplicates.
+Both workflows are intentionally limited to `workflow_dispatch`; the label workflow additionally allows `workflow_call` so the backlog workflow can reuse it. External Actions are pinned to full commit SHAs, checkout credentials are not persisted, and the workflows use only `contents: read` and `issues: write`.
+
+The stable manifest key is the identity of a managed issue. Generated issue bodies contain a marker of the form `<!-- managed-by: .github/backlog/issues.json key=<key> -->`. Reruns locate issues by this marker, never by title alone. A same-title unmarked issue or duplicate marker stops the workflow and requires explicit maintainer resolution instead of authorizing an overwrite.
+
+A missing issue is created with its marker in the initial body before references are reconciled. Existing marked issues have their title, body, labels, and milestone reconciled from the repository declarations. Existing milestone titles and descriptions are reconciled without changing whether a milestone is open or closed. The workflows never close issues, reopen milestones, or delete unmanaged labels.
+
+Changing a manifest key changes identity and must be treated as an explicit migration. Review and merge governance changes before running the workflows.
 
 ## Triage checklist
 
