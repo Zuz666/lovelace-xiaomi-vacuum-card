@@ -1,6 +1,9 @@
 name: Format diagnostics
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - agent/backlog-bootstrap
