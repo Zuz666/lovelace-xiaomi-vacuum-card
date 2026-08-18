@@ -130,7 +130,7 @@ The required CI smoke check enforces the immutable digest baseline:
 ghcr.io/home-assistant/home-assistant@sha256:<digest>
 ```
 
-The current baseline uses Home Assistant 2026.6.1 (`@sha256:59aa8824...`).
+The current baseline uses Home Assistant 2026.6.1 (`@sha256:59aa8824955c9db491b75d2eebe42bd68494f80c2ec69ec0d66d9dae37d37514`).
 Repository validation rejects tag-only references for the required smoke job,
 and moving channels (`stable`, `beta`, `dev`) run separately as scheduled or
 manual non-blocking canaries in `.github/workflows/ha-canary.yml`.
