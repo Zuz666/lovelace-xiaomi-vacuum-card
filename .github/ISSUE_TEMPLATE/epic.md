@@ -6,6 +6,13 @@ labels: "epic"
 assignees: ""
 ---
 
+<!--
+Before publishing, keep the `epic` label, assign one `priority:*` label, and
+assign one or two `area:*` labels. Epics do not require a `type:*` label. Assign
+a target milestone only when the whole outcome is committed to that release.
+See `docs/maintainers/backlog-governance.md` for the source-of-truth rules.
+-->
+
 ## Outcome
 
 <!-- Describe the user or architecture result, not the individual implementation steps. -->
