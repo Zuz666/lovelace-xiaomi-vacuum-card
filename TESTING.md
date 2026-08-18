@@ -59,23 +59,25 @@ regression in the issue.
 
 ## Browser Component Tests
 
-A fast real-browser component layer is planned in the canonical backlog. It will
-load the shipped card with an actual Lit lifecycle and deterministic Home
-Assistant stubs, without starting a full HA container.
+Run the real-browser component test layer with:
 
-After it is implemented, use it for:
+```sh
+npm run test:component
+```
+
+The component harness loads the shipped card (`dist/xiaomi-vacuum-card.js`) into a
+Chromium browser page with an actual LitElement runtime, real Shadow DOM, and
+deterministic Home Assistant object stubs, without starting a full Home Assistant
+container.
+
+Use this layer for:
 
 - reactive `hass` and entity-state updates;
-- visible Shadow DOM output;
-- focus and keyboard behavior;
-- ARIA roles and accessible names;
+- visible Shadow DOM output and DOM assertions;
+- focus, keyboard navigation, and ARIA accessibility roles;
 - unavailable and disabled states;
-- production-shaped optional registry maps;
-- interaction and service dispatch;
-- render-count regressions.
-
-The planned command is `npm run test:component`; do not document it as available
-in pull-request test evidence until the corresponding backlog issue is merged.
+- service and WebSocket action dispatches;
+- render-count and lifecycle regressions.
 
 ## Home Assistant Smoke Test
 
