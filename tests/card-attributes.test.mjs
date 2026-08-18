@@ -404,3 +404,141 @@ test("render() path: id-only battery row with custom key discovers modern sensor
   assert.ok(batteryIcon, "Battery icon must be rendered");
   assert.ok(batteryIcon.values.includes("mdi:battery-60"));
 });
+
+test("getReferencedEntities returns vacuum, explicit rows, auto-discovered sensors, and media-source image", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+
+  card.setConfig({
+    entity: "vacuum.roborock_s7",
+    image: "media-source://image/image.roborock_s7_map",
+    attributes: {
+      filter: {
+        entity: "sensor.filter_left",
+      },
+      side_brush: {
+        key: "side_brush_left",
+      },
+    },
+  });
+
+  const tracked = card.getReferencedEntities();
+  assert.ok(tracked.includes("vacuum.roborock_s7"), "Must include primary vacuum");
+  assert.ok(tracked.includes("image.roborock_s7_map"), "Must include media-source image entity");
+  assert.ok(tracked.includes("sensor.filter_left"), "Must include explicit sensor entity");
+  assert.ok(
+    tracked.includes("sensor.roborock_s7_battery") ||
+      tracked.includes("sensor.roborock_s7_battery_level"),
+    "Must include auto-discovered battery sensor",
+  );
+  assert.ok(
+    tracked.includes("sensor.roborock_s7_side_brush_left"),
+    "Must include auto-discovered attribute sensor",
+  );
+});
+
+test("getReferencedEntities respects show: false flags and excluded row groups", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+
+  card.setConfig({
+    attributes: false,
+    entity: "vacuum.roborock_s7",
+    state: {
+      battery: {
+        entity: "sensor.custom_battery",
+      },
+      status: false,
+    },
+  });
+
+  const tracked = card.getReferencedEntities();
+  assert.ok(tracked.includes("vacuum.roborock_s7"));
+  assert.ok(tracked.includes("sensor.custom_battery"));
+  assert.equal(
+    tracked.includes("sensor.roborock_s7_filter_left"),
+    false,
+    "Excluded attribute group must not be tracked",
+  );
+});
+
+test("shouldUpdate evaluates referenced external entity changes and ignores unrelated changes", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+
+  card.setConfig({
+    entity: "vacuum.test_vacuum",
+    attributes: {
+      filter: {
+        entity: "sensor.filter_left",
+      },
+    },
+  });
+
+  const vacuumState = {
+    attributes: {},
+    entity_id: "vacuum.test_vacuum",
+    state: "cleaning",
+  };
+  const filterState1 = {
+    attributes: {},
+    entity_id: "sensor.filter_left",
+    state: "100",
+  };
+  const filterState2 = {
+    attributes: {},
+    entity_id: "sensor.filter_left",
+    state: "50",
+  };
+  const lightState1 = {
+    attributes: {},
+    entity_id: "light.living_room",
+    state: "off",
+  };
+  const lightState2 = {
+    attributes: {},
+    entity_id: "light.living_room",
+    state: "on",
+  };
+
+  const hass1 = createHass({
+    states: {
+      "vacuum.test_vacuum": vacuumState,
+      "sensor.filter_left": filterState1,
+      "light.living_room": lightState1,
+    },
+  });
+  card.hass = hass1;
+
+  // When an unrelated light entity changes
+  const hassWithLightChange = createHass({
+    states: {
+      "vacuum.test_vacuum": vacuumState,
+      "sensor.filter_left": filterState1,
+      "light.living_room": lightState2,
+    },
+  });
+  card._hass = hassWithLightChange;
+  const changedPropsUnrelated = new Map([["_hass", hass1]]);
+  assert.equal(
+    card.shouldUpdate(changedPropsUnrelated),
+    false,
+    "Unrelated entity change must not trigger update",
+  );
+
+  // When the tracked filter entity changes
+  const hassWithFilterChange = createHass({
+    states: {
+      "vacuum.test_vacuum": vacuumState,
+      "sensor.filter_left": filterState2,
+      "light.living_room": lightState1,
+    },
+  });
+  card._hass = hassWithFilterChange;
+  const changedPropsTracked = new Map([["_hass", hass1]]);
+  assert.equal(
+    card.shouldUpdate(changedPropsTracked),
+    true,
+    "Tracked external entity change must trigger update",
+  );
+});
