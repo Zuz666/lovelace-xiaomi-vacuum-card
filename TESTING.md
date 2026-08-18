@@ -53,8 +53,9 @@ The VM harness is intentionally not a real Lit or DOM implementation. It does
 not prove reactive updates, Shadow DOM output, focus, keyboard behavior, event
 propagation, accessibility roles, or user-visible interaction state. Do not add
 more fake browser behavior to make a lifecycle-sensitive test pass. Until the
-real browser component layer is implemented, use the Home Assistant smoke test
-for such changes and record the missing component regression in the issue.
+real browser component layer is implemented, use targeted Home Assistant smoke
+coverage for urgent lifecycle-sensitive changes and record the missing component
+regression in the issue.
 
 ## Browser Component Tests
 
@@ -69,6 +70,7 @@ After it is implemented, use it for:
 - focus and keyboard behavior;
 - ARIA roles and accessible names;
 - unavailable and disabled states;
+- production-shaped optional registry maps;
 - interaction and service dispatch;
 - render-count regressions.
 
@@ -86,7 +88,7 @@ The setup copies `tests/ha-smoke/home-assistant/configuration.yaml`,
 `dist/xiaomi-vacuum-card.js` into `.ha-smoke` and its Home Assistant
 `www/community/lovelace-xiaomi-vacuum-card` resource directory.
 
-PowerShell example:
+PowerShell example for the current interim setup:
 
 ```powershell
 Remove-Item -Recurse -Force ".ha-smoke" -ErrorAction SilentlyContinue
@@ -103,10 +105,32 @@ The Playwright spec waits for Home Assistant readiness, completes onboarding whe
 needed, opens the smoke dashboard, and verifies the card with the demo vacuum
 entity `vacuum.demo_vacuum_0_ground_floor`.
 
-The current local example and CI use the moving `stable` image. The testing
-backlog will replace the required CI baseline with an explicit reviewed HA
-version and move changing channels to scheduled or manually dispatched canaries.
-Until then, always record the exact image version reported by a failed run.
+### Interim smoke rule
+
+The current local example and CI use the moving `stable` image. Until the
+reproducible-smoke backlog item is merged:
+
+- the existing required `ha-smoke` check remains the applicable integration
+  gate;
+- resource, editor, registry, service, WebSocket, and integration-boundary pull
+  requests must record the image identifier or digest actually resolved by
+  Docker or the workflow, not only the `stable` source tag;
+- baseline movement between otherwise identical runs must be investigated;
+- pull-request evidence must not describe the current run as digest-pinned.
+
+### Target smoke rule
+
+The testing backlog will replace the required CI runtime reference with an
+immutable form:
+
+```text
+ghcr.io/home-assistant/home-assistant@sha256:<digest>
+```
+
+A human-readable Home Assistant release will be recorded alongside the digest.
+Repository validation will reject tag-only references for the required job, and
+moving `stable`, `beta`, or development channels will run as scheduled or manual
+non-blocking canaries.
 
 ## Test Data And Compatibility Fixtures
 
@@ -115,6 +139,10 @@ should not proliferate as unrelated one-off mocks.
 
 A shared sanitized fixture schema is planned for vacuum state, related entities,
 feature flags, registry metadata, expected presentation, and service contracts.
+The schema will include an explicit integer `schema_version`; loaders will reject
+unknown future versions before passing fixture data to Node, browser, or Home
+Assistant consumers.
+
 Until that schema is merged:
 
 - keep synthetic data minimal and clearly named;
