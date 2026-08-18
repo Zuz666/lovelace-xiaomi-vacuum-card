@@ -1,0 +1,51 @@
+name: Format diagnostics
+
+on:
+  push:
+    branches:
+      - agent/backlog-bootstrap
+
+permissions:
+  contents: read
+
+jobs:
+  format-diagnostics:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Format changed governance files
+        run: |
+          npx prettier --write \
+            .github/ISSUE_TEMPLATE/bug_report.yml \
+            .github/ISSUE_TEMPLATE/feature_request.yml \
+            .github/ISSUE_TEMPLATE/compatibility_report.yml \
+            .github/backlog/issues.json \
+            docs/maintainers/backlog-governance.md \
+            tests/backlog-governance.test.mjs
+
+      - name: Print formatted files as base64
+        run: |
+          for file in \
+            .github/ISSUE_TEMPLATE/bug_report.yml \
+            .github/ISSUE_TEMPLATE/feature_request.yml \
+            .github/ISSUE_TEMPLATE/compatibility_report.yml \
+            .github/backlog/issues.json \
+            docs/maintainers/backlog-governance.md \
+            tests/backlog-governance.test.mjs; do
+            echo "FORMAT_FILE_BEGIN:${file}"
+            base64 -w 0 "${file}"
+            echo
+            echo "FORMAT_FILE_END:${file}"
+          done
