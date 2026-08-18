@@ -14,12 +14,12 @@ This is a targeted upgrade, not a test-stack rewrite.
 
 ## Current test system
 
-| Layer | Current implementation | Primary value |
-| --- | --- | --- |
-| Static validation | `node --check`, version synchronization, ESLint, markdownlint, and Prettier | Fast syntax, repository-policy, and formatting feedback |
-| Source and contract tests | Node test runner loading `dist/xiaomi-vacuum-card.js` through `tests/helpers/card-harness.mjs` | Fast checks for configuration, source resolution, service payloads, metadata, and error paths |
-| Home Assistant smoke test | Playwright against a Dockerized Home Assistant instance and the shipped `dist` asset | Real resource loading, custom-element registration, rendering, templating, service dispatch, and browser-console checks |
-| Repository validation | HACS validation and CodeQL | Packaging and static security checks |
+| Layer                     | Current implementation                                                                         | Primary value                                                                                                           |
+| ------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Static validation         | `node --check`, version synchronization, ESLint, markdownlint, and Prettier                    | Fast syntax, repository-policy, and formatting feedback                                                                 |
+| Source and contract tests | Node test runner loading `dist/xiaomi-vacuum-card.js` through `tests/helpers/card-harness.mjs` | Fast checks for configuration, source resolution, service payloads, metadata, and error paths                           |
+| Home Assistant smoke test | Playwright against a Dockerized Home Assistant instance and the shipped `dist` asset           | Real resource loading, custom-element registration, rendering, templating, service dispatch, and browser-console checks |
+| Repository validation     | HACS validation and CodeQL                                                                     | Packaging and static security checks                                                                                    |
 
 The current suite directly tests the shipped browser resource rather than a parallel implementation. That is an important property and must be preserved when the source tree is later modularized.
 
@@ -47,17 +47,17 @@ The repository currently avoids a large unit-test framework. The Node test runne
 
 ## Findings and risks
 
-| Severity | Finding | Consequence |
-| --- | --- | --- |
-| Critical | The VM harness uses a fake `LitElement`; `requestUpdate()` is a no-op and no real reactive property or update cycle runs | Stale UI and `shouldUpdate()` defects can pass all fast tests |
-| High | The harness has no Shadow DOM, rendered DOM, focus management, event propagation, accessibility tree, or real keyboard behavior | Interaction and accessibility regressions are only weakly represented by direct method calls |
-| High | Several tests inspect the internal `{ strings, values }` representation returned by the fake `html` tag | Tests can be coupled to implementation structure while missing user-visible DOM behavior |
-| High | The required smoke job uses the mutable `home-assistant:stable` container tag | A new Home Assistant release can change the required PR check without a repository change |
-| High | The HA smoke suite has one primary scenario and one demo vacuum shape | External entity reactivity, feature flags, unavailable states, selects, editor round trips, and vendor entity models are not represented |
-| Medium | Playwright traces are retained locally on failure, but CI does not upload traces, screenshots, the HTML report, or Home Assistant logs as artifacts | A failed smoke run is harder to diagnose after the runner is destroyed |
-| Medium | Entity states and integration shapes are embedded independently in tests | Fixtures cannot be reused across contract, component, and HA scenarios, and compatibility claims can drift |
-| Medium | No real-browser accessibility assertions cover the ARIA combobox and future controls | Roles, focus, keyboard navigation, labels, and disabled behavior may regress silently |
-| Low | There is no coverage baseline | Untested branches are less visible, although a numeric coverage target alone would not address the critical lifecycle gap |
+| Severity | Finding                                                                                                                                             | Consequence                                                                                                                              |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Critical | The VM harness uses a fake `LitElement`; `requestUpdate()` is a no-op and no real reactive property or update cycle runs                            | Stale UI and `shouldUpdate()` defects can pass all fast tests                                                                            |
+| High     | The harness has no Shadow DOM, rendered DOM, focus management, event propagation, accessibility tree, or real keyboard behavior                     | Interaction and accessibility regressions are only weakly represented by direct method calls                                             |
+| High     | Several tests inspect the internal `{ strings, values }` representation returned by the fake `html` tag                                             | Tests can be coupled to implementation structure while missing user-visible DOM behavior                                                 |
+| High     | The required smoke job uses the mutable `home-assistant:stable` container tag                                                                       | A new Home Assistant release can change the required PR check without a repository change                                                |
+| High     | The HA smoke suite has one primary scenario and one demo vacuum shape                                                                               | External entity reactivity, feature flags, unavailable states, selects, editor round trips, and vendor entity models are not represented |
+| Medium   | Playwright traces are retained locally on failure, but CI does not upload traces, screenshots, the HTML report, or Home Assistant logs as artifacts | A failed smoke run is harder to diagnose after the runner is destroyed                                                                   |
+| Medium   | Entity states and integration shapes are embedded independently in tests                                                                            | Fixtures cannot be reused across contract, component, and HA scenarios, and compatibility claims can drift                               |
+| Medium   | No real-browser accessibility assertions cover the ARIA combobox and future controls                                                                | Roles, focus, keyboard navigation, labels, and disabled behavior may regress silently                                                    |
+| Low      | There is no coverage baseline                                                                                                                       | Untested branches are less visible, although a numeric coverage target alone would not address the critical lifecycle gap                |
 
 ## Target test architecture
 
@@ -138,14 +138,14 @@ The same fixture should be consumable by unit tests, component tests, and select
 
 ## Quality gates by change type
 
-| Change type | Required evidence |
-| --- | --- |
-| Documentation or governance only | Static checks and relevant repository tests |
-| Pure source resolution, formatting, or payload logic | Unit or contract regression tests plus static checks |
-| Lit lifecycle, rendering, focus, keyboard, or availability | Real browser component test plus static checks |
-| Home Assistant resource, editor, registry, service, or WebSocket integration | Component tests and pinned HA smoke test |
-| New integration or vendor compatibility claim | Sanitized fixture, contract or component test, and targeted HA verification when feasible |
-| Release or supported HA baseline update | Full required suite and explicit smoke-baseline review |
+| Change type                                                                  | Required evidence                                                                         |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Documentation or governance only                                             | Static checks and relevant repository tests                                               |
+| Pure source resolution, formatting, or payload logic                         | Unit or contract regression tests plus static checks                                      |
+| Lit lifecycle, rendering, focus, keyboard, or availability                   | Real browser component test plus static checks                                            |
+| Home Assistant resource, editor, registry, service, or WebSocket integration | Component tests and pinned HA smoke test                                                  |
+| New integration or vendor compatibility claim                                | Sanitized fixture, contract or component test, and targeted HA verification when feasible |
+| Release or supported HA baseline update                                      | Full required suite and explicit smoke-baseline review                                    |
 
 ## Required sequence before major development
 
