@@ -10,46 +10,72 @@ Modern vacuum integrations may also expose charging state as a separate `binary_
 
 - Upstream issue(s): https://github.com/benct/lovelace-xiaomi-vacuum-card/issues/84, https://github.com/benct/lovelace-xiaomi-vacuum-card/issues/92, https://github.com/benct/lovelace-xiaomi-vacuum-card/issues/124
 - Upstream pull request(s): https://github.com/benct/lovelace-xiaomi-vacuum-card/pull/126
-- Home Assistant change or documentation: https://developers.home-assistant.io/blog/2025/07/02/vacuum-battery-properties-deprecated/ and Home Assistant frontend entity-registry battery discovery
+- Home Assistant change or documentation: https://developers.home-assistant.io/blog/2025/07/02/vacuum-battery-properties-deprecated/, https://developers.home-assistant.io/docs/frontend/custom-ui/custom-card/, and https://github.com/home-assistant/frontend/blob/dev/src/types.ts
 - Current fork behavior: explicit entity, modern name, legacy name, and vacuum attribute fallbacks are supported; same-device registry discovery is not.
 - Reproduction, fixture, or diagnostic evidence: rename the generated battery sensor while keeping it attached to the same device; name-based discovery no longer finds it.
 
 ## Scope
 
 - Discover battery entities attached to the same Home Assistant device as the configured vacuum.
-- Use the entity and device registry maps supplied on the Home Assistant frontend object as the registry source.
+- Consume registry data through a documented adapter over the normal Home Assistant object assigned to a Lovelace custom card.
 - Prefer eligible `sensor` entities with `device_class: battery`, matching Home Assistant frontend conventions.
 - Discover an optional eligible same-device `binary_sensor` with `device_class: battery_charging`.
 - Preserve explicit configuration as the highest precedence.
 - Preserve name-based and legacy attribute fallbacks for compatibility.
-- Integrate discovered entities with the reactive dependency tracker.
+- Integrate discovered entities and registry inputs with the reactive dependency tracker.
 - Add deterministic tests for renamed, missing, unavailable, ambiguous, disabled, hidden, and registry-unavailable candidates.
+- Add a production-shaped registry fixture and targeted Home Assistant smoke coverage for the real frontend registry boundary.
 
 ## Non-goals
 
 - Generic discovery of every related entity type.
 - Automatically enabling disabled entity-registry entries.
 - Guessing battery entities from friendly names or vendor-specific strings.
+- Importing private Home Assistant frontend decorators or components into the direct browser resource.
 - Maintaining a separate WebSocket registry subscription or private registry cache.
 - Removing legacy fallbacks in this release.
 
 ## Proposed behavior
 
+### Home Assistant registry input contract
+
+The card continues to receive the normal `hass` object through its public Lovelace custom-card setter. In the current Home Assistant frontend type contract, that object includes `states`, `entities`, and `devices`; the latter two contain entity-registry display entries and device-registry entries.
+
+Implementation must introduce a small internal adapter, conceptually `getRegistrySnapshot(hass)`, rather than reading registry fields throughout rendering code. The adapter returns:
+
+```js
+{
+  states: hass.states,
+  entities: hass.entities ?? null,
+  devices: hass.devices ?? null,
+}
+```
+
+The adapter contract is deliberately optional for registry maps:
+
+- current supported frontends provide `hass.entities` and `hass.devices` through the normal `hass` assignment;
+- an older supported frontend, minimal test host, or temporarily incomplete object may omit either map;
+- missing registry maps must produce an explicit `null` adapter value and activate documented name-based and legacy fallbacks rather than a private API call;
+- the card must not import Home Assistant's private context decorators, request registry contexts directly from internal elements, or call `config/entity_registry/list` in this P0 issue;
+- a future architecture may consume fine-grained frontend contexts behind the same adapter, but that is a separate reviewed change.
+
+The production browser component fixture must model the current `HomeAssistant` shape with `states`, `entities`, and optional `devices`. The full Home Assistant smoke test must read the actual `hass` object assigned to the mounted card and verify that the adapter can consume the real frontend registry maps and configured vacuum registry entry. Deterministic same-device candidate ordering remains fixture-driven when the smoke integration cannot reliably manufacture a specific device relationship.
+
 ### Registry access and refresh contract
 
-1. Read the configured vacuum entry from `hass.entities[config.entity]`.
-2. If the entry has a `device_id`, filter `Object.values(hass.entities)` to entries with the same `device_id`.
-3. Evaluate registry metadata and runtime state as separate eligibility checks:
+1. Obtain `states`, `entities`, and `devices` through the adapter above.
+2. Read the configured vacuum entry from `entities[config.entity]` when `entities` is available.
+3. If the entry has a `device_id`, filter `Object.values(entities)` to entries with the same `device_id`.
+4. Evaluate registry metadata and runtime state as separate eligibility checks:
    - the entity domain must be the expected `sensor` or `binary_sensor` domain;
    - when a full registry entry exposes `disabled_by`, it must be `null`;
    - when a full registry entry exposes `hidden_by`, it must be `null`; when the frontend display map exposes only `hidden`, it must not be `true`;
-   - a current state object must exist at `hass.states[entity_id]`;
-   - `hass.states[entity_id].attributes.device_class` must be exactly `battery` for a `sensor` or `battery_charging` for a `binary_sensor`.
-4. Do not treat state presence as proof that `disabled_by` is `null`. State presence is an independent runtime-discoverability requirement. When the public frontend display map omits full `disabled_by` or `hidden_by` fields, use the available display metadata plus the required live state object without inventing missing registry values.
-5. Use `hass.devices` to validate or diagnose the referenced device when available, but do not fail only because the display device map is absent.
-6. Do not call `config/entity_registry/list` or maintain an independent registry subscription in this issue. Current frontend registry maps are refreshed as part of the `hass` lifecycle.
-7. Recompute registry candidates when the configured vacuum changes or the `hass.entities` registry-map reference changes. Resolve candidate availability and device class from the current `hass.states` on each relevant update. Any memoization must be keyed by these inputs and must not outlive them.
-8. If `hass.entities`, the vacuum registry entry, or its `device_id` is unavailable on an older supported frontend, skip same-device discovery and continue through name-based and legacy fallbacks without failing the card.
+   - a current state object must exist at `states[entity_id]`;
+   - `states[entity_id].attributes.device_class` must be exactly `battery` for a `sensor` or `battery_charging` for a `binary_sensor`.
+5. Do not treat state presence as proof that `disabled_by` is `null`. State presence is an independent runtime-discoverability requirement. When the public frontend display map omits full `disabled_by` or `hidden_by` fields, use the available display metadata plus the required live state object without inventing missing registry values.
+6. Use `devices` to validate or diagnose the referenced device when available, but do not fail only because the device map is absent.
+7. Recompute registry candidates when the configured vacuum changes, the `entities` map reference changes, or the relevant adapter contract changes. Resolve candidate availability and device class from current `states` on each relevant update. Any memoization must be keyed by these inputs and must not outlive them.
+8. If `entities`, the vacuum registry entry, or its `device_id` is unavailable, skip same-device discovery and continue through name-based and legacy fallbacks without failing the card.
 
 ### Candidate selection and diagnostics
 
@@ -88,12 +114,13 @@ Fallback continues only when the higher-priority source is absent or no longer s
 
 ## Acceptance criteria
 
+- [ ] A documented adapter consumes registry maps from the normal custom-card `hass` object without private frontend imports or an extra WebSocket registry subscription.
 - [ ] A renamed battery sensor attached to the vacuum device is discovered automatically.
 - [ ] An explicit configured battery entity overrides all automatic candidates.
 - [ ] A same-device battery sensor overrides object-ID naming fallbacks.
 - [ ] Legacy name and vacuum attribute fallbacks remain functional for older supported entity shapes.
 - [ ] A same-device charging binary sensor influences the rendered battery icon or charging presentation.
-- [ ] Registry data absent from the frontend object degrades to existing fallbacks without a failed render or extra private API dependency.
+- [ ] Missing `hass.entities` or `hass.devices` degrades to existing fallbacks without a failed render or extra private API dependency.
 - [ ] A full registry entry with non-null `disabled_by` or `hidden_by` is excluded; a display entry with `hidden: true` is excluded.
 - [ ] Runtime state presence and `attributes.device_class` are checked independently from registry enabled or hidden metadata.
 - [ ] Missing or structurally ineligible entities fall through safely to the next source.
@@ -101,9 +128,11 @@ Fallback continues only when the higher-priority source is absent or no longer s
 - [ ] Multiple candidate selection follows the documented platform and `entity_id` ordering and emits a sanitized diagnostic.
 - [ ] Registry-map replacement invalidates candidate discovery.
 - [ ] Battery and charging state updates refresh the card through tracked dependencies.
+- [ ] A real Home Assistant smoke scenario verifies the actual frontend registry-map boundary consumed by the adapter.
 
 ## Test plan
 
+- [ ] Production-shaped component fixture with `states`, `entities`, and `devices`
 - [ ] Shared entity-registry fixture for a renamed same-device battery sensor
 - [ ] Fixture for a same-device charging binary sensor
 - [ ] Fixture with full registry entries covering `disabled_by` and `hidden_by`
@@ -115,12 +144,12 @@ Fallback continues only when the higher-priority source is absent or no longer s
 - [ ] Test that `unavailable` and `unknown` selected entities do not demote to name or legacy fallbacks
 - [ ] Test that removed, disabled, hidden, wrong-domain, and wrong-device-class entities do fall through
 - [ ] Backward-compatibility tests for current naming and legacy attribute fallbacks
-- [ ] Real browser component tests for battery and charging updates
-- [ ] Home Assistant smoke test using modern diagnostic entities where feasible
+- [ ] Real browser component tests for battery, charging, and registry-map replacement updates
+- [ ] Home Assistant smoke assertion against the actual `hass.entities` and `hass.devices` contract assigned to the mounted card
 
 ## Compatibility and migration
 
-- Minimum or targeted Home Assistant version: current maintained versions expose frontend entity and device registry maps; older supported versions without those maps use existing name and attribute fallbacks
+- Minimum or targeted Home Assistant version: current maintained versions expose frontend entity and device registry maps; older supported versions or minimal hosts without those maps use existing name and attribute fallbacks
 - Existing configuration impact: explicit and legacy configurations remain valid
 - Deprecations: Home Assistant deprecated vacuum `battery_level` and `battery_icon` in Core 2025.8 and removed them in Core 2026.8; the card keeps read-only legacy fallbacks only for older supported entity shapes and does not reintroduce those properties
 - Breaking change: No
@@ -135,5 +164,5 @@ Fallback continues only when the higher-priority source is absent or no longer s
 
 - Target milestone: v4.6.3 — Runtime correctness
 - Changelog entry required: Yes
-- Documentation update required: Yes, document registry access, source precedence, unavailable-state stability, renamed-entity support, and legacy fallback limits
+- Documentation update required: Yes, document the registry adapter, source precedence, unavailable-state stability, renamed-entity support, and legacy fallback limits
 - HACS or release asset impact: canonical `dist/xiaomi-vacuum-card.js` changes; asset name remains unchanged
