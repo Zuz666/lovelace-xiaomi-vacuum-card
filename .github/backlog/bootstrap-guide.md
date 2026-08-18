@@ -5,7 +5,7 @@ This directory contains the versioned source for the repository's initial canoni
 ## Files
 
 - `issues.json` declares stable issue keys, canonical titles, body files, labels, and milestone keys.
-- Each sibling Markdown file is the canonical body source for one bootstrapped issue.
+- Each Markdown file referenced by `body_file` in `issues.json` is the canonical body source for one managed issue. Other sibling Markdown files, including this guide, are governance documentation rather than issue bodies.
 - `.github/milestones.json` declares milestone keys, titles, and descriptions.
 - `.github/labels.json` declares the managed label taxonomy.
 - `docs/maintainers/testing-strategy.md` records the test-system review, target layers, and pre-development quality gates referenced by the testing backlog.
@@ -14,7 +14,7 @@ The initial bootstrap contains five epics and seven implementation or design wor
 
 ## Creating or reconciling the backlog
 
-After these files are merged into the default branch, run the **Bootstrap backlog** workflow manually from GitHub Actions.
+Make backlog declaration changes on a feature branch, open a pull request targeting `main`, and wait for all required CI checks to pass. Merge the reviewed pull request into `main`. Only then run the **Bootstrap backlog** workflow manually from `main` in GitHub Actions.
 
 The workflow:
 
@@ -42,7 +42,7 @@ If an existing unmarked issue has the same title, the workflow stops instead of 
 
 ## Editing managed issues
 
-Treat the Markdown files in this directory as the source of truth for managed issue bodies. Submit body, label, milestone, key, or title changes through a pull request and rerun **Bootstrap backlog** after merge.
+Treat only the Markdown files referenced by `body_file` in `issues.json` as the source of truth for managed issue bodies. Submit body, label, milestone, key, or title changes through a pull request and rerun **Bootstrap backlog** after the reviewed change is merged into `main` with passing CI.
 
 Use issue comments for discussion and implementation updates; the workflow does not modify comments.
 
@@ -53,10 +53,11 @@ Managed issue bodies may locally disable markdownlint rule `MD034` so exact upst
 1. Start from `.github/ISSUE_TEMPLATE/work_item.md` or `.github/ISSUE_TEMPLATE/epic.md`.
 2. Remove front matter and instructional comments.
 3. Save the body as a Markdown file in this directory.
-4. Add a unique, durable key and canonical title to `issues.json`.
+4. Add a unique, durable key, canonical title, and exact `body_file` path to `issues.json`.
 5. Reference other managed issues with `{{issue:<key>}}`.
-6. Validate that every label exists in `.github/labels.json` and every milestone key exists in `.github/milestones.json`.
-7. Open a pull request and run the bootstrap workflow only after merge.
+6. Validate that every `body_file` exists, every `{{issue:<key>}}` reference resolves to a declared key in `issues.json`, every label exists in `.github/labels.json`, and every milestone key exists in `.github/milestones.json`.
+7. Run `npm test` and the full repository validation required by `CONTRIBUTING.md`.
+8. Open a pull request targeting `main`, wait for required CI, merge it, and only then dispatch the bootstrap workflow from `main`.
 
 Changing a key changes managed identity and must be treated as a migration. Do not casually rename keys after issues have been created.
 
