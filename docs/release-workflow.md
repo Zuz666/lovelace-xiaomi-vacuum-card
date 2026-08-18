@@ -13,6 +13,7 @@ This document defines the release process, versioning rules, and changelog maint
    - `package.json` (`"version": "X.Y.Z"`)
    - `dist/xiaomi-vacuum-card.js` (console info header banner `%c XIAOMI-VACUUM-CARD-REBORN %c X.Y.Z`)
    - `CHANGELOG.md` (`## [X.Y.Z] - YYYY-MM-DD` and link definition `[X.Y.Z]: ...` at the bottom)
+   - `SECURITY.md` (Supported version line `X.Y.x` updated for major/minor releases)
 4. **Authoritative Changelog**: GitHub release notes are extracted directly from `CHANGELOG.md` to ensure a single, curated source of truth for release history.
 
 ---
@@ -46,6 +47,7 @@ The version checking script (`tests/check-version.mjs`), executed as part of `np
 - Ensures `package.json` version matches `dist/xiaomi-vacuum-card.js`.
 - Verifies that `CHANGELOG.md` contains an explicit section `## [X.Y.Z] - YYYY-MM-DD` for the current version.
 - Verifies that `CHANGELOG.md` includes the comparison link reference for `[X.Y.Z]`.
+- Verifies that `SECURITY.md` marks the active minor release line (`X.Y.x`) as supported (`:white_check_mark:`).
 
 Any PR attempting to bump versions without updating `CHANGELOG.md` will fail CI automatically.
 
@@ -80,7 +82,15 @@ git checkout -b chore/release-vX.Y.Z
    - Move relevant items from `## [Unreleased]` into a new section `## [X.Y.Z] - YYYY-MM-DD`.
    - Update comparison link references at the bottom of `CHANGELOG.md`.
 
-### 3. Validate Locally
+### 3. Update Security Policy Support Matrix (Major & Minor Releases)
+
+When releasing a new **major** or **minor** version (for example, bumping from `4.6.x` to `4.7.0` or `5.0.0`), update the **Supported Versions** table in `SECURITY.md` to ensure the project security policy remains current:
+
+1. Update the table in `SECURITY.md` to mark the new `X.Y.x` release line as supported (`:white_check_mark:`).
+2. Update the previous release line to unsupported (`:x:`), adhering to the single-active-minor support policy.
+3. For patch releases (such as `4.6.1` -> `4.6.2`), no change to `SECURITY.md` is required as `4.6.x` covers the entire patch line.
+
+### 4. Validate Locally
 
 Run the complete test and lint suite:
 
@@ -94,23 +104,23 @@ For UI or browser-affecting changes, run the Home Assistant smoke test:
 npm run test:ha-smoke
 ```
 
-### 4. Commit and Submit Pull Request
+### 5. Commit and Submit Pull Request
 
 Commit using Conventional Commits:
 
 ```bash
-git add package.json dist/xiaomi-vacuum-card.js CHANGELOG.md
+git add package.json dist/xiaomi-vacuum-card.js CHANGELOG.md SECURITY.md
 git commit -m "chore(release): prepare vX.Y.Z"
 git push -u origin chore/release-vX.Y.Z
 ```
 
 Open a pull request to `main` with the full PR template populated.
 
-### 5. Review & Merge
+### 6. Review & Merge
 
 Ensure all GitHub Actions checks pass (`CI`, `validate-hacs`). Merge the PR into `main`.
 
-### 6. Trigger Release Workflow
+### 7. Trigger Release Workflow
 
 Once merged into `main`, dispatch the release workflow:
 
@@ -123,7 +133,7 @@ gh workflow run release.yml -f version=X.Y.Z
 Or via GitHub Actions web interface:
 Go to **Actions** -> **Release** -> **Run workflow** -> Enter version `X.Y.Z` (without leading `v`).
 
-### 7. Automated Publishing & Verification
+### 8. Automated Publishing & Verification
 
 The release workflow (`.github/workflows/release.yml`) automatically:
 
