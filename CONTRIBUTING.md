@@ -85,7 +85,7 @@ Every pull request must target the `main` branch of `Zuz666/lovelace-xiaomi-vacu
 
 ### 7. Checklist (`## Checklist`)
 
-- Verify that Conventional Commits are used, browser ES module compatibility is maintained, tests/docs are updated, and automated review findings (CodeRabbit) are reviewed.
+- Verify that Conventional Commits are used, browser ES module compatibility is maintained, tests/docs are updated, CodeQL security scanning checks pass, and automated review findings (CodeRabbit) are reviewed.
 
 ### 8. Review (`## Review`)
 
@@ -93,7 +93,18 @@ Every pull request must target the `main` branch of `Zuz666/lovelace-xiaomi-vacu
 
 Do not use single-line placeholders or empty stubs in `--body`. Use `--body-file` or a full multiline description when submitting pull requests with the `gh` CLI.
 
-## Automated Code Review
+## Automated Code Review & Security Scanning
+
+Pull requests are automatically analyzed by CodeRabbit and GitHub CodeQL.
+
+### CodeQL Security Analysis
+
+GitHub CodeQL runs automated Static Application Security Testing (SAST) on
+JavaScript/TypeScript source code and GitHub Actions workflow files. Pull
+requests introducing unresolved security vulnerabilities or high-severity
+alerts will be blocked.
+
+### CodeRabbit AI Review
 
 Pull requests may be reviewed automatically by CodeRabbit.
 
