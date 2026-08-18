@@ -60,29 +60,29 @@ A hidden action is absent from the DOM and focus order. A disabled action remain
 
 The required feature is derived from the effective built-in or vendor service mapping:
 
-| Effective service | Required feature |
-| --- | --- |
-| `vacuum.start` | `START` |
-| `vacuum.turn_on` | `TURN_ON` |
-| `vacuum.pause` | `PAUSE` |
-| `vacuum.stop` | `STOP` |
-| `vacuum.turn_off` | `TURN_OFF` |
-| `vacuum.return_to_base` | `RETURN_HOME` |
-| `vacuum.locate` | `LOCATE` |
-| `vacuum.clean_spot` | `CLEAN_SPOT` |
+| Effective service       | Required feature |
+| ----------------------- | ---------------- |
+| `vacuum.start`          | `START`          |
+| `vacuum.turn_on`        | `TURN_ON`        |
+| `vacuum.pause`          | `PAUSE`          |
+| `vacuum.stop`           | `STOP`           |
+| `vacuum.turn_off`       | `TURN_OFF`       |
+| `vacuum.return_to_base` | `RETURN_HOME`    |
+| `vacuum.locate`         | `LOCATE`         |
+| `vacuum.clean_spot`     | `CLEAN_SPOT`     |
 
 A legacy vendor mapping such as a Pause button using `vacuum.stop` evaluates the feature required by the effective service, not only the semantic button ID. An unrecognized service cannot be auto-inferred and requires explicit visibility or a future explicit feature contract.
 
 ### Per-action automatic policy
 
-| Action | Recognized service(s) | Temporarily blocked states | Auto presentation | Dispatch guard |
-| --- | --- | --- | --- | --- |
-| Start | `vacuum.start`, `vacuum.turn_on` | `unavailable`, `unknown`, `cleaning`, `on` | Hidden when required feature is absent; otherwise disabled in blocked states | Recheck required feature and state immediately before dispatch |
-| Pause | `vacuum.pause`, legacy `vacuum.stop` | `unavailable`, `unknown`, and every state other than `cleaning` or `on` | Hidden when required feature is absent; otherwise disabled in blocked states | Recheck required feature and state immediately before dispatch |
-| Stop | `vacuum.stop`, `vacuum.turn_off` | `unavailable`, `unknown`, `docked`, `off`, `idle` | Hidden when required feature is absent; otherwise disabled in blocked states | Recheck required feature and state immediately before dispatch |
-| Return to Base | `vacuum.return_to_base` | `unavailable`, `unknown`, `returning` | Hidden when `RETURN_HOME` is absent; otherwise disabled in blocked states | Recheck `RETURN_HOME` and state immediately before dispatch |
-| Locate | `vacuum.locate` | `unavailable`, `unknown` | Hidden when `LOCATE` is absent; otherwise disabled in blocked states | Recheck `LOCATE` and availability immediately before dispatch |
-| Spot Clean | `vacuum.clean_spot` | `unavailable`, `unknown` | Hidden when `CLEAN_SPOT` is absent; otherwise disabled in blocked states | Recheck `CLEAN_SPOT` and availability immediately before dispatch |
+| Action         | Recognized service(s)                | Temporarily blocked states                                              | Auto presentation                                                            | Dispatch guard                                                    |
+| -------------- | ------------------------------------ | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Start          | `vacuum.start`, `vacuum.turn_on`     | `unavailable`, `unknown`, `cleaning`, `on`                              | Hidden when required feature is absent; otherwise disabled in blocked states | Recheck required feature and state immediately before dispatch    |
+| Pause          | `vacuum.pause`, legacy `vacuum.stop` | `unavailable`, `unknown`, and every state other than `cleaning` or `on` | Hidden when required feature is absent; otherwise disabled in blocked states | Recheck required feature and state immediately before dispatch    |
+| Stop           | `vacuum.stop`, `vacuum.turn_off`     | `unavailable`, `unknown`, `docked`, `off`, `idle`                       | Hidden when required feature is absent; otherwise disabled in blocked states | Recheck required feature and state immediately before dispatch    |
+| Return to Base | `vacuum.return_to_base`              | `unavailable`, `unknown`, `returning`                                   | Hidden when `RETURN_HOME` is absent; otherwise disabled in blocked states    | Recheck `RETURN_HOME` and state immediately before dispatch       |
+| Locate         | `vacuum.locate`                      | `unavailable`, `unknown`                                                | Hidden when `LOCATE` is absent; otherwise disabled in blocked states         | Recheck `LOCATE` and availability immediately before dispatch     |
+| Spot Clean     | `vacuum.clean_spot`                  | `unavailable`, `unknown`                                                | Hidden when `CLEAN_SPOT` is absent; otherwise disabled in blocked states     | Recheck `CLEAN_SPOT` and availability immediately before dispatch |
 
 For `show: true`, the required-feature check is bypassed to preserve legacy integrations, but the state and entity-availability guard remains mandatory. For `show: false`, no action is rendered or dispatched.
 

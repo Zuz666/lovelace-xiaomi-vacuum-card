@@ -22,9 +22,7 @@ const workflowTriggerKeys = (workflow, name) => {
   const triggerBlock = workflow.match(/^on:\n([\s\S]*?)^permissions:/m);
   assert.ok(triggerBlock, `${name} must have an on block before permissions`);
 
-  return [...triggerBlock[1].matchAll(/^ {2}([A-Za-z_][A-Za-z0-9_]*):/gm)].map(
-    (match) => match[1],
-  );
+  return [...triggerBlock[1].matchAll(/^ {2}([A-Za-z_][A-Za-z0-9_]*):/gm)].map((match) => match[1]);
 };
 
 const workflowUses = (workflow) =>
@@ -265,7 +263,7 @@ test("backlog bootstrap preserves milestone state and reconciles issues by marke
     "Only milestone creation may set state to open",
   );
   assert.ok(
-    bootstrap.includes('contains($marker)'),
+    bootstrap.includes("contains($marker)"),
     "Managed issues must be discovered by their stable marker",
   );
   assert.ok(
