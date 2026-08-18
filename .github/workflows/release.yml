@@ -62,6 +62,26 @@ jobs:
       - name: Prepare HACS asset
         run: cp dist/xiaomi-vacuum-card.js xiaomi-vacuum-card.js
 
+      - name: Extract release notes
+        run: |
+          node -e '
+            import("node:fs/promises").then(async ({ readFile, writeFile }) => {
+              const raw = await readFile("CHANGELOG.md", "utf8");
+              const changelog = raw.replace(/\r\n/g, "\n");
+              const version = process.env.RELEASE_VERSION;
+              const escaped = version.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              const regex = new RegExp(
+                `(?:^|\\n)##\\s+\\[?${escaped}\\]?(?:\\s+-[^\\n]*)?\\n([\\s\\S]*?)(?=\\n##\\s+|\n\\[[^\\]]+\\]:|$)`,
+              );
+              const match = changelog.match(regex);
+              const notes = match ? match[1].trim() : "";
+              if (notes) {
+                await writeFile("release-notes.md", notes + "\n");
+                console.log(`Extracted release notes for v${version} (${notes.length} chars)`);
+              }
+            });
+          '
+
       - name: Create GitHub release and tag
         env:
           GH_TOKEN: ${{ github.token }}
@@ -89,17 +109,29 @@ jobs:
                 exit 1
               fi
             else
-              echo "Creating draft release v${RELEASE_VERSION} targeting ${GITHUB_SHA}..."
-              if ! gh release create "v${RELEASE_VERSION}" \
-                --title "v${RELEASE_VERSION}" \
-                --generate-notes \
-                --target "${GITHUB_SHA}" \
-                --draft; then
-                echo "Draft create attempt $attempt failed; retrying in 5s..."
-                sleep 5
-                continue
+              if [ -f "release-notes.md" ] && [ -s "release-notes.md" ]; then
+                echo "Creating draft release v${RELEASE_VERSION} targeting ${GITHUB_SHA} with notes from CHANGELOG.md..."
+                if ! gh release create "v${RELEASE_VERSION}" \
+                  --title "v${RELEASE_VERSION}" \
+                  --notes-file "release-notes.md" \
+                  --target "${GITHUB_SHA}" \
+                  --draft; then
+                  echo "Draft create attempt $attempt failed; retrying in 5s..."
+                  sleep 5
+                  continue
+                fi
+              else
+                echo "Creating draft release v${RELEASE_VERSION} targeting ${GITHUB_SHA} with generated notes..."
+                if ! gh release create "v${RELEASE_VERSION}" \
+                  --title "v${RELEASE_VERSION}" \
+                  --generate-notes \
+                  --target "${GITHUB_SHA}" \
+                  --draft; then
+                  echo "Draft create attempt $attempt failed; retrying in 5s..."
+                  sleep 5
+                  continue
+                fi
               fi
-            fi
 
             echo "Uploading asset to draft release..."
             if ! gh release upload "v${RELEASE_VERSION}" xiaomi-vacuum-card.js --clobber; then

@@ -1,6 +1,6 @@
 {
   "name": "lovelace-xiaomi-vacuum-card",
-  "version": "4.6.1",
+  "version": "4.6.2",
   "private": true,
   "description": "Maintained Xiaomi Vacuum Card Reborn for Home Assistant Lovelace",
   "type": "module",
