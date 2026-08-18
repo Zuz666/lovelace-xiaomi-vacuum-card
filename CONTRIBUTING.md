@@ -93,6 +93,16 @@ Every pull request must target the `main` branch of `Zuz666/lovelace-xiaomi-vacu
 
 Do not use single-line placeholders or empty stubs in `--body`. Use `--body-file` or a full multiline description when submitting pull requests with the `gh` CLI.
 
+## Changelog & Release Workflow
+
+`CHANGELOG.md` is the authoritative source for all notable project changes.
+
+- Follow the [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/) format.
+- Place unreleased contributions under the `## [Unreleased]` heading.
+- When preparing a release, move entries to `## [X.Y.Z] - YYYY-MM-DD` and update comparison links at the bottom.
+- `npm run check:version` automatically verifies that `package.json`, `dist/xiaomi-vacuum-card.js`, and `CHANGELOG.md` stay synchronized.
+- For the full release lifecycle and automated GitHub Actions publishing steps, see [docs/release-workflow.md](docs/release-workflow.md).
+
 ## Workspace Scope & Documentation
 
 - Private notes, scratchpads, and transcripts belong in `/.local/` (which is ignored by Git).

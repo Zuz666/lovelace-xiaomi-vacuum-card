@@ -12,7 +12,7 @@
 - Install dependencies: `npm ci`
 - Run all checks: `npm run check` (runs syntax, version, lint, format, and Node tests).
 - Run syntax check: `npm run check:syntax` (`node --check dist/xiaomi-vacuum-card.js`).
-- Run version check: `npm run check:version` (`node tests/check-version.mjs`).
+- Run version check: `npm run check:version` (`node tests/check-version.mjs`, validates `package.json`, `dist/xiaomi-vacuum-card.js`, and `CHANGELOG.md`).
 - Run linters: `npm run lint` (runs `eslint .` and `markdownlint-cli2 "**/*.md"`).
 - Run JavaScript linter: `npm run lint:js` (`eslint .`).
 - Run Markdown linter: `npm run lint:md` (`markdownlint-cli2 "**/*.md"`).
@@ -35,3 +35,4 @@
 - Pull requests must follow the guidelines in `CONTRIBUTING.md` and populate all sections from `.github/PULL_REQUEST_TEMPLATE.md` (`## Summary`, `## Target`, `## Visual Proof`, `## Test Plan`, `## HACS And Release Impact`, `## AI Disclosure`, `## Checklist`, `## Review`) using `--body-file` or complete multiline text, avoiding single-line placeholders.
 - Project docs and finalized plans belong in the public `docs/` folder.
 - Private notes, scratchpads, and transcripts belong in `/.local/`, which is ignored by Git. Do not commit secrets.
+- Every release requires updating `package.json`, `dist/xiaomi-vacuum-card.js`, and `CHANGELOG.md` following Keep a Changelog. See `docs/release-workflow.md` for full release steps.
