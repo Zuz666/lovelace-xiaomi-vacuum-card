@@ -47,7 +47,7 @@ body:
     id: integration-model
     attributes:
       label: Integration, manufacturer, and model
-      description: Example: Roborock integration, Roborock Q Revo.
+      description: "Example: Roborock integration, Roborock Q Revo."
       placeholder: Roborock / Roborock Q Revo
     validations:
       required: true
