@@ -38,6 +38,19 @@ Thank you for contributing to this maintained Home Assistant Lovelace custom car
 
    Requires Docker and Playwright.
 
+The current commands are documented in [TESTING.md](TESTING.md). Test-layer responsibilities, known limitations, and the required improvements before major runtime development are defined in [docs/maintainers/testing-strategy.md](docs/maintainers/testing-strategy.md).
+
+### Choose the test layer by risk
+
+- Use Node contract tests for configuration, source precedence, formatting helpers, payloads, template handling, and error paths.
+- The current VM harness is not a real Lit or DOM environment. It does not prove reactive updates, Shadow DOM, focus, keyboard behavior, event propagation, or accessibility.
+- Do not expand the fake harness to emulate browser lifecycle behavior. Lifecycle and interaction changes require real browser evidence.
+- A fast real-browser component layer is tracked in the canonical backlog. After it is merged, use it for Lit updates, visible DOM, focus, keyboard, availability, accessibility, and render-count regressions.
+- Use the full Home Assistant smoke test for resource loading, editor or registry integration, service and WebSocket boundaries, and other behavior that truly requires HA.
+- New compatibility claims require sanitized entity fixtures and expected behavior, not only a manufacturer name or one screenshot.
+
+Until the component layer is available, lifecycle-sensitive pull requests must include targeted HA smoke coverage and explicitly identify the missing component regression in the linked issue.
+
 ## Commit Message Guidelines
 
 Use Conventional Commits so history and automated changelogs remain structured and readable:
@@ -47,6 +60,23 @@ Use Conventional Commits so history and automated changelogs remain structured a
 - `docs:` for documentation updates (e.g., `docs: refine contributing guidelines`)
 - `test:` for adding or updating tests (e.g., `test: add ha-smoke coverage`)
 - `chore:` for tooling and maintenance (e.g., `chore: update dependencies`)
+
+## Issue and Backlog Guidelines
+
+Public bug, feature, and compatibility reports must use the structured forms under `.github/ISSUE_TEMPLATE/`.
+
+Maintainer-authored work uses these versioned templates:
+
+- `.github/ISSUE_TEMPLATE/work_item.md` for implementation-ready leaf issues;
+- `.github/ISSUE_TEMPLATE/epic.md` for multi-issue outcomes.
+
+The work item template is the canonical artifact for problem, evidence, scope, non-goals, proposed behavior, acceptance criteria, test plan, compatibility, dependencies, and release impact. Do not replace it with an unversioned personal template or a one-line issue body.
+
+Initial roadmap issues are declared under `.github/backlog/` and created by the manual **Bootstrap backlog** workflow after the declarations are merged into `main`. Managed issue bodies contain a source marker; edit their Markdown source through a pull request and rerun the workflow rather than changing the generated body only in GitHub.
+
+Every implementation issue must satisfy the Definition of Ready before work begins and the Definition of Done before closure. Priority, type, area, milestone, Project lifecycle, epic, testing gates, and triage rules are defined in [docs/maintainers/backlog-governance.md](docs/maintainers/backlog-governance.md).
+
+Do not copy historical upstream issues one-for-one. Consolidate related evidence into one current canonical issue, describe what the maintained fork already solves, and verify the modern Home Assistant entity and service contract.
 
 ## Pull Request Guidelines
 
@@ -70,7 +100,13 @@ Every pull request must target the `main` branch of `Zuz666/lovelace-xiaomi-vacu
 
 ### 4. Test Plan (`## Test Plan`)
 
-- Mark all verified test and check steps (e.g., `npm run check`, `npm run test:ha-smoke`, `node --check dist/xiaomi-vacuum-card.js`).
+- Mark all verified test and check steps.
+- Explain why the selected test layers can observe the changed behavior.
+- Include `npm run check` for every code change.
+- Include real browser component tests for lifecycle, DOM, focus, keyboard, availability, accessibility, or interaction changes after that layer is available.
+- Include `npm run test:ha-smoke` for Home Assistant resource, editor, registry, service, WebSocket, or integration-boundary changes.
+- State the exact HA image or version used for smoke evidence.
+- Link compatibility fixtures when an integration or model claim changes.
 
 ### 5. HACS And Release Impact (`## HACS And Release Impact`)
 

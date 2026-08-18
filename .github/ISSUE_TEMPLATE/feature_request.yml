@@ -1,29 +1,70 @@
 name: Feature request
-description: Suggest an improvement or new capability for Xiaomi Vacuum Card Reborn.
+description: Suggest a user-facing capability or compatibility improvement for Xiaomi Vacuum Card Reborn.
 title: "feat: "
-labels: ["enhancement"]
+labels: ["type:feature"]
 body:
   - type: textarea
     id: problem
     attributes:
-      label: Problem
-      description: Describe the user problem or limitation this would solve.
+      label: User problem
+      description: Describe the limitation or workflow problem without prescribing implementation details first.
     validations:
       required: true
+
   - type: textarea
     id: proposed-solution
     attributes:
-      label: Proposed solution
-      description: Describe the behavior, configuration, or UI you want.
+      label: Proposed behavior
+      description: Describe the expected runtime behavior and user-visible result.
     validations:
       required: true
+
   - type: textarea
-    id: alternatives-considered
+    id: proposed-configuration
     attributes:
-      label: Alternatives considered
-      description: Describe any workarounds or alternate approaches you considered.
+      label: Proposed YAML or configuration contract
+      description: Show how the feature could be configured. Write N/A when no configuration change is expected.
+      render: yaml
+    validations:
+      required: true
+
   - type: textarea
-    id: additional-context
+    id: user-interface
     attributes:
-      label: Additional context
-      description: Add screenshots, examples, or related links.
+      label: Expected user interface
+      description: Explain where the capability appears and how mouse, keyboard, touch, and unavailable states should behave.
+
+  - type: textarea
+    id: integrations
+    attributes:
+      label: Affected integrations and models
+      description: List verified integrations or models, and distinguish evidence from assumptions.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and workarounds
+      description: Describe existing YAML, scripts, template entities, or other cards that partially solve the problem.
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility and migration considerations
+      description: Note expected Home Assistant versions, existing YAML impact, deprecations, or possible breaking changes.
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Suggested acceptance criteria
+      description: Provide observable conditions that would make the feature complete.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional evidence and references
+      description: Add sanitized screenshots, entity data, upstream issues, Home Assistant changes, or related documentation.

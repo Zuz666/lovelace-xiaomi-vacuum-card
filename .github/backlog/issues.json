@@ -1,0 +1,100 @@
+[
+  {
+    "key": "p0-real-lit-component-tests",
+    "title": "test: add real Lit browser component tests for lifecycle and interactions",
+    "body_file": ".github/backlog/p0-real-lit-component-tests.md",
+    "labels": ["priority:P0", "type:test", "area:testing", "area:runtime"],
+    "milestone": "runtime-correctness"
+  },
+  {
+    "key": "p0-reactive-external-entities",
+    "title": "fix: update card when referenced external entities change",
+    "body_file": ".github/backlog/p0-reactive-external-entities.md",
+    "labels": ["priority:P0", "type:bug", "area:runtime", "area:entities", "source:upstream"],
+    "milestone": "runtime-correctness"
+  },
+  {
+    "key": "p0-native-vacuum-state-features",
+    "title": "fix: use native vacuum activity and supported feature flags",
+    "body_file": ".github/backlog/p0-native-vacuum-state-features.md",
+    "labels": [
+      "priority:P0",
+      "type:bug",
+      "area:runtime",
+      "area:controls",
+      "source:upstream",
+      "breaking-change"
+    ],
+    "milestone": "runtime-correctness"
+  },
+  {
+    "key": "p0-device-aware-battery",
+    "title": "fix: discover battery and charging entities through device registry",
+    "body_file": ".github/backlog/p0-device-aware-battery.md",
+    "labels": ["priority:P0", "type:bug", "area:entities", "area:compatibility", "source:upstream"],
+    "milestone": "runtime-correctness"
+  },
+  {
+    "key": "p1-reproducible-ha-smoke",
+    "title": "test: make Home Assistant smoke tests reproducible and diagnostic",
+    "body_file": ".github/backlog/p1-reproducible-ha-smoke.md",
+    "labels": ["priority:P1", "type:test", "area:testing", "area:ci-release"],
+    "milestone": "runtime-correctness"
+  },
+  {
+    "key": "p1-entity-fixture-matrix",
+    "title": "test: introduce reusable entity fixtures and scenario matrix",
+    "body_file": ".github/backlog/p1-entity-fixture-matrix.md",
+    "labels": ["priority:P1", "type:test", "area:testing", "area:compatibility"],
+    "milestone": "entity-aware-rows-controls"
+  },
+  {
+    "key": "p1-entity-aware-row-design",
+    "title": "design: define the entity-aware row model and migration strategy",
+    "body_file": ".github/backlog/p1-entity-aware-row-design.md",
+    "labels": [
+      "priority:P1",
+      "type:refactor",
+      "area:entities",
+      "area:controls",
+      "breaking-change",
+      "source:upstream"
+    ],
+    "milestone": "entity-aware-rows-controls"
+  },
+  {
+    "key": "epic-testing-architecture",
+    "title": "epic: layered testing architecture and quality gates",
+    "body_file": ".github/backlog/epic-testing-architecture.md",
+    "labels": ["epic", "priority:P0", "area:testing", "area:ci-release"],
+    "milestone": null
+  },
+  {
+    "key": "epic-modern-ha-entities",
+    "title": "epic: modern Home Assistant entity compatibility",
+    "body_file": ".github/backlog/epic-modern-ha-entities.md",
+    "labels": ["epic", "priority:P0", "area:entities", "area:compatibility"],
+    "milestone": "runtime-correctness"
+  },
+  {
+    "key": "epic-entity-aware-rows",
+    "title": "epic: entity-aware rows and controls",
+    "body_file": ".github/backlog/epic-entity-aware-rows-controls.md",
+    "labels": ["epic", "priority:P1", "area:entities", "area:controls"],
+    "milestone": "entity-aware-rows-controls"
+  },
+  {
+    "key": "epic-actions-area-cleaning",
+    "title": "epic: standard Lovelace actions and area cleaning",
+    "body_file": ".github/backlog/epic-actions-area-cleaning.md",
+    "labels": ["epic", "priority:P1", "area:actions", "area:layout"],
+    "milestone": "actions-area-cleaning"
+  },
+  {
+    "key": "epic-integration-compatibility",
+    "title": "epic: integration compatibility profiles and fixtures",
+    "body_file": ".github/backlog/epic-integration-compatibility.md",
+    "labels": ["epic", "priority:P2", "area:compatibility", "area:vendor"],
+    "milestone": null
+  }
+]

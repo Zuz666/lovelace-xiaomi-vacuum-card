@@ -1,5 +1,11 @@
-blank_issues_enabled: true
+blank_issues_enabled: false
 contact_links:
+  - name: User guide and configuration reference
+    url: https://github.com/Zuz666/lovelace-xiaomi-vacuum-card#readme
+    about: Check installation, configuration, examples, and known behavior before filing an issue.
   - name: Home Assistant custom card documentation
     url: https://developers.home-assistant.io/docs/frontend/custom-ui/custom-card/
-    about: Read the HA custom card docs before opening implementation questions.
+    about: Read the Home Assistant custom card documentation for platform-level implementation questions.
+  - name: Report a security vulnerability privately
+    url: https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/security/advisories/new
+    about: Do not disclose security vulnerabilities in a public issue.

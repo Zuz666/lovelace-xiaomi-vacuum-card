@@ -1,0 +1,142 @@
+[
+  {
+    "name": "priority:P0",
+    "color": "B60205",
+    "description": "Critical correctness or current Home Assistant compatibility work."
+  },
+  {
+    "name": "priority:P1",
+    "color": "D93F0B",
+    "description": "Required for the next planned minor release."
+  },
+  {
+    "name": "priority:P2",
+    "color": "FBCA04",
+    "description": "Valuable work that does not block the primary user journey."
+  },
+  {
+    "name": "priority:P3",
+    "color": "C5DEF5",
+    "description": "Nice-to-have, experimental, or primarily visual improvement."
+  },
+  {
+    "name": "type:bug",
+    "color": "D73A4A",
+    "description": "A reproducible defect in existing behavior."
+  },
+  {
+    "name": "type:feature",
+    "color": "A2EEEF",
+    "description": "A new user-facing capability or behavior."
+  },
+  {
+    "name": "type:refactor",
+    "color": "5319E7",
+    "description": "Internal restructuring without an intended behavior change."
+  },
+  {
+    "name": "type:test",
+    "color": "0E8A16",
+    "description": "Test coverage, fixtures, or verification infrastructure."
+  },
+  {
+    "name": "type:docs",
+    "color": "0075CA",
+    "description": "Documentation-only work."
+  },
+  {
+    "name": "type:chore",
+    "color": "EDEDED",
+    "description": "Repository maintenance, dependencies, or operational work."
+  },
+  {
+    "name": "area:runtime",
+    "color": "1D76DB",
+    "description": "Rendering lifecycle, reactivity, state updates, or Lit runtime."
+  },
+  {
+    "name": "area:entities",
+    "color": "0E8A16",
+    "description": "Entity resolution, registry metadata, values, or formatting."
+  },
+  {
+    "name": "area:controls",
+    "color": "5319E7",
+    "description": "Buttons, selectors, dropdowns, and service execution."
+  },
+  {
+    "name": "area:actions",
+    "color": "D4C5F9",
+    "description": "Lovelace tap, hold, double-tap, confirmation, or navigation actions."
+  },
+  {
+    "name": "area:layout",
+    "color": "C2E0C6",
+    "description": "Responsive layout, Sections grid behavior, rows, or styling."
+  },
+  {
+    "name": "area:editor",
+    "color": "006B75",
+    "description": "Visual editor, selectors, schemas, or configuration UX."
+  },
+  {
+    "name": "area:compatibility",
+    "color": "BFDADC",
+    "description": "Home Assistant version or integration compatibility."
+  },
+  {
+    "name": "area:vendor",
+    "color": "F9D0C4",
+    "description": "Vendor- or model-specific compatibility profile work."
+  },
+  {
+    "name": "area:ci-release",
+    "color": "6E7781",
+    "description": "CI, HACS validation, dependencies, release, or publishing."
+  },
+  {
+    "name": "area:testing",
+    "color": "0B7285",
+    "description": "Test harnesses, fixtures, browser or HA tests, and quality gates."
+  },
+  {
+    "name": "status:needs-info",
+    "color": "D876E3",
+    "description": "Required environment, configuration, or diagnostics are missing."
+  },
+  {
+    "name": "status:needs-reproduction",
+    "color": "E99695",
+    "description": "The reported behavior has not yet been reproduced."
+  },
+  {
+    "name": "status:blocked",
+    "color": "000000",
+    "description": "Progress is blocked by a documented dependency or external change."
+  },
+  {
+    "name": "epic",
+    "color": "3E4B9E",
+    "description": "Parent issue that tracks a multi-issue outcome."
+  },
+  {
+    "name": "source:upstream",
+    "color": "C5DEF5",
+    "description": "Derived from historical upstream issues or pull requests."
+  },
+  {
+    "name": "breaking-change",
+    "color": "B60205",
+    "description": "May require a configuration migration or incompatible behavior change."
+  },
+  {
+    "name": "good first issue",
+    "color": "7057FF",
+    "description": "Suitable for a contributor new to this repository."
+  },
+  {
+    "name": "help wanted",
+    "color": "008672",
+    "description": "Maintainers would value community implementation or device evidence."
+  }
+]
