@@ -1,5 +1,12 @@
 [
   {
+    "key": "p0-real-lit-component-tests",
+    "title": "test: add real Lit browser component tests for lifecycle and interactions",
+    "body_file": ".github/backlog/p0-real-lit-component-tests.md",
+    "labels": ["priority:P0", "type:test", "area:testing", "area:runtime"],
+    "milestone": "runtime-correctness"
+  },
+  {
     "key": "p0-reactive-external-entities",
     "title": "fix: update card when referenced external entities change",
     "body_file": ".github/backlog/p0-reactive-external-entities.md",
@@ -21,11 +28,32 @@
     "milestone": "runtime-correctness"
   },
   {
+    "key": "p1-reproducible-ha-smoke",
+    "title": "test: make Home Assistant smoke tests reproducible and diagnostic",
+    "body_file": ".github/backlog/p1-reproducible-ha-smoke.md",
+    "labels": ["priority:P1", "type:test", "area:testing", "area:ci-release"],
+    "milestone": "runtime-correctness"
+  },
+  {
+    "key": "p1-entity-fixture-matrix",
+    "title": "test: introduce reusable entity fixtures and scenario matrix",
+    "body_file": ".github/backlog/p1-entity-fixture-matrix.md",
+    "labels": ["priority:P1", "type:test", "area:testing", "area:compatibility"],
+    "milestone": "entity-aware-rows-controls"
+  },
+  {
     "key": "p1-entity-aware-row-design",
     "title": "design: define the entity-aware row model and migration strategy",
     "body_file": ".github/backlog/p1-entity-aware-row-design.md",
     "labels": ["priority:P1", "type:refactor", "area:entities", "area:controls", "breaking-change"],
     "milestone": "entity-aware-rows-controls"
+  },
+  {
+    "key": "epic-testing-architecture",
+    "title": "epic: layered testing architecture and quality gates",
+    "body_file": ".github/backlog/epic-testing-architecture.md",
+    "labels": ["epic", "priority:P0", "area:testing", "area:ci-release"],
+    "milestone": null
   },
   {
     "key": "epic-modern-ha-entities",
