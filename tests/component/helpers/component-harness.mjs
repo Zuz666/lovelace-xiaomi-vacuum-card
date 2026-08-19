@@ -163,6 +163,7 @@ export async function updateCardHass(page, updates) {
       ...(payload && "entities" in payload ? { entities: payload.entities } : {}),
       ...(payload && "devices" in payload ? { devices: payload.devices } : {}),
     };
+    window.__activeHass = nextHass;
     card.hass = nextHass;
     await card.updateComplete;
   }, updates);

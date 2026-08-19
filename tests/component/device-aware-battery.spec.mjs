@@ -53,11 +53,9 @@ test.describe("Device-Aware Battery and Charging Registry Discovery", () => {
     });
 
     // Verify initial render discovers the renamed sensor (84%)
-    await expect(cardLocator.locator(".grid-left")).toContainText("84%");
-    await expect(cardLocator.locator(".grid-left ha-icon").nth(1)).toHaveAttribute(
-      "icon",
-      "mdi:battery-80",
-    );
+    const batteryRow = cardLocator.locator(".grid-left > div").filter({ hasText: /%/ });
+    await expect(batteryRow).toContainText("84%");
+    await expect(batteryRow.locator("ha-icon")).toHaveAttribute("icon", "mdi:battery-80");
 
     // Update battery state from 84 to 42
     await updateEntityState(page, "sensor.renamed_vacuum_battery_power", {
@@ -65,10 +63,9 @@ test.describe("Device-Aware Battery and Charging Registry Discovery", () => {
       attributes: { device_class: "battery" },
     });
 
-    await expect(cardLocator.locator(".grid-left ha-icon").nth(1)).toHaveAttribute(
-      "icon",
-      "mdi:battery-40",
-    );
+    // Card re-renders with new percentage and updated icon
+    await expect(batteryRow).toContainText("42%");
+    await expect(batteryRow.locator("ha-icon")).toHaveAttribute("icon", "mdi:battery-40");
   });
 
   test("auto-discovers same-device charging binary sensor and updates battery icon dynamically", async ({
@@ -119,11 +116,9 @@ test.describe("Device-Aware Battery and Charging Registry Discovery", () => {
     });
 
     // When charging is off: icon is normal battery (mdi:battery-70)
-    await expect(cardLocator.locator(".grid-left")).toContainText("73%");
-    await expect(cardLocator.locator(".grid-left ha-icon").nth(1)).toHaveAttribute(
-      "icon",
-      "mdi:battery-70",
-    );
+    const batteryRow = cardLocator.locator(".grid-left > div").filter({ hasText: /%/ });
+    await expect(batteryRow).toContainText("73%");
+    await expect(batteryRow.locator("ha-icon")).toHaveAttribute("icon", "mdi:battery-70");
 
     // Turn charging ON: icon updates to charging battery (mdi:battery-charging-70)
     await updateEntityState(page, "binary_sensor.custom_charging", {
@@ -131,10 +126,7 @@ test.describe("Device-Aware Battery and Charging Registry Discovery", () => {
       attributes: { device_class: "battery_charging" },
     });
 
-    await expect(cardLocator.locator(".grid-left ha-icon").nth(1)).toHaveAttribute(
-      "icon",
-      "mdi:battery-charging-70",
-    );
+    await expect(batteryRow.locator("ha-icon")).toHaveAttribute("icon", "mdi:battery-charging-70");
 
     // Turn charging OFF: icon updates back to normal battery (mdi:battery-70)
     await updateEntityState(page, "binary_sensor.custom_charging", {
@@ -142,10 +134,7 @@ test.describe("Device-Aware Battery and Charging Registry Discovery", () => {
       attributes: { device_class: "battery_charging" },
     });
 
-    await expect(cardLocator.locator(".grid-left ha-icon").nth(1)).toHaveAttribute(
-      "icon",
-      "mdi:battery-70",
-    );
+    await expect(batteryRow.locator("ha-icon")).toHaveAttribute("icon", "mdi:battery-70");
   });
 
   test("invalidates candidate discovery when entities registry map reference is replaced", async ({
