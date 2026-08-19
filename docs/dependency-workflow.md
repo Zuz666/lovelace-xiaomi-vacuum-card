@@ -40,7 +40,7 @@ The repository uses GitHub Dependabot to automate dependency maintenance:
 - **Grouped Version Updates**: Dev dependencies are grouped into manageable batches (e.g. `npm_and_yarn`) to prevent PR noise.
 - **Security Vulnerability Fixes**: High and critical security advisories automatically trigger targeted update PRs.
 - **Actions Updates**: Workflow action updates are tracked to keep CI actions on secure and supported versions.
-- **Labels**: Automated PRs are tagged with `dependencies` and language-specific labels (e.g. `javascript`).
+- **Labels**: Automated pull requests for both npm and GitHub Actions are tagged with `dependencies`, `type:chore`, and `area:ci-release`. Flat ecosystem-specific labels (such as `javascript` or `github-actions`) are not used. Priority labels are not assigned statically to all Dependabot PRs; maintainers assign `priority:P0` or `priority:P1` manually during triage when required (e.g. for urgent security advisories), ensuring routine tooling updates and critical vulnerability fixes do not receive the same default priority.
 
 ---
 

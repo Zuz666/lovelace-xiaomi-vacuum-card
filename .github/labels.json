@@ -130,6 +130,11 @@
     "description": "May require a configuration migration or incompatible behavior change."
   },
   {
+    "name": "dependencies",
+    "color": "0366D6",
+    "description": "Pull requests that update a dependency file."
+  },
+  {
     "name": "good first issue",
     "color": "7057FF",
     "description": "Suitable for a contributor new to this repository."

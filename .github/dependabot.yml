@@ -10,7 +10,8 @@ updates:
           - "*"
     labels:
       - "dependencies"
-      - "javascript"
+      - "type:chore"
+      - "area:ci-release"
     commit-message:
       prefix: "chore"
       prefix-development: "chore"
@@ -25,6 +26,7 @@ updates:
           - "*"
     labels:
       - "dependencies"
-      - "github-actions"
+      - "type:chore"
+      - "area:ci-release"
     commit-message:
       prefix: "chore"
