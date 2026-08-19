@@ -54,12 +54,14 @@ test.describe("Vacuum Activity and Action Capabilities", () => {
 
     // Transition state from docked -> cleaning
     await updateEntityState(page, "vacuum.roborock_s7", {
+      ...vacuumState,
       state: "cleaning",
     });
     await expect(statusRow).toContainText("Cleaning");
 
     // Transition state from cleaning -> returning
     await updateEntityState(page, "vacuum.roborock_s7", {
+      ...vacuumState,
       state: "returning",
     });
     await expect(statusRow).toContainText("Returning");
@@ -146,6 +148,7 @@ test.describe("Vacuum Activity and Action Capabilities", () => {
     // Start -> enabled
     await expect(startBtn).not.toHaveAttribute("disabled", "");
     await expect(startBtn).toHaveAttribute("aria-disabled", "false");
+    await expect(startBtn).toHaveAttribute("tabindex", "0");
 
     // Pause -> disabled (can only pause when cleaning)
     await expect(pauseBtn).toHaveAttribute("disabled", "");
@@ -155,13 +158,34 @@ test.describe("Vacuum Activity and Action Capabilities", () => {
     // Stop -> disabled (docked)
     await expect(stopBtn).toHaveAttribute("disabled", "");
     await expect(stopBtn).toHaveAttribute("aria-disabled", "true");
+    await expect(stopBtn).toHaveAttribute("tabindex", "-1");
 
     // Return to Base -> enabled
     await expect(returnBtn).not.toHaveAttribute("disabled", "");
+    await expect(returnBtn).toHaveAttribute("tabindex", "0");
 
-    // Clicking disabled Pause button must NOT dispatch service
+    // Programmatic click on disabled actions must NOT dispatch service
     await pauseBtn.dispatchEvent("click");
+    await stopBtn.dispatchEvent("click");
     let calls = await getRecordedServiceCalls(page);
+    expect(calls).toEqual([]);
+
+    // Pointer click on disabled actions must NOT dispatch service
+    await pauseBtn.click({ force: true });
+    await stopBtn.click({ force: true });
+    calls = await getRecordedServiceCalls(page);
+    expect(calls).toEqual([]);
+
+    // Keyboard activation attempts on disabled actions must NOT dispatch service
+    await pauseBtn.dispatchEvent("keydown", { key: "Enter" });
+    await pauseBtn.dispatchEvent("keyup", { key: "Enter" });
+    await pauseBtn.dispatchEvent("keydown", { key: " " });
+    await pauseBtn.dispatchEvent("keyup", { key: " " });
+    await stopBtn.dispatchEvent("keydown", { key: "Enter" });
+    await stopBtn.dispatchEvent("keyup", { key: "Enter" });
+    await stopBtn.dispatchEvent("keydown", { key: " " });
+    await stopBtn.dispatchEvent("keyup", { key: " " });
+    calls = await getRecordedServiceCalls(page);
     expect(calls).toEqual([]);
 
     // Clicking enabled Start button MUST dispatch service
@@ -177,6 +201,7 @@ test.describe("Vacuum Activity and Action Capabilities", () => {
 
     // Now transition state to 'cleaning'
     await updateEntityState(page, "vacuum.smart_cleaner", {
+      ...vacuumState,
       state: "cleaning",
     });
 
@@ -184,13 +209,26 @@ test.describe("Vacuum Activity and Action Capabilities", () => {
     // Start -> disabled
     await expect(startBtn).toHaveAttribute("disabled", "");
     await expect(startBtn).toHaveAttribute("aria-disabled", "true");
+    await expect(startBtn).toHaveAttribute("tabindex", "-1");
+
+    // Pointer and keyboard activation on newly disabled Start must NOT dispatch service
+    await startBtn.click({ force: true });
+    await startBtn.dispatchEvent("click");
+    await startBtn.dispatchEvent("keydown", { key: "Enter" });
+    await startBtn.dispatchEvent("keyup", { key: "Enter" });
+    await startBtn.dispatchEvent("keydown", { key: " " });
+    await startBtn.dispatchEvent("keyup", { key: " " });
+    calls = await getRecordedServiceCalls(page);
+    expect(calls).toHaveLength(1); // Only the initial start call
 
     // Pause -> enabled
     await expect(pauseBtn).not.toHaveAttribute("disabled", "");
     await expect(pauseBtn).toHaveAttribute("aria-disabled", "false");
+    await expect(pauseBtn).toHaveAttribute("tabindex", "0");
 
     // Stop -> enabled
     await expect(stopBtn).not.toHaveAttribute("disabled", "");
+    await expect(stopBtn).toHaveAttribute("tabindex", "0");
 
     // Click Pause button when cleaning
     await pauseBtn.click();

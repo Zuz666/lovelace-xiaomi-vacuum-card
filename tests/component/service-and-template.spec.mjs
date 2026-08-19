@@ -32,6 +32,7 @@ test.describe("Service Calls & Dynamic Template Subscriptions", () => {
 
     // Transition to cleaning state to enable Pause/Stop
     await updateEntityState(page, "vacuum.test_vacuum", {
+      ...vacuumState,
       state: "cleaning",
     });
 
