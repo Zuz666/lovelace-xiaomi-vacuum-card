@@ -117,7 +117,7 @@ For `show: true`, the required-feature check is bypassed to preserve legacy inte
 - [x] Service-dispatch guard tests that mutate state between render and activation
 - [x] Real browser component tests for hidden DOM, disabled semantics, focus order, keyboard activation, and pointer activation
 - [x] Regression test for upstream issue #123 behavior
-- [x] Targeted Home Assistant smoke test for representative enabled, disabled, and hidden actions
+- [x] Targeted Home Assistant smoke test for card loading and dynamic action button execution
 - [x] Existing contract, component, lint, formatting, and smoke suites pass
 
 ## Compatibility and migration
