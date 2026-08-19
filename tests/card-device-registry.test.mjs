@@ -350,6 +350,39 @@ test("legacy charging attributes: influences rendered battery icon when binary s
   assert.equal(card.resolveChargingSource().isCharging, true);
   const icon60 = card.renderIcon(card.config.state.battery);
   assert.ok(icon60.values.includes("mdi:battery-charging-60"));
+
+  // 3. Legacy vacuumState.attributes.charging = true
+  card.hass = createHass({
+    states: {
+      "vacuum.my_vacuum": {
+        attributes: { battery_level: 40, charging: true },
+        entity_id: "vacuum.my_vacuum",
+        state: "docked",
+      },
+    },
+  });
+  assert.equal(card.resolveChargingSource().isCharging, true);
+
+  // 4. Same-device binary sensor takes precedence over legacy attributes
+  card.hass = createHass({
+    states: {
+      "vacuum.my_vacuum": {
+        attributes: { battery_level: 50, is_charging: true },
+        entity_id: "vacuum.my_vacuum",
+        state: "docked",
+      },
+      "binary_sensor.my_vacuum_charging": {
+        attributes: { device_class: "battery_charging" },
+        entity_id: "binary_sensor.my_vacuum_charging",
+        state: "off",
+      },
+    },
+    entities: {
+      "vacuum.my_vacuum": { device_id: "dev_1", platform: "roborock" },
+      "binary_sensor.my_vacuum_charging": { device_id: "dev_1", platform: "roborock" },
+    },
+  });
+  assert.equal(card.resolveChargingSource().isCharging, false);
 });
 
 test("entity eligibility: excluded disabled, hidden, wrong-domain, wrong-device-class, or missing-state entries fall through", async () => {
@@ -910,7 +943,12 @@ test("reactive dependency tracking: includes discovered battery and charging ent
   };
   card.hass = hassCandidateIneligible;
   assert.equal(card.shouldUpdate(changedProps), true);
-
+  assert.equal(
+    card.resolveDiscoveredBatteryEntity(),
+    null,
+    "A candidate that loses device_class: battery must stop being discovered",
+  );
+  assert.ok(!card.getReferencedEntities().includes("sensor.custom_battery"));
   // shouldUpdate ignores unrelated state changes
   const hassUnrelatedChanged = {
     ...hass1,

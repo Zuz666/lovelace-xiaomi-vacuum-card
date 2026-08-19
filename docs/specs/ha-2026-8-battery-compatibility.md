@@ -49,6 +49,7 @@ Charging detection sources (in precedence order):
 
 1. **Eligible same-device charging binary sensor**: `binary_sensor.*` entity attached to the same device as the vacuum, with `device_class: battery_charging`, `disabled_by: null`, `hidden_by: null`, display `hidden !== true`, and active state object in `hass.states`. Active charging is indicated when state is `'on'`. When multiple charging candidates exist, candidates matching the vacuum platform are preferred and ties are broken alphabetically by `entity_id`.
 2. **Legacy vacuum charging attributes**: `vacuumState.attributes.charging === true` or `vacuumState.attributes.is_charging === true` when a same-device binary sensor candidate is absent.
+3. **Legacy `battery_icon` attribute**: `vacuumState.attributes.battery_icon` string containing `charging`, evaluated only when preceding sources do not indicate charging.
 
 When rendering battery row icons:
 
