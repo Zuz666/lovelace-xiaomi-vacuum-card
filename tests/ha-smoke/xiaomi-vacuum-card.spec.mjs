@@ -251,10 +251,12 @@ test("loads the Xiaomi vacuum card in Home Assistant", async ({ page, request, b
 
   expect(registryContract).not.toBeNull();
   expect(registryContract?.hasStates).toBe(true);
+  expect(registryContract?.hasEntities).toBe(true);
+  expect(registryContract?.hasDevices).toBe(true);
+  expect(registryContract?.hasConfiguredVacuumEntity).toBe(true);
   expect(registryContract?.hasHassStatesMatch).toBe(true);
   expect(registryContract?.hasHassEntitiesMatch).toBe(true);
   expect(registryContract?.hasHassDevicesMatch).toBe(true);
-
   await vacuumCard.screenshot({ path: ".local/proof/before-dynamic-click.png" });
 
   const dynamicButton = vacuumCard.locator('ha-icon-button[title="Use selected fan speed"]');
