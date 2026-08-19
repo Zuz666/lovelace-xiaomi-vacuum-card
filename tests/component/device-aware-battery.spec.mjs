@@ -198,8 +198,9 @@ test.describe("Device-Aware Battery and Charging Registry Discovery", () => {
       },
     });
 
-    // Card invalidates discovery and renders battery_two (95%)
+    // Card invalidates discovery and renders battery_two (95%) instead of previous battery_one (65%)
     await expect(cardLocator.locator(".grid-left")).toContainText("95%");
+    await expect(cardLocator.locator(".grid-left")).not.toContainText("65%");
   });
 
   test("renders localized Unavailable when discovered battery sensor enters unavailable state without demoting to fallbacks", async ({

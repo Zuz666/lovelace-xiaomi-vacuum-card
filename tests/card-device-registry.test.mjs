@@ -471,6 +471,34 @@ test("entity eligibility: excluded disabled, hidden, wrong-domain, wrong-device-
   });
   card.hass = hassOtherDevice;
   assert.equal(card.resolveDiscoveredBatteryEntity(), null);
+
+  // 10. vacuum registry entry without device_id -> discovery skipped
+  const hassNoDeviceId = createHass({
+    states: {
+      "vacuum.my_vacuum": { attributes: {}, entity_id: "vacuum.my_vacuum", state: "docked" },
+      "sensor.candidate_battery": { attributes: { device_class: "battery" }, state: "80" },
+      "sensor.my_vacuum_battery": { attributes: {}, state: "50" },
+    },
+    entities: {
+      "vacuum.my_vacuum": { platform: "roborock" },
+      "sensor.candidate_battery": { device_id: "dev_1", platform: "roborock" },
+    },
+  });
+  card.hass = hassNoDeviceId;
+  assert.equal(card.resolveDiscoveredBatteryEntity(), null);
+  assert.equal(card.resolveAttributeSource(card.config.state.battery).rawValue, "50");
+
+  // 11. malformed/null entities map -> discovery skipped without throwing
+  const hassNullEntities = createHass({
+    states: {
+      "vacuum.my_vacuum": { attributes: {}, entity_id: "vacuum.my_vacuum", state: "docked" },
+      "sensor.my_vacuum_battery": { attributes: {}, state: "50" },
+    },
+    entities: null,
+  });
+  card.hass = hassNullEntities;
+  assert.equal(card.resolveDiscoveredBatteryEntity(), null);
+  assert.equal(card.resolveAttributeSource(card.config.state.battery).rawValue, "50");
 });
 
 test("unavailable and unknown stability: discovered entities in unavailable/unknown state stay selected and do not fall back", async () => {

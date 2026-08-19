@@ -45,11 +45,15 @@ For non-battery rows, the resolution order remains:
 
 ### 2. Battery Icon & Charging State Precedence
 
+Charging detection sources (in precedence order):
+
+1. **Eligible same-device charging binary sensor**: `binary_sensor.*` entity attached to the same device as the vacuum, with `device_class: battery_charging`, `disabled_by: null`, `hidden_by: null`, display `hidden !== true`, and active state object in `hass.states`. Active charging is indicated when state is `'on'`. When multiple charging candidates exist, candidates matching the vacuum platform are preferred and ties are broken alphabetically by `entity_id`.
+2. **Legacy vacuum charging attributes**: `vacuumState.attributes.charging === true` or `vacuumState.attributes.is_charging === true` when a same-device binary sensor candidate is absent.
+
 When rendering battery row icons:
 
 1. **Sensor icon**: icon from the resolved external sensor entity state, if present.
-2. **Deterministic numeric icon**: mapped from numeric battery value (`0..100` rounded to nearest 10). If an eligible same-device charging binary sensor is discovered and `on`, charging icons are rendered:
-   - Charging candidates must be `binary_sensor.*` entities attached to the same device as the vacuum, with `device_class: battery_charging`, `disabled_by: null`, `hidden_by: null`, display `hidden !== true`, and an active state object in `hass.states`. When multiple charging candidates exist, candidates matching the vacuum platform are preferred and ties are broken alphabetically by `entity_id`.
+2. **Deterministic numeric icon**: mapped from numeric battery value (`0..100` rounded to nearest 10). If active charging is detected via the charging sources above, charging icons are rendered:
    - Charging: `0` -> `mdi:battery-charging-outline`, `10..90` -> `mdi:battery-charging-10`..`90`, `100` -> `mdi:battery-charging-100`.
    - Not charging: `0` -> `mdi:battery-outline`, `10..90` -> `mdi:battery-10`..`90`, `100` -> `mdi:battery`.
 3. **Legacy attribute icon**: `vacuumState.attributes.battery_icon`.
