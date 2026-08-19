@@ -160,7 +160,7 @@ A discovered same-device charging binary sensor (`device_class: battery_charging
 
 Selected entities remain stable when transitioning to `unavailable` or `unknown` state and display localized unavailable text without demoting to lower-priority legacy fallbacks. Legacy vacuum attributes (`battery_level`, `battery_icon`) are maintained for backward compatibility with older Home Assistant versions and integrations that still expose them.
 
-For technical details on modern battery and charging entity resolution, see the [Home Assistant 2026.8 battery compatibility specification](docs/specs/ha-2026-8-battery-compatibility.md).
+For technical details on modern battery and charging entity resolution, see the [Home Assistant 2026.9 battery compatibility specification](docs/specs/ha-2026-9-battery-compatibility.md).
 
 ---
 
@@ -436,7 +436,7 @@ Contributions and bug reports are welcome! Please consult the documentation befo
 
 - [Contributing Guidelines](CONTRIBUTING.md)
 - [Testing Instructions](TESTING.md)
-- [Home Assistant 2026.8 Battery Compatibility Specification](docs/specs/ha-2026-8-battery-compatibility.md)
+- [Home Assistant 2026.9 Battery Compatibility Specification](docs/specs/ha-2026-9-battery-compatibility.md)
 - [Release Workflow](docs/release-workflow.md)
 - [Dependency Workflow](docs/dependency-workflow.md)
 

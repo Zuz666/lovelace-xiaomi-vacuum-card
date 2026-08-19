@@ -1,8 +1,8 @@
-# Specification: Home Assistant 2026.8 Battery Compatibility
+# Specification: Home Assistant 2026.9 Battery Compatibility
 
 ## Context & Core References
 
-In Home Assistant Core 2026.8 ([home-assistant/core#175682](https://github.com/home-assistant/core/pull/175682), [home-assistant/core#175687](https://github.com/home-assistant/core/pull/175687)), the deprecated `battery_level` property and `battery_icon` attribute were removed from `vacuum` platform entities for standard and vendor integrations (including `xiaomi_miio`, `roomba`, `neato`, etc.).
+In Home Assistant Core 2026.8 and 2026.9 ([home-assistant/core#175682](https://github.com/home-assistant/core/pull/175682), [home-assistant/core#175687](https://github.com/home-assistant/core/pull/175687)), the deprecated `battery_level` property and `battery_icon` attribute were removed from `vacuum` platform entities for standard and vendor integrations (including `xiaomi_miio`, `roomba`, `neato`, etc.).
 
 Under [home-assistant/core#179095](https://github.com/home-assistant/core/pull/179095), dedicated battery diagnostic sensors (`SensorDeviceClass.BATTERY`) were introduced for `xiaomi_miio` under the entity ID pattern:
 
