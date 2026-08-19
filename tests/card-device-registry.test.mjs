@@ -309,6 +309,49 @@ test("same-device charging binary sensor: influences rendered battery icon", asy
   assert.ok(iconUnavailable.values.includes("mdi:battery-70"));
 });
 
+test("legacy charging attributes: influences rendered battery icon when binary sensor is absent", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+
+  card.setConfig({ entity: "vacuum.my_vacuum" });
+
+  // 1. Legacy vacuumState.attributes.battery_icon = 'mdi:battery-charging-80' with numeric battery_level
+  card.hass = createHass({
+    states: {
+      "vacuum.my_vacuum": {
+        attributes: {
+          battery_level: 80,
+          battery_icon: "mdi:battery-charging-80",
+        },
+        entity_id: "vacuum.my_vacuum",
+        state: "docked",
+      },
+    },
+  });
+
+  const chargingSource = card.resolveChargingSource();
+  assert.equal(chargingSource.isCharging, true);
+  const icon = card.renderIcon(card.config.state.battery);
+  assert.ok(icon.values.includes("mdi:battery-charging-80"));
+
+  // 2. Legacy vacuumState.attributes.is_charging = true
+  card.hass = createHass({
+    states: {
+      "vacuum.my_vacuum": {
+        attributes: {
+          battery_level: 60,
+          is_charging: true,
+        },
+        entity_id: "vacuum.my_vacuum",
+        state: "docked",
+      },
+    },
+  });
+  assert.equal(card.resolveChargingSource().isCharging, true);
+  const icon60 = card.renderIcon(card.config.state.battery);
+  assert.ok(icon60.values.includes("mdi:battery-charging-60"));
+});
+
 test("entity eligibility: excluded disabled, hidden, wrong-domain, wrong-device-class, or missing-state entries fall through", async () => {
   const { Card } = await loadCard();
   const card = new Card();
@@ -503,6 +546,46 @@ test("unavailable and unknown stability: discovered entities in unavailable/unkn
     (v) => typeof v === "string" && v.includes("Unknown"),
   );
   assert.ok(textUnknown, "Must render localized Unknown and not fall back");
+
+  // Non-battery row with unavailable state
+  const hassNonBatteryUnavailable = {
+    ...createHass({
+      states: {
+        "vacuum.my_vacuum": {
+          attributes: { fan_speed: "unavailable" },
+          entity_id: "vacuum.my_vacuum",
+          state: "docked",
+        },
+      },
+    }),
+    localize: (key) => (key === "state.default.unavailable" ? "Unavailable" : key),
+  };
+  card.hass = hassNonBatteryUnavailable;
+  const renderedMode = card.renderAttribute(card.config.state.mode);
+  const textMode = renderedMode.values.find(
+    (v) => typeof v === "string" && v.includes("Unavailable"),
+  );
+  assert.ok(textMode, "Non-battery row must render localized Unavailable");
+
+  // Localize returning empty string falls back to default "Unavailable"
+  const hassEmptyLocalize = {
+    ...createHass({
+      states: {
+        "vacuum.my_vacuum": {
+          attributes: { battery_level: "unavailable" },
+          entity_id: "vacuum.my_vacuum",
+          state: "docked",
+        },
+      },
+    }),
+    localize: () => "",
+  };
+  card.hass = hassEmptyLocalize;
+  const renderedEmpty = card.renderAttribute(card.config.state.battery);
+  const textEmpty = renderedEmpty.values.find(
+    (v) => typeof v === "string" && v.includes("Unavailable"),
+  );
+  assert.ok(textEmpty, "Must fallback to default Unavailable when localize returns empty string");
 });
 
 test("ambiguous candidate selection: prefers matching platform, sorts entity_id alphabetically, and emits sanitized diagnostic", async () => {
@@ -687,6 +770,21 @@ test("reactive dependency tracking: includes discovered battery and charging ent
     },
   };
   card.hass = hassDevicesReplaced;
+  assert.equal(card.shouldUpdate(changedProps), true);
+
+  // shouldUpdate when a discovered candidate's device_class changes (structural ineligibility)
+  const hassCandidateIneligible = {
+    ...hass1,
+    states: {
+      ...hass1.states,
+      "sensor.custom_battery": {
+        ...hass1.states["sensor.custom_battery"],
+        attributes: { device_class: "temperature" },
+        state: "22",
+      },
+    },
+  };
+  card.hass = hassCandidateIneligible;
   assert.equal(card.shouldUpdate(changedProps), true);
 
   // shouldUpdate ignores unrelated state changes

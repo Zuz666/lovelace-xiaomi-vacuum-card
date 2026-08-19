@@ -476,6 +476,9 @@
                 if (this.stateObj.attributes.charging === true || this.stateObj.attributes.is_charging === true) {
                     return { isCharging: true, entityState: null, entityId: null };
                 }
+                if (typeof this.stateObj.attributes.battery_icon === 'string' && this.stateObj.attributes.battery_icon.includes('charging')) {
+                    return { isCharging: true, entityState: null, entityId: null };
+                }
             }
 
             return { isCharging: false, entityState: null, entityId: null };
@@ -553,11 +556,12 @@
         }
 
         renderAttribute(data) {
+            if (!data) return null;
             const source = this.resolveAttributeSource(data);
             const raw = source.rawValue;
             const computeFunc = data.compute || (v => v);
             const unavailableText = (this._hass && typeof this._hass.localize === 'function')
-                ? this._hass.localize('state.default.unavailable')
+                ? (this._hass.localize('state.default.unavailable') || 'Unavailable')
                 : 'Unavailable';
             const unknownText = (this._hass && typeof this._hass.localize === 'function')
                 ? (this._hass.localize('state.default.unknown') || 'Unknown')
@@ -840,7 +844,7 @@
             return document.createElement('xiaomi-vacuum-card-editor');
         }
 
-        getReferencedEntities() {
+        getReferencedEntities(hass = this._hass) {
             if (!this.config) return [];
             const entities = new Set();
 
@@ -856,8 +860,8 @@
             const vacuumEntityId = (this.stateObj && this.stateObj.entity_id) || this.config.entity || '';
             const vacuumObjectId = vacuumEntityId.includes('.') ? vacuumEntityId.split('.')[1] : vacuumEntityId;
 
-            const discoveredBatteryId = this.resolveDiscoveredBatteryEntity(this._hass);
-            const discoveredChargingId = this.resolveDiscoveredChargingEntity(this._hass);
+            const discoveredBatteryId = this.resolveDiscoveredBatteryEntity(hass);
+            const discoveredChargingId = this.resolveDiscoveredChargingEntity(hass);
 
             const collectRowEntities = (rowGroup) => {
                 if (!rowGroup || typeof rowGroup !== 'object') return;
@@ -916,7 +920,9 @@
                 const oldStates = oldHass.states || {};
                 const newStates = newHass.states || {};
 
-                const trackedEntities = this.getReferencedEntities();
+                const oldTracked = this.getReferencedEntities(oldHass);
+                const newTracked = this.getReferencedEntities(newHass);
+                const trackedEntities = new Set([...oldTracked, ...newTracked]);
                 for (const entityId of trackedEntities) {
                     if (oldStates[entityId] !== newStates[entityId]) {
                         return true;

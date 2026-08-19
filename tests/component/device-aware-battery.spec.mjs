@@ -254,4 +254,59 @@ test.describe("Device-Aware Battery and Charging Registry Discovery", () => {
     await expect(cardLocator.locator(".grid-left")).toContainText("Unavailable");
     await expect(cardLocator.locator(".grid-left")).not.toContainText("99%");
   });
+
+  test("falls back to lower-priority source when discovered battery candidate becomes structurally ineligible (device_class changes)", async ({
+    page,
+  }) => {
+    const vacuumState = createDefaultVacuumState({
+      entityId: "vacuum.living_room_vacuum",
+      status: "Docked",
+      attributes: {
+        battery_level: 55, // Legacy attribute fallback
+      },
+    });
+
+    const { cardLocator } = await mountCard(page, {
+      config: {
+        type: "custom:xiaomi-vacuum-card",
+        entity: "vacuum.living_room_vacuum",
+      },
+      hass: {
+        states: {
+          "vacuum.living_room_vacuum": vacuumState,
+          "sensor.renamed_vacuum_battery": {
+            entity_id: "sensor.renamed_vacuum_battery",
+            state: "88",
+            attributes: { device_class: "battery" },
+          },
+        },
+        entities: {
+          "vacuum.living_room_vacuum": {
+            entity_id: "vacuum.living_room_vacuum",
+            device_id: "device_roborock_s7",
+            platform: "roborock",
+          },
+          "sensor.renamed_vacuum_battery": {
+            entity_id: "sensor.renamed_vacuum_battery",
+            device_id: "device_roborock_s7",
+            platform: "roborock",
+          },
+        },
+      },
+    });
+
+    // Discovered renamed sensor (88%)
+    await expect(cardLocator.locator(".grid-left")).toContainText("88%");
+
+    // Now sensor loses device_class: battery (e.g. becomes temperature sensor)
+    await updateEntityState(page, "sensor.renamed_vacuum_battery", {
+      state: "24",
+      attributes: { device_class: "temperature" },
+    });
+
+    // Card reacts and falls back to legacy vacuum attribute (55%)
+    await expect(cardLocator.locator(".grid-left")).toContainText("55%");
+    await expect(cardLocator.locator(".grid-left")).not.toContainText("88%");
+    await expect(cardLocator.locator(".grid-left")).not.toContainText("24%");
+  });
 });

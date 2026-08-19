@@ -64,5 +64,6 @@ In `XiaomiVacuumCardEditor.entityDataRowSchema(row)`:
 
 ## Verification
 
-1. Unit tests in `tests/card-attributes.test.mjs` verifying the entire precedence matrix, `0%` handling, unavailable handling, numeric icon mapping, and editor schemas.
-2. HA smoke test fixture with a modern `sensor.demo_vacuum_0_ground_floor_battery` entity asserting rendered battery percentage.
+1. Unit contract tests in `tests/card-attributes.test.mjs` and `tests/card-device-registry.test.mjs` verifying the entire precedence matrix, device-registry candidate discovery, `0%` handling, unavailable/unknown stability, numeric and charging icon mapping, and editor schemas.
+2. Playwright browser component tests in `tests/component/device-aware-battery.spec.mjs` validating renamed sensor discovery, dynamic charging binary sensor reactivity, and registry map invalidation.
+3. HA smoke test fixture in `tests/ha-smoke/xiaomi-vacuum-card.spec.mjs` asserting frontend registry snapshot contract and rendered battery percentage.

@@ -158,6 +158,8 @@ The card resolves the battery value and icon using the following precedence:
 
 A discovered same-device charging binary sensor (`device_class: battery_charging`) dynamically updates the battery icon (e.g. `mdi:battery-charging-80`).
 
+Selected entities remain stable when transitioning to `unavailable` or `unknown` state and display localized unavailable text without demoting to lower-priority legacy fallbacks. Legacy vacuum attributes (`battery_level`, `battery_icon`) are maintained for backward compatibility with older Home Assistant versions and integrations that still expose them.
+
 For technical details on modern battery and charging entity resolution, see the [Home Assistant 2026.8 battery compatibility specification](docs/specs/ha-2026-8-battery-compatibility.md).
 
 ---
