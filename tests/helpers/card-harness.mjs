@@ -129,6 +129,8 @@ export async function loadCard() {
 
 export function createHass({
   states = {},
+  entities = undefined,
+  devices = undefined,
   wsResult = {},
   wsReject = null,
   subscribeHandler = null,
@@ -195,6 +197,8 @@ export function createHass({
     connection,
     localize,
     states,
+    ...(entities !== undefined ? { entities } : {}),
+    ...(devices !== undefined ? { devices } : {}),
     callService(domain, service, data) {
       calls.services.push({ domain, service, data: toHost(data) });
     },

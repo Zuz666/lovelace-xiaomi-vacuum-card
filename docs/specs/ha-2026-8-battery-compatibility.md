@@ -16,18 +16,25 @@ The card must resolve battery state accurately across modern sensor entities, ex
 
 ## Requirements
 
-### 1. Battery Attribute Resolution Precedence
+### 1. Registry Adapter & Battery Attribute Resolution Precedence
+
+The card uses an internal adapter snapshot (`getRegistrySnapshot(hass)`) returning `{ states, entities, devices }`.
 
 When rendering a battery row (`id: 'battery'` or `key: 'battery'` / `key: 'battery_level'`):
 
 1. **Explicit entity**: `data.entity` if configured and present in `hass.states`. If configured but absent in `states`, fall through to subsequent sources.
-2. **Modern sensor entity**: `sensor.${vacuum_object_id}_battery`.
-3. **Legacy sensor entity**: `sensor.${vacuum_object_id}_battery_level`.
-4. **Vacuum attribute `battery_level`**: `vacuumState.attributes.battery_level`.
-5. **Vacuum attribute `battery`**: `vacuumState.attributes.battery`.
-6. **Generic vacuum property fallback**: `vacuumState[data.key]`.
+2. **Same-device sensor**: eligible `sensor.*` entity attached to the same Home Assistant device as the configured vacuum (`device_class: battery`, `disabled_by: null`, `hidden_by: null`, not `hidden: true`, present in `states`).
+3. **Modern sensor entity**: `sensor.${vacuum_object_id}_battery`.
+4. **Legacy sensor entity**: `sensor.${vacuum_object_id}_battery_level`.
+5. **Vacuum attribute `battery_level`**: `vacuumState.attributes.battery_level`.
+6. **Vacuum attribute `battery`**: `vacuumState.attributes.battery`.
+7. **Generic vacuum property fallback**: `vacuumState[data.key]`.
 
 If any source exists, including valid `0` or empty string values, use it. If no source is found, return `null` (displayed as localized "Unavailable").
+
+Selected entities in `unavailable` or `unknown` state remain selected and render localized "Unavailable" / "Unknown" without demoting to lower-priority fallbacks.
+
+When multiple candidates exist on the same device at the same precedence level, platform matching the vacuum entity's platform is preferred, ties are sorted alphabetically by `entity_id`, and a sanitized diagnostic warning is logged once per candidate set.
 
 For non-battery rows, the resolution order remains:
 
@@ -36,19 +43,16 @@ For non-battery rows, the resolution order remains:
 3. `vacuumState.attributes[data.key]`.
 4. `vacuumState[data.key]`.
 
-### 2. Battery Icon Precedence
+### 2. Battery Icon & Charging State Precedence
 
 When rendering battery row icons:
 
 1. **Sensor icon**: icon from the resolved external sensor entity state, if present.
-2. **Deterministic numeric icon**: mapped from numeric battery value (`0..100` rounded to nearest 10):
-   - `0`: `mdi:battery-outline`
-   - `10..90`: `mdi:battery-10` through `mdi:battery-90`
-   - `100`: `mdi:battery`
+2. **Deterministic numeric icon**: mapped from numeric battery value (`0..100` rounded to nearest 10). If a same-device charging binary sensor (`device_class: battery_charging`) is discovered and `on`, charging icons are rendered:
+   - Charging: `0` -> `mdi:battery-charging-outline`, `10..90` -> `mdi:battery-charging-10`..`90`, `100` -> `mdi:battery-charging-100`.
+   - Not charging: `0` -> `mdi:battery-outline`, `10..90` -> `mdi:battery-10`..`90`, `100` -> `mdi:battery`.
 3. **Legacy attribute icon**: `vacuumState.attributes.battery_icon`.
 4. **Configured fallback icon**: `data.icon` or default fallback.
-
-For non-battery rows, configured and entity icons retain standard semantics.
 
 ### 3. Editor Behavior
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Device-registry-aware battery and charging discovery (`sensor.*` with `device_class: battery` and `binary_sensor.*` with `device_class: battery_charging` attached to the same Home Assistant device as the vacuum) with platform preference, deterministic tie-breaking, sanitized diagnostics, and registry adapter snapshot contract ([#34](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/issues/34)).
+
 ### Fixed
 
 - Reactive card re-rendering when referenced external entities (`sensor.*`, `binary_sensor.*`, auto-discovered battery sensors, or media-source images) update without changing the main vacuum state object ([#32](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/issues/32)).

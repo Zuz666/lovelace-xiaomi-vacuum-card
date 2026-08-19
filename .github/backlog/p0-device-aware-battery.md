@@ -114,38 +114,38 @@ Fallback continues only when the higher-priority source is absent or no longer s
 
 ## Acceptance criteria
 
-- [ ] A documented adapter consumes registry maps from the normal custom-card `hass` object without private frontend imports or an extra WebSocket registry subscription.
-- [ ] A renamed battery sensor attached to the vacuum device is discovered automatically.
-- [ ] An explicit configured battery entity overrides all automatic candidates.
-- [ ] A same-device battery sensor overrides object-ID naming fallbacks.
-- [ ] Legacy name and vacuum attribute fallbacks remain functional for older supported entity shapes.
-- [ ] A same-device charging binary sensor influences the rendered battery icon or charging presentation.
-- [ ] Missing `hass.entities` or `hass.devices` degrades to existing fallbacks without a failed render or extra private API dependency.
-- [ ] A full registry entry with non-null `disabled_by` or `hidden_by` is excluded; a display entry with `hidden: true` is excluded.
-- [ ] Runtime state presence and `attributes.device_class` are checked independently from registry enabled or hidden metadata.
-- [ ] Missing or structurally ineligible entities fall through safely to the next source.
-- [ ] A selected entity in `unavailable` or `unknown` state remains selected and renders unavailable instead of switching to a lower-priority fallback.
-- [ ] Multiple candidate selection follows the documented platform and `entity_id` ordering and emits a sanitized diagnostic.
-- [ ] Registry-map replacement invalidates candidate discovery.
-- [ ] Battery and charging state updates refresh the card through tracked dependencies.
-- [ ] A real Home Assistant smoke scenario verifies the actual frontend registry-map boundary consumed by the adapter.
+- [x] A documented adapter consumes registry maps from the normal custom-card `hass` object without private frontend imports or an extra WebSocket registry subscription.
+- [x] A renamed battery sensor attached to the vacuum device is discovered automatically.
+- [x] An explicit configured battery entity overrides all automatic candidates.
+- [x] A same-device battery sensor overrides object-ID naming fallbacks.
+- [x] Legacy name and vacuum attribute fallbacks remain functional for older supported entity shapes.
+- [x] A same-device charging binary sensor influences the rendered battery icon or charging presentation.
+- [x] Missing `hass.entities` or `hass.devices` degrades to existing fallbacks without a failed render or extra private API dependency.
+- [x] A full registry entry with non-null `disabled_by` or `hidden_by` is excluded; a display entry with `hidden: true` is excluded.
+- [x] Runtime state presence and `attributes.device_class` are checked independently from registry enabled or hidden metadata.
+- [x] Missing or structurally ineligible entities fall through safely to the next source.
+- [x] A selected entity in `unavailable` or `unknown` state remains selected and renders unavailable instead of switching to a lower-priority fallback.
+- [x] Multiple candidate selection follows the documented platform and `entity_id` ordering and emits a sanitized diagnostic.
+- [x] Registry-map replacement invalidates candidate discovery.
+- [x] Battery and charging state updates refresh the card through tracked dependencies.
+- [x] A real Home Assistant smoke scenario verifies the actual frontend registry-map boundary consumed by the adapter.
 
 ## Test plan
 
-- [ ] Production-shaped component fixture with `states`, `entities`, and `devices`
-- [ ] Shared entity-registry fixture for a renamed same-device battery sensor
-- [ ] Fixture for a same-device charging binary sensor
-- [ ] Fixture with full registry entries covering `disabled_by` and `hidden_by`
-- [ ] Fixture with display-map entries that expose `hidden` but omit full registry fields
-- [ ] Fixture with no frontend registry maps, proving fallback behavior
-- [ ] Source-precedence unit tests
-- [ ] Registry refresh and memoization invalidation tests
-- [ ] Ambiguous candidate, platform preference, diagnostic, and unavailable-state tests
-- [ ] Test that `unavailable` and `unknown` selected entities do not demote to name or legacy fallbacks
-- [ ] Test that removed, disabled, hidden, wrong-domain, and wrong-device-class entities do fall through
-- [ ] Backward-compatibility tests for current naming and legacy attribute fallbacks
-- [ ] Real browser component tests for battery, charging, and registry-map replacement updates
-- [ ] Home Assistant smoke assertion against the actual `hass.entities` and `hass.devices` contract assigned to the mounted card
+- [x] Production-shaped component fixture with `states`, `entities`, and `devices`
+- [x] Shared entity-registry fixture for a renamed same-device battery sensor
+- [x] Fixture for a same-device charging binary sensor
+- [x] Fixture with full registry entries covering `disabled_by` and `hidden_by`
+- [x] Fixture with display-map entries that expose `hidden` but omit full registry fields
+- [x] Fixture with no frontend registry maps, proving fallback behavior
+- [x] Source-precedence unit tests
+- [x] Registry refresh and memoization invalidation tests
+- [x] Ambiguous candidate, platform preference, diagnostic, and unavailable-state tests
+- [x] Test that `unavailable` and `unknown` selected entities do not demote to name or legacy fallbacks
+- [x] Test that removed, disabled, hidden, wrong-domain, and wrong-device-class entities do fall through
+- [x] Backward-compatibility tests for current naming and legacy attribute fallbacks
+- [x] Real browser component tests for battery, charging, and registry-map replacement updates
+- [x] Home Assistant smoke assertion against the actual `hass.entities` and `hass.devices` contract assigned to the mounted card
 
 ## Compatibility and migration
 
