@@ -6,23 +6,7 @@ import {
   getRecordedServiceCalls,
   createDefaultVacuumState,
 } from "./helpers/component-harness.mjs";
-
-const VACUUM_FEATURES = {
-  TURN_ON: 1,
-  TURN_OFF: 2,
-  PAUSE: 4,
-  STOP: 8,
-  RETURN_HOME: 16,
-  FAN_SPEED: 32,
-  STATUS: 128,
-  SEND_COMMAND: 256,
-  LOCATE: 512,
-  CLEAN_SPOT: 1024,
-  MAP: 2048,
-  STATE: 4096,
-  START: 8192,
-  CLEAN_AREA: 16384,
-};
+import { VACUUM_FEATURES } from "../helpers/vacuum-features.mjs";
 
 test.describe("Vacuum Activity and Action Capabilities", () => {
   test("modern vacuum in docked state without attributes.status renders Docked (upstream #123)", async ({

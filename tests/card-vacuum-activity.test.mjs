@@ -1,24 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createHass, loadCard } from "./helpers/card-harness.mjs";
-
-const VACUUM_FEATURES = {
-  TURN_ON: 1,
-  TURN_OFF: 2,
-  PAUSE: 4,
-  STOP: 8,
-  RETURN_HOME: 16,
-  FAN_SPEED: 32,
-  STATUS: 128,
-  SEND_COMMAND: 256,
-  LOCATE: 512,
-  CLEAN_SPOT: 1024,
-  MAP: 2048,
-  STATE: 4096,
-  START: 8192,
-  CLEAN_AREA: 16384,
-};
+import { createHass, loadCard, VACUUM_FEATURES } from "./helpers/card-harness.mjs";
 
 test("status resolution: modern vacuum state is resolved by default without key: state or attributes.status (upstream #123)", async () => {
   const { Card } = await loadCard();
@@ -321,8 +304,8 @@ test("action presentation: table-driven matrix for every action and activity sta
 
     for (const [actionId, disabledStates] of Object.entries(expectedDisabled)) {
       const buttonConfig = card.config.buttons[actionId];
+      assert.ok(buttonConfig, `Default config must define button ${actionId}`);
       const result = card.evaluateButton(Object.assign({ id: actionId }, buttonConfig));
-
       assert.equal(
         result.visible,
         true,

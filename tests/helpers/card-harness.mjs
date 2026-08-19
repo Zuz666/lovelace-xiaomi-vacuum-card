@@ -3,6 +3,8 @@ import vm from "node:vm";
 
 const cardSourceUrl = new URL("../../dist/xiaomi-vacuum-card.js", import.meta.url);
 
+export { VACUUM_FEATURES } from "./vacuum-features.mjs";
+
 export function toHost(value) {
   if (Array.isArray(value)) return Array.from(value, (item) => toHost(item));
   if (!value || typeof value !== "object") return value;
