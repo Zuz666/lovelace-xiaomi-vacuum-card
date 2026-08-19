@@ -231,6 +231,32 @@ test("loads the Xiaomi vacuum card in Home Assistant", async ({ page, request, b
   await expect(vacuumCard).not.toContainText(
     "Entity 'vacuum.demo_vacuum_0_ground_floor' not available",
   );
+
+  const registryContract = await vacuumCard.evaluate((card) => {
+    if (!card || typeof card.getRegistrySnapshot !== "function") return null;
+    const snapshot = card.getRegistrySnapshot();
+    const hass = card._hass;
+    return {
+      hasStates: Boolean(snapshot.states && typeof snapshot.states === "object"),
+      hasEntities: snapshot.entities !== null && typeof snapshot.entities === "object",
+      hasDevices: snapshot.devices !== null && typeof snapshot.devices === "object",
+      hasConfiguredVacuumEntity: Boolean(
+        snapshot.entities && card.config?.entity && card.config.entity in snapshot.entities,
+      ),
+      hasHassStatesMatch: snapshot.states === hass?.states,
+      hasHassEntitiesMatch: snapshot.entities === (hass?.entities ?? null),
+      hasHassDevicesMatch: snapshot.devices === (hass?.devices ?? null),
+    };
+  });
+
+  expect(registryContract).not.toBeNull();
+  expect(registryContract?.hasStates).toBe(true);
+  expect(registryContract?.hasEntities).toBe(true);
+  expect(registryContract?.hasDevices).toBe(true);
+  expect(registryContract?.hasConfiguredVacuumEntity).toBe(true);
+  expect(registryContract?.hasHassStatesMatch).toBe(true);
+  expect(registryContract?.hasHassEntitiesMatch).toBe(true);
+  expect(registryContract?.hasHassDevicesMatch).toBe(true);
   await vacuumCard.screenshot({ path: ".local/proof/before-dynamic-click.png" });
 
   const dynamicButton = vacuumCard.locator('ha-icon-button[title="Use selected fan speed"]');

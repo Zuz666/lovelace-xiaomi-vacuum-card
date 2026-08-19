@@ -16,7 +16,7 @@ A maintained, modern Home Assistant Lovelace custom card for vacuum cleaners. Fo
 - **Modern Home Assistant Compatibility**: Built without legacy Web Components (`mwc-menu`/`mwc-list-item`), using standard Lovelace elements and native browser APIs.
 - **Card Picker & Visual Editor**: Full integration with the Home Assistant dashboard editor, including card preview, suggestions, entity filtering, and structured GUI configuration for all card sections.
 - **Accessible Fan Speed Combobox**: Full keyboard navigation (`ArrowUp`, `ArrowDown`, `Home`, `End`, `PageUp`, `PageDown`, `Enter`, `Space`, `Escape`, `Tab`) and clean ARIA listbox support.
-- **Modern Battery Sensor Discovery**: Automatically discovers modern entity-based battery sensors (`sensor.<vacuum>_battery`) while maintaining fallback support for legacy sensor naming and vacuum entity attributes.
+- **Device-Registry Battery & Charging Discovery**: Automatically discovers battery sensors (`device_class: battery`) and charging binary sensors (`device_class: battery_charging`) attached to the vacuum device in the Home Assistant device registry, including renamed entities, with fallbacks for naming conventions and vacuum attributes.
 - **Static & Dynamic Service Calls**: Configure custom buttons with static payloads or dynamic Jinja templates evaluated on click via Home Assistant's template engine.
 - **Media & Image Picker**: Supports local images, media-source URIs (`media-source://...`), and direct URLs with built-in path sanitization.
 - **Vendor Presets**: Out-of-the-box mappings for Xiaomi, Valetudo, Roomba, Roborock/Robovac, Ecovacs/Deebot, and Neato vacuums.
@@ -150,12 +150,17 @@ The dropdown supports full mouse interaction and keyboard navigation (`ArrowUp`,
 The card resolves the battery value and icon using the following precedence:
 
 1. Explicit row entity (`state.battery.entity` or `attributes.battery.entity`)
-2. Modern discovered sensor (`sensor.<vacuum_name>_battery`)
-3. Legacy discovered sensor (`sensor.<vacuum_name>_battery_level`)
-4. Vacuum entity attribute `battery_level`
-5. Vacuum entity attribute `battery`
+2. Same-device eligible sensor (`device_class: battery` attached to the same Home Assistant device)
+3. Modern discovered sensor (`sensor.<vacuum_name>_battery`)
+4. Legacy discovered sensor (`sensor.<vacuum_name>_battery_level`)
+5. Vacuum entity attribute `battery_level`
+6. Vacuum entity attribute `battery`
 
-For technical details on modern battery entity resolution, see the [Home Assistant 2026.8 battery compatibility specification](docs/specs/ha-2026-8-battery-compatibility.md).
+A discovered same-device charging binary sensor (`device_class: battery_charging`) dynamically updates the battery icon (e.g. `mdi:battery-charging-80`).
+
+Selected entities remain stable when transitioning to `unavailable` or `unknown` state and display localized unavailable text without demoting to lower-priority legacy fallbacks. Legacy vacuum attributes (`battery_level`, `battery_icon`) are maintained for backward compatibility with older Home Assistant versions and integrations that still expose them.
+
+For technical details on modern battery and charging entity resolution, see the [Home Assistant 2026.8+ battery compatibility specification](docs/specs/ha-2026-8-battery-compatibility.md).
 
 ---
 
@@ -431,7 +436,7 @@ Contributions and bug reports are welcome! Please consult the documentation befo
 
 - [Contributing Guidelines](CONTRIBUTING.md)
 - [Testing Instructions](TESTING.md)
-- [Home Assistant 2026.8 Battery Compatibility Specification](docs/specs/ha-2026-8-battery-compatibility.md)
+- [Home Assistant 2026.8+ Battery Compatibility Specification](docs/specs/ha-2026-8-battery-compatibility.md)
 - [Release Workflow](docs/release-workflow.md)
 - [Dependency Workflow](docs/dependency-workflow.md)
 

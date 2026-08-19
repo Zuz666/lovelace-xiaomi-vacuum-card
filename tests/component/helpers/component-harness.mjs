@@ -66,6 +66,8 @@ export async function mountCard(page, { config, hass, trackRenders = true } = {}
       // Build mock hass object
       const hassObj = {
         states: initialHass?.states || {},
+        ...(initialHass?.entities !== undefined ? { entities: initialHass.entities } : {}),
+        ...(initialHass?.devices !== undefined ? { devices: initialHass.devices } : {}),
         localize: (key) => {
           const dict = {
             "state.default.unavailable": "Unavailable",
@@ -158,8 +160,9 @@ export async function updateCardHass(page, updates) {
       ...currentHass,
       ...payload,
       states: nextStates,
+      ...(payload && "entities" in payload ? { entities: payload.entities } : {}),
+      ...(payload && "devices" in payload ? { devices: payload.devices } : {}),
     };
-
     window.__activeHass = nextHass;
     card.hass = nextHass;
     await card.updateComplete;

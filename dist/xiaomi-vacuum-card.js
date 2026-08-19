@@ -372,15 +372,134 @@
             </ha-card>` : html`<ha-card style="padding: 8px 16px">Entity '${this.config.entity}' not available...</ha-card>`;
         }
 
+        getRegistrySnapshot(hass = this._hass) {
+            return {
+                states: (hass && hass.states) || {},
+                entities: (hass && hass.entities !== undefined && hass.entities !== null) ? hass.entities : null,
+                devices: (hass && hass.devices !== undefined && hass.devices !== null) ? hass.devices : null,
+            };
+        }
+
+        emitAmbiguousCandidateWarning(vacuumEntityId, deviceClass, candidateIds, selectedId) {
+            if (!this._warnedCandidateSignatures) {
+                this._warnedCandidateSignatures = new Set();
+            }
+            const signature = `${vacuumEntityId}:${deviceClass}:${candidateIds.slice().sort().join(',')}`;
+            if (!this._warnedCandidateSignatures.has(signature)) {
+                this._warnedCandidateSignatures.add(signature);
+                console.warn(
+                    `[xiaomi-vacuum-card] Multiple ${deviceClass} candidates found for ${vacuumEntityId}: ${candidateIds.join(', ')}. Selected '${selectedId}'. Specify 'entity' in configuration to avoid ambiguity.`
+                );
+            }
+        }
+
+        resolveSameDeviceCandidates(domain, expectedDeviceClass, hass = this._hass) {
+            const snapshot = this.getRegistrySnapshot(hass);
+            const vacuumEntityId = (this.stateObj && this.stateObj.entity_id) || (this.config && this.config.entity) || '';
+            if (!snapshot.entities || !vacuumEntityId || !(vacuumEntityId in snapshot.entities)) {
+                return [];
+            }
+
+            const vacuumEntry = snapshot.entities[vacuumEntityId];
+            if (!vacuumEntry || !vacuumEntry.device_id) {
+                return [];
+            }
+
+            const deviceId = vacuumEntry.device_id;
+            const vacuumPlatform = vacuumEntry.platform;
+            const candidates = [];
+
+            for (const [key, entry] of Object.entries(snapshot.entities)) {
+                if (!entry || typeof entry !== 'object') continue;
+                const entityId = entry.entity_id || key;
+                if (entry.device_id !== deviceId) continue;
+
+                const entityDomain = entityId.includes('.') ? entityId.split('.')[0] : (entry.domain || '');
+                if (entityDomain !== domain) continue;
+
+                if (entry.disabled_by !== undefined && entry.disabled_by !== null) continue;
+                if (entry.hidden_by !== undefined && entry.hidden_by !== null) continue;
+                if (entry.hidden === true) continue;
+
+                if (!snapshot.states || !(entityId in snapshot.states) || !snapshot.states[entityId]) continue;
+                const entityState = snapshot.states[entityId];
+                if (!entityState || !entityState.attributes || entityState.attributes.device_class !== expectedDeviceClass) continue;
+
+                candidates.push({ entityId, entry });
+            }
+
+            if (!candidates.length) return [];
+
+            candidates.sort((a, b) => {
+                const aPlatformMatch = Boolean(vacuumPlatform && a.entry.platform === vacuumPlatform);
+                const bPlatformMatch = Boolean(vacuumPlatform && b.entry.platform === vacuumPlatform);
+                if (aPlatformMatch !== bPlatformMatch) {
+                    return aPlatformMatch ? -1 : 1;
+                }
+                return a.entityId.localeCompare(b.entityId);
+            });
+
+            if (candidates.length > 1) {
+                const candidateIds = candidates.map(c => c.entityId);
+                const selectedId = candidates[0].entityId;
+                this.emitAmbiguousCandidateWarning(vacuumEntityId, expectedDeviceClass, candidateIds, selectedId);
+            }
+
+            return candidates;
+        }
+
+        resolveDiscoveredBatteryEntity(hass = this._hass) {
+            const candidates = this.resolveSameDeviceCandidates('sensor', 'battery', hass);
+            return candidates.length > 0 ? candidates[0].entityId : null;
+        }
+
+        resolveDiscoveredChargingEntity(hass = this._hass) {
+            const candidates = this.resolveSameDeviceCandidates('binary_sensor', 'battery_charging', hass);
+            return candidates.length > 0 ? candidates[0].entityId : null;
+        }
+
+        resolveChargingSource() {
+            const snapshot = this.getRegistrySnapshot(this._hass);
+            const states = snapshot.states;
+
+            const discoveredChargingId = this.resolveDiscoveredChargingEntity(this._hass);
+            if (discoveredChargingId && discoveredChargingId in states) {
+                const entityState = states[discoveredChargingId];
+                return {
+                    isCharging: entityState.state === 'on',
+                    entityState,
+                    entityId: discoveredChargingId,
+                };
+            }
+
+            if (this.stateObj && this.stateObj.attributes) {
+                if (this.stateObj.attributes.charging === true || this.stateObj.attributes.is_charging === true) {
+                    return { isCharging: true, entityState: null, entityId: null };
+                }
+                if (typeof this.stateObj.attributes.battery_icon === 'string' && this.stateObj.attributes.battery_icon.includes('charging')) {
+                    return { isCharging: true, entityState: null, entityId: null };
+                }
+            }
+
+            return { isCharging: false, entityState: null, entityId: null };
+        }
+
         resolveAttributeSource(data) {
             if (!data) return { rawValue: null, entityState: null, isBattery: false };
 
             const isBattery = data.id === 'battery' || data.key === 'battery_level' || data.key === 'battery';
-            const states = (this._hass && this._hass.states) || {};
+            const snapshot = this.getRegistrySnapshot(this._hass);
+            const states = snapshot.states;
 
             if (isBattery) {
                 if (data.entity && data.entity in states) {
                     const entityState = states[data.entity];
+                    return { rawValue: entityState.state, entityState, isBattery: true };
+                }
+
+                const discoveredBatteryId = this.resolveDiscoveredBatteryEntity(this._hass);
+                if (discoveredBatteryId && discoveredBatteryId in states) {
+                    const entityState = states[discoveredBatteryId];
                     return { rawValue: entityState.state, entityState, isBattery: true };
                 }
 
@@ -437,15 +556,27 @@
         }
 
         renderAttribute(data) {
+            if (!data) return null;
             const source = this.resolveAttributeSource(data);
             const raw = source.rawValue;
             const computeFunc = data.compute || (v => v);
-            const formatValue = val => {
-                const computed = computeFunc(val);
-                return computed === '-' ? '-' : computed + (data.unit || '');
-            };
+            const unavailableText = (this._hass && typeof this._hass.localize === 'function')
+                ? (this._hass.localize('state.default.unavailable') || 'Unavailable')
+                : 'Unavailable';
+            const unknownText = (this._hass && typeof this._hass.localize === 'function')
+                ? (this._hass.localize('state.default.unknown') || 'Unknown')
+                : 'Unknown';
 
-            const value = raw !== null && raw !== undefined ? formatValue(raw) : null;
+            let value = null;
+            if (raw === 'unavailable') {
+                value = unavailableText;
+            } else if (raw === 'unknown') {
+                value = unknownText;
+            } else if (raw !== null && raw !== undefined) {
+                const computed = computeFunc(raw);
+                value = computed === '-' ? '-' : computed + (data.unit || '');
+            }
+
             const list = this.stateObj && this.stateObj.attributes && data.key ? this.stateObj.attributes[`${data.key}_list`] : undefined;
             const hasDropdown = Array.isArray(list);
 
@@ -453,9 +584,6 @@
                 const icon = this.renderIcon(data, source);
                 return this.renderDropdown(icon, data.key, data.service, data.label);
             }
-            const unavailableText = (this._hass && typeof this._hass.localize === 'function')
-                ? this._hass.localize('state.default.unavailable')
-                : 'Unavailable';
             return html`<div>
                 ${this.renderIcon(data, source)}
                 ${(data.label || '') + (value !== null ? value : unavailableText)}
@@ -476,12 +604,23 @@
                     if (!Number.isNaN(num)) {
                         const clamped = Math.max(0, Math.min(100, num));
                         const rounded = Math.round(clamped / 10) * 10;
-                        if (rounded === 0) {
-                            icon = 'mdi:battery-outline';
-                        } else if (rounded === 100) {
-                            icon = 'mdi:battery';
+                        const chargingSource = this.resolveChargingSource();
+                        if (chargingSource.isCharging) {
+                            if (rounded === 0) {
+                                icon = 'mdi:battery-charging-outline';
+                            } else if (rounded === 100) {
+                                icon = 'mdi:battery-charging-100';
+                            } else {
+                                icon = `mdi:battery-charging-${rounded}`;
+                            }
                         } else {
-                            icon = `mdi:battery-${rounded}`;
+                            if (rounded === 0) {
+                                icon = 'mdi:battery-outline';
+                            } else if (rounded === 100) {
+                                icon = 'mdi:battery';
+                            } else {
+                                icon = `mdi:battery-${rounded}`;
+                            }
                         }
                     }
                 }
@@ -705,7 +844,7 @@
             return document.createElement('xiaomi-vacuum-card-editor');
         }
 
-        getReferencedEntities() {
+        getReferencedEntities(hass = this._hass) {
             if (!this.config) return [];
             const entities = new Set();
 
@@ -721,6 +860,9 @@
             const vacuumEntityId = (this.stateObj && this.stateObj.entity_id) || this.config.entity || '';
             const vacuumObjectId = vacuumEntityId.includes('.') ? vacuumEntityId.split('.')[1] : vacuumEntityId;
 
+            const discoveredBatteryId = this.resolveDiscoveredBatteryEntity(hass);
+            const discoveredChargingId = this.resolveDiscoveredChargingEntity(hass);
+
             const collectRowEntities = (rowGroup) => {
                 if (!rowGroup || typeof rowGroup !== 'object') return;
                 Object.entries(rowGroup).forEach(([id, data]) => {
@@ -731,6 +873,12 @@
                     }
                     const isBattery = id === 'battery' || data.id === 'battery' || data.key === 'battery_level' || data.key === 'battery';
                     if (isBattery) {
+                        if (discoveredBatteryId) {
+                            entities.add(discoveredBatteryId);
+                        }
+                        if (discoveredChargingId) {
+                            entities.add(discoveredChargingId);
+                        }
                         if (vacuumObjectId) {
                             entities.add(`sensor.${vacuumObjectId}_battery`);
                             entities.add(`sensor.${vacuumObjectId}_battery_level`);
@@ -765,10 +913,16 @@
                     return true;
                 }
 
+                if (oldHass.entities !== newHass.entities || oldHass.devices !== newHass.devices) {
+                    return true;
+                }
+
                 const oldStates = oldHass.states || {};
                 const newStates = newHass.states || {};
 
-                const trackedEntities = this.getReferencedEntities();
+                const oldTracked = this.getReferencedEntities(oldHass);
+                const newTracked = this.getReferencedEntities(newHass);
+                const trackedEntities = new Set([...oldTracked, ...newTracked]);
                 for (const entityId of trackedEntities) {
                     if (oldStates[entityId] !== newStates[entityId]) {
                         return true;
