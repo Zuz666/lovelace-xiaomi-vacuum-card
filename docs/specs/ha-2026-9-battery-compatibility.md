@@ -2,9 +2,7 @@
 
 ## Context & Core References
 
-In Home Assistant Core 2026.8 and 2026.9 ([home-assistant/core#175682](https://github.com/home-assistant/core/pull/175682), [home-assistant/core#175687](https://github.com/home-assistant/core/pull/175687)), the deprecated `battery_level` property and `battery_icon` attribute were removed from `vacuum` platform entities for standard and vendor integrations (including `xiaomi_miio`, `roomba`, `neato`, etc.).
-
-Under [home-assistant/core#179095](https://github.com/home-assistant/core/pull/179095), dedicated battery diagnostic sensors (`SensorDeviceClass.BATTERY`) were introduced for `xiaomi_miio` under the entity ID pattern:
+In Home Assistant Core 2026.8 ([home-assistant/core#175687](https://github.com/home-assistant/core/pull/175687)), `xiaomi_miio` removed legacy `battery_level` property and `battery_icon` attributes. Generic `StateVacuumEntity` property removal ([home-assistant/core#175682](https://github.com/home-assistant/core/pull/175682)) and the dedicated `xiaomi_miio` battery diagnostic sensor (`SensorDeviceClass.BATTERY`, [home-assistant/core#179095](https://github.com/home-assistant/core/pull/179095)) land in Home Assistant Core 2026.9 under the entity ID pattern:
 
 - **`sensor.<vacuum_name>_battery`** (for example `sensor.test_vacuum_cleaner_battery`).
 
@@ -19,6 +17,8 @@ The card must resolve battery state accurately across modern sensor entities, ex
 ### 1. Registry Adapter & Battery Attribute Resolution Precedence
 
 The card uses an internal adapter snapshot (`getRegistrySnapshot(hass)`) returning `{ states, entities, devices }`.
+
+If `hass.entities`, the configured vacuum registry entry, or its `device_id` is unavailable, the card skips same-device discovery and gracefully continues through name-based and legacy fallbacks in subsequent rules. Missing `hass.devices` alone is non-blocking and does not prevent resolution through available sources.
 
 When rendering a battery row (`id: 'battery'` or `key: 'battery'` / `key: 'battery_level'`):
 
@@ -48,7 +48,8 @@ For non-battery rows, the resolution order remains:
 When rendering battery row icons:
 
 1. **Sensor icon**: icon from the resolved external sensor entity state, if present.
-2. **Deterministic numeric icon**: mapped from numeric battery value (`0..100` rounded to nearest 10). If a same-device charging binary sensor (`device_class: battery_charging`) is discovered and `on`, charging icons are rendered:
+2. **Deterministic numeric icon**: mapped from numeric battery value (`0..100` rounded to nearest 10). If an eligible same-device charging binary sensor is discovered and `on`, charging icons are rendered:
+   - Charging candidates must be `binary_sensor.*` entities attached to the same device as the vacuum, with `device_class: battery_charging`, `disabled_by: null`, `hidden_by: null`, display `hidden !== true`, and an active state object in `hass.states`. When multiple charging candidates exist, candidates matching the vacuum platform are preferred and ties are broken alphabetically by `entity_id`.
    - Charging: `0` -> `mdi:battery-charging-outline`, `10..90` -> `mdi:battery-charging-10`..`90`, `100` -> `mdi:battery-charging-100`.
    - Not charging: `0` -> `mdi:battery-outline`, `10..90` -> `mdi:battery-10`..`90`, `100` -> `mdi:battery`.
 3. **Legacy attribute icon**: `vacuumState.attributes.battery_icon`.

@@ -679,6 +679,87 @@ test("ambiguous candidate selection: prefers matching platform, sorts entity_id 
   assert.equal(selectedAlphabetical, "sensor.alpha_battery");
 });
 
+test("ambiguous charging candidate selection: prefers matching platform, sorts entity_id alphabetically, and emits sanitized diagnostic", async () => {
+  const { Card, calls: harnessCalls } = await loadCard();
+  const card = new Card();
+
+  // 1. Platform preference for charging sensor
+  const hassChargingPlatform = createHass({
+    states: {
+      "vacuum.my_vacuum": {
+        attributes: {},
+        entity_id: "vacuum.my_vacuum",
+        state: "docked",
+      },
+      "binary_sensor.a_template_charging": {
+        attributes: { device_class: "battery_charging" },
+        entity_id: "binary_sensor.a_template_charging",
+        state: "on",
+      },
+      "binary_sensor.z_roborock_charging": {
+        attributes: { device_class: "battery_charging" },
+        entity_id: "binary_sensor.z_roborock_charging",
+        state: "on",
+      },
+    },
+    entities: {
+      "vacuum.my_vacuum": { device_id: "dev_1", platform: "roborock" },
+      "binary_sensor.a_template_charging": { device_id: "dev_1", platform: "template" },
+      "binary_sensor.z_roborock_charging": { device_id: "dev_1", platform: "roborock" },
+    },
+  });
+
+  card.setConfig({ entity: "vacuum.my_vacuum" });
+  card.hass = hassChargingPlatform;
+
+  const selectedCharging = card.resolveDiscoveredChargingEntity();
+  assert.equal(
+    selectedCharging,
+    "binary_sensor.z_roborock_charging",
+    "Must prefer matching platform 'roborock' over alphabetical 'template'",
+  );
+
+  const warnings = harnessCalls.console.filter((c) => c.method === "warn");
+  assert.equal(warnings.length, 1);
+  const warnText = warnings[0].args.join(" ");
+  assert.ok(warnText.includes("Multiple battery_charging candidates found for vacuum.my_vacuum"));
+  assert.ok(warnText.includes("binary_sensor.z_roborock_charging"));
+  assert.ok(!warnText.includes("dev_1"), "Diagnostic must not leak internal device_id");
+
+  // 2. Alphabetical tie-break for charging candidates when platforms match
+  const hassChargingAlphabetical = createHass({
+    states: {
+      "vacuum.my_vacuum": {
+        attributes: {},
+        entity_id: "vacuum.my_vacuum",
+        state: "docked",
+      },
+      "binary_sensor.beta_charging": {
+        attributes: { device_class: "battery_charging" },
+        entity_id: "binary_sensor.beta_charging",
+        state: "on",
+      },
+      "binary_sensor.alpha_charging": {
+        attributes: { device_class: "battery_charging" },
+        entity_id: "binary_sensor.alpha_charging",
+        state: "on",
+      },
+    },
+    entities: {
+      "vacuum.my_vacuum": { device_id: "dev_1", platform: "roborock" },
+      "binary_sensor.beta_charging": { device_id: "dev_1", platform: "roborock" },
+      "binary_sensor.alpha_charging": { device_id: "dev_1", platform: "roborock" },
+    },
+  });
+
+  const card2 = new Card();
+  card2.setConfig({ entity: "vacuum.my_vacuum" });
+  card2.hass = hassChargingAlphabetical;
+
+  const selectedAlphabetical = card2.resolveDiscoveredChargingEntity();
+  assert.equal(selectedAlphabetical, "binary_sensor.alpha_charging");
+});
+
 test("reactive dependency tracking: includes discovered battery and charging entities and detects entity/device map replacement", async () => {
   const { Card } = await loadCard();
   const card = new Card();
