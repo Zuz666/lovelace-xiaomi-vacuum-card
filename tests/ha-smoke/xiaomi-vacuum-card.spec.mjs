@@ -232,8 +232,7 @@ test("loads the Xiaomi vacuum card in Home Assistant", async ({ page, request, b
     "Entity 'vacuum.demo_vacuum_0_ground_floor' not available",
   );
 
-  const registryContract = await page.evaluate(() => {
-    const card = globalThis.document?.querySelector("xiaomi-vacuum-card");
+  const registryContract = await vacuumCard.evaluate((card) => {
     if (!card || typeof card.getRegistrySnapshot !== "function") return null;
     const snapshot = card.getRegistrySnapshot();
     const hass = card._hass;
