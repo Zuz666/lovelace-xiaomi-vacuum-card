@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import {
   mountCard,
   createDefaultVacuumState,
+  updateEntityState,
   getRecordedServiceCalls,
   emitTemplateUpdate,
 } from "./helpers/component-harness.mjs";
@@ -10,7 +11,8 @@ test.describe("Service Calls & Dynamic Template Subscriptions", () => {
   test("action buttons dispatch expected Home Assistant vacuum services", async ({ page }) => {
     const vacuumState = createDefaultVacuumState({
       entityId: "vacuum.test_vacuum",
-      status: "Cleaning",
+      state: "docked",
+      status: "Docked",
     });
 
     const { cardLocator } = await mountCard(page, {
@@ -25,8 +27,13 @@ test.describe("Service Calls & Dynamic Template Subscriptions", () => {
       },
     });
 
-    // Click Start button
+    // Click Start button (enabled when docked)
     await cardLocator.locator('ha-icon-button[title="Start"]').click();
+
+    // Transition to cleaning state to enable Pause/Stop
+    await updateEntityState(page, "vacuum.test_vacuum", {
+      state: "cleaning",
+    });
 
     // Click Pause button
     await cardLocator.locator('ha-icon-button[title="Pause"]').click();
@@ -36,7 +43,6 @@ test.describe("Service Calls & Dynamic Template Subscriptions", () => {
 
     // Click Return to Base button
     await cardLocator.locator('ha-icon-button[title="Return to Base"]').click();
-
     const calls = await getRecordedServiceCalls(page);
     expect(calls).toEqual([
       expect.objectContaining({

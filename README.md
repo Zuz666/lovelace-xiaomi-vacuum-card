@@ -137,6 +137,12 @@ Both sections share the same configuration fields and allow binding rows to any 
 | `label`  | `string`  | Preset default | Custom label prefix displayed before the value.                                                     |
 | `unit`   | `string`  | Preset default | Unit suffix displayed after the value (for example `" %"`, `" h"`, `" m²"`).                        |
 
+#### Status Resolution
+
+The default `status` row automatically displays the canonical activity state of modern Home Assistant `StateVacuumEntity` entities (`cleaning`, `docked`, `idle`, `paused`, `returning`, `error`) without requiring manual remapping.
+
+If a legacy vacuum integration provides a custom `attributes.status`, it remains accessible as a backward-compatible fallback when main state is unavailable, or via explicit configuration (`attribute: status`).
+
 #### Fan Speed Dropdown
 
 When a row key has a corresponding array attribute named `<key>_list` (such as `fan_speed` and `fan_speed_list`), the card renders an interactive combobox dropdown instead of plain text.
@@ -164,21 +170,32 @@ For technical details on modern battery and charging entity resolution, see the 
 
 ---
 
-### Buttons
+### Buttons and Action Capabilities
 
 Buttons represent the action controls displayed along the bottom of the card.
 
-Default buttons: `start` (Play), `pause` (Pause), `stop` (Stop), `spot` (Spot Clean, hidden by default), `locate` (Locate, hidden by default), `return` (Return to Dock, hidden by default).
+Built-in buttons automatically adapt to your vacuum's supported capabilities (`VacuumEntityFeature` bitmasks) and live activity state:
 
-| Field                   | Type      | Default          | Description                                                              |
-| :---------------------- | :-------- | :--------------- | :----------------------------------------------------------------------- |
-| `show`                  | `boolean` | `true` / `false` | Whether the button is visible on the card.                               |
-| `icon`                  | `string`  | Preset default   | Material Design icon for the button (for example `mdi:play`).            |
-| `label`                 | `string`  | Preset default   | Accessible label and tooltip text displayed on hover.                    |
-| `service`               | `string`  | Preset default   | Home Assistant service called when clicked (for example `vacuum.start`). |
-| `service_data_mode`     | `string`  | `static`         | Service payload mode: `static` or `dynamic`.                             |
-| `service_data`          | `object`  | `{}`             | Static payload object passed directly to the service call.               |
-| `service_data_template` | `string`  | `""`             | Jinja template evaluated dynamically on click.                           |
+- **Automatic Presentation (`show: auto` or omitted `show`)**:
+  - Unsupported capabilities (e.g. Spot Clean or Locate if not supported by the vacuum) are automatically **hidden** (absent from DOM and focus order).
+  - Supported capabilities that are temporarily invalid in the current activity (e.g. Start while cleaning, Pause while docked, or any action while unavailable) are rendered with native **disabled** semantics (`ha-icon-button[disabled]`, `aria-disabled="true"`, non-interactive).
+  - Supported and valid capabilities are rendered enabled and clickable.
+- **Explicit Visibility (`show: true`)**: Forces the button visible even if the integration's feature flags are incomplete, while preserving runtime state and entity-availability safety guards.
+- **Explicit Hidden (`show: false`)**: Unconditionally hides the action button.
+
+Default buttons: `start` (Start / Resume), `pause` (Pause), `stop` (Stop), `spot` (Clean Spot), `locate` (Locate), `return` (Return to Base).
+
+For full details on feature bitmasks, blocked states, and pre-dispatch guards, see the [Vacuum Activity & Action Capabilities specification](docs/specs/vacuum-activity-and-action-capabilities.md).
+
+| Field                   | Type                  | Default        | Description                                                              |
+| :---------------------- | :-------------------- | :------------- | :----------------------------------------------------------------------- |
+| `show`                  | `boolean` \| `"auto"` | `"auto"`       | Whether the button is visible: `"auto"`, `true`, or `false`.             |
+| `icon`                  | `string`              | Preset default | Material Design icon for the button (for example `mdi:play`).            |
+| `label`                 | `string`              | Preset default | Accessible label and tooltip text displayed on hover.                    |
+| `service`               | `string`              | Preset default | Home Assistant service called when clicked (for example `vacuum.start`). |
+| `service_data_mode`     | `string`              | `static`       | Service payload mode: `static` or `dynamic`.                             |
+| `service_data`          | `object`              | `{}`           | Static payload object passed directly to the service call.               |
+| `service_data_template` | `string`              | `""`           | Jinja template evaluated dynamically on click.                           |
 
 #### Dynamic Service Data Templates
 
