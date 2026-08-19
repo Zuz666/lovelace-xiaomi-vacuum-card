@@ -210,6 +210,7 @@ An issue is done when:
 - README, contributor documentation, and changelog are updated when required;
 - backward compatibility or migration behavior is verified;
 - compatibility claims link to reviewed fixtures and tested expectations;
+- managed backlog source files (`.github/backlog/<key>.md`) and parent epics are updated with completed checkboxes in the pull request, and the **Bootstrap backlog** workflow is rerun after merge into `main`;
 - the parent epic and Project status are updated.
 
 ## Epic rules

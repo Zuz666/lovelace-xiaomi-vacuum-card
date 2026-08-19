@@ -42,27 +42,27 @@ The harness should use public inputs expected by a Lovelace card and remain inde
 
 ## Acceptance criteria
 
-- [ ] `npm run test:component` runs real-browser component tests without starting Home Assistant.
-- [ ] The shipped card element mounts with an actual Lit reactive lifecycle and Shadow DOM.
-- [ ] Tests can assign initial and updated Home Assistant state maps deterministically.
-- [ ] Tests can inspect visible text, icons, roles, labels, disabled state, and focus.
-- [ ] The component harness can express the stale external-entity regression scenario; the regression test is capable of demonstrating the defect and becomes a required passing test when issue {{issue:p0-reactive-external-entities}} delivers the runtime fix.
-- [ ] A regression test detects unnecessary rendering when only an unrelated entity changes.
-- [ ] At least one ARIA combobox keyboard and focus scenario executes against real DOM.
-- [ ] Service and WebSocket calls can be asserted without a real Home Assistant backend.
-- [ ] Existing VM tests remain available for fast pure-contract coverage.
-- [ ] Existing supported YAML remains compatible.
-- [ ] Contributor testing documentation explains the new layer.
+- [x] `npm run test:component` runs real-browser component tests without starting Home Assistant.
+- [x] The shipped card element mounts with an actual Lit reactive lifecycle and Shadow DOM.
+- [x] Tests can assign initial and updated Home Assistant state maps deterministically.
+- [x] Tests can inspect visible text, icons, roles, labels, disabled state, and focus.
+- [x] The component harness can express the stale external-entity regression scenario; the regression test is capable of demonstrating the defect and becomes a required passing test when issue {{issue:p0-reactive-external-entities}} delivers the runtime fix.
+- [x] A regression test detects unnecessary rendering when only an unrelated entity changes.
+- [x] At least one ARIA combobox keyboard and focus scenario executes against real DOM.
+- [x] Service and WebSocket calls can be asserted without a real Home Assistant backend.
+- [x] Existing VM tests remain available for fast pure-contract coverage.
+- [x] Existing supported YAML remains compatible.
+- [x] Contributor testing documentation explains the new layer.
 
 ## Test plan
 
-- [ ] Component harness self-test for card registration and mounting
-- [ ] External entity update and unavailable transition tests
-- [ ] Unrelated state update and render-count test
-- [ ] ARIA combobox open, navigation, selection, escape, and focus test
-- [ ] Service-call recording test
-- [ ] Run existing Node tests unchanged or with only intentional helper migration
-- [ ] Run the pinned Home Assistant smoke test as an independent integration check
+- [x] Component harness self-test for card registration and mounting
+- [x] External entity update and unavailable transition tests
+- [x] Unrelated state update and render-count test
+- [x] ARIA combobox open, navigation, selection, escape, and focus test
+- [x] Service-call recording test
+- [x] Run existing Node tests unchanged or with only intentional helper migration
+- [x] Run the pinned Home Assistant smoke test as an independent integration check
 
 ## Compatibility and migration
 

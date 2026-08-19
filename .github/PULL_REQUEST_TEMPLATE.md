@@ -36,6 +36,7 @@ Describe what changed and why.
 - [ ] Conventional Commits are used for commit messages.
 - [ ] Changes remain compatible with direct browser JS resource loading in Home Assistant/HACS.
 - [ ] Docs/tests are updated when behavior changed.
+- [ ] Managed backlog source (`.github/backlog/<key>.md`) and related epics are updated if closing or advancing a managed item.
 - [ ] Automated code review (CodeRabbit) and security scanning (CodeQL) reviewed and addressed or justified.
 
 ## Review

@@ -40,7 +40,7 @@ Planned decomposition after the entity-aware control interfaces are stable:
 
 The following reusable testing infrastructure is owned and prioritized by the testing architecture epic. These issues gate safe implementation, but they are not child deliverables of this v4.8 feature outcome and their priority labels do not automatically promote every downstream epic that consumes them.
 
-- [ ] {{issue:p0-real-lit-component-tests}} — provide real DOM, focus, keyboard, and accessibility assertions
+- [x] {{issue:p0-real-lit-component-tests}} — provide real DOM, focus, keyboard, and accessibility assertions
 - [ ] {{issue:p1-entity-fixture-matrix}} — provide deterministic capability and availability scenarios
 
 The component harness is P0 because it is required to verify current P0 runtime-correctness work. This epic remains P1 because its own planned action and area-cleaning deliverables are next-minor feature work rather than a current correctness defect.
