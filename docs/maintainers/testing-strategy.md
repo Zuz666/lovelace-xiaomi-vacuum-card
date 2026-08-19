@@ -14,15 +14,14 @@ This is a targeted upgrade, not a test-stack rewrite. The component layer and im
 
 ## Current test system
 
-| Layer                     | Current implementation                                                                         | Primary value                                                                                                           |
-| ------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Static validation         | `node --check`, version synchronization, ESLint, markdownlint, and Prettier                    | Fast syntax, repository-policy, and formatting feedback                                                                 |
-| Source and contract tests | Node test runner loading `dist/xiaomi-vacuum-card.js` through `tests/helpers/card-harness.mjs` | Fast checks for configuration, source resolution, service payloads, metadata, and error paths                           |
-| Home Assistant smoke test | Playwright against a Dockerized Home Assistant instance and the shipped `dist` asset           | Real resource loading, custom-element registration, rendering, templating, service dispatch, and browser-console checks |
-| Repository validation     | HACS validation and CodeQL                                                                     | Packaging and static security checks                                                                                    |
+| Layer                     | Current implementation                                                                                            | Primary value                                                                                                           |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Static validation         | `npm run check:build`, `node --check` (`src/` & `dist/`), version synchronization, ESLint, markdownlint, Prettier | Fast build synchronization, syntax, repository-policy, and formatting feedback                                          |
+| Source and contract tests | Node test runner loading `dist/xiaomi-vacuum-card.js` through `tests/helpers/card-harness.mjs`                    | Fast checks for configuration, source resolution, service payloads, metadata, and error paths                           |
+| Home Assistant smoke test | Playwright against a Dockerized Home Assistant instance and the shipped `dist` asset                              | Real resource loading, custom-element registration, rendering, templating, service dispatch, and browser-console checks |
+| Repository validation     | HACS validation and CodeQL                                                                                        | Packaging and static security checks                                                                                    |
 
 The current suite directly tests the shipped browser resource rather than a parallel implementation. That is an important property and must be preserved when the source tree is later modularized.
-
 The required Home Assistant smoke job uses an immutable `ghcr.io/home-assistant/home-assistant@sha256:<digest>` image reference, while moving channels run in a separate canary workflow.
 
 ## What works well

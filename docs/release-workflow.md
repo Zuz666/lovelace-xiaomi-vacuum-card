@@ -11,10 +11,10 @@ This document defines the release process, versioning rules, and changelog maint
 2. **Single Release Branch**: `main` is the only persistent branch. Releases are tagged and published directly from `main` commits.
 3. **Synchronized Artifacts**: Every release must keep the following files synchronized to the identical version string:
    - `package.json` (`"version": "X.Y.Z"`)
-   - `dist/xiaomi-vacuum-card.js` (console info header banner `%c XIAOMI-VACUUM-CARD-REBORN %c X.Y.Z`)
+   - `src/xiaomi-vacuum-card.js` (console info header banner `%c XIAOMI-VACUUM-CARD-REBORN %c X.Y.Z`)
+   - `dist/xiaomi-vacuum-card.js` (compiled via `npm run build`)
    - `CHANGELOG.md` (`## [X.Y.Z] - YYYY-MM-DD` and link definition `[X.Y.Z]: ...` at the bottom)
    - `SECURITY.md` (Supported version line `X.Y.x` updated for major/minor releases)
-4. **Authoritative Changelog**: GitHub release notes are extracted directly from `CHANGELOG.md` to ensure a single, curated source of truth for release history.
 
 ---
 
@@ -44,12 +44,11 @@ This document defines the release process, versioning rules, and changelog maint
 
 The version checking script (`tests/check-version.mjs`), executed as part of `npm run check` and CI:
 
-- Ensures `package.json` version matches `dist/xiaomi-vacuum-card.js`.
+- Ensures `package.json` version matches `src/xiaomi-vacuum-card.js` and `dist/xiaomi-vacuum-card.js`.
 - Verifies that `CHANGELOG.md` contains an explicit section `## [X.Y.Z] - YYYY-MM-DD` for the current version.
 - Verifies that `CHANGELOG.md` includes the comparison link reference for `[X.Y.Z]`.
 - Verifies that `SECURITY.md` marks the active minor release line (`X.Y.x`) as supported (`:white_check_mark:`).
-
-Any PR attempting to bump versions without updating `CHANGELOG.md` will fail CI automatically.
+  Any PR attempting to bump versions without updating `CHANGELOG.md` will fail CI automatically.
 
 ---
 
@@ -68,7 +67,7 @@ git checkout -b chore/release-vX.Y.Z
 ### 2. Update Version & Changelog
 
 1. Update `"version": "X.Y.Z"` in `package.json`.
-2. Update the banner in `dist/xiaomi-vacuum-card.js`:
+2. Update the banner in `src/xiaomi-vacuum-card.js`:
 
    ```javascript
    console.info(
@@ -78,7 +77,13 @@ git checkout -b chore/release-vX.Y.Z
    );
    ```
 
-3. Update `CHANGELOG.md`:
+3. Compile the release bundle:
+
+   ```bash
+   npm run build
+   ```
+
+4. Update `CHANGELOG.md`:
    - Move relevant items from `## [Unreleased]` into a new section `## [X.Y.Z] - YYYY-MM-DD`.
    - Update comparison link references at the bottom of `CHANGELOG.md`.
 
@@ -109,7 +114,7 @@ npm run test:ha-smoke
 Commit using Conventional Commits:
 
 ```bash
-git add package.json dist/xiaomi-vacuum-card.js CHANGELOG.md SECURITY.md
+git add package.json src/xiaomi-vacuum-card.js dist/xiaomi-vacuum-card.js CHANGELOG.md SECURITY.md
 git commit -m "chore(release): prepare vX.Y.Z"
 git push -u origin chore/release-vX.Y.Z
 ```

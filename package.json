@@ -5,8 +5,10 @@
   "description": "Maintained Xiaomi Vacuum Card Reborn for Home Assistant Lovelace",
   "type": "module",
   "scripts": {
-    "check": "npm run check:syntax && npm run check:version && npm run lint && npm run format:check && npm test",
-    "check:syntax": "node --check dist/xiaomi-vacuum-card.js",
+    "build": "node scripts/build.mjs",
+    "check": "npm run check:build && npm run check:syntax && npm run check:version && npm run lint && npm run format:check && npm test",
+    "check:build": "npm run build && git diff --exit-code dist/",
+    "check:syntax": "node --check src/xiaomi-vacuum-card.js && node --check dist/xiaomi-vacuum-card.js",
     "check:version": "node tests/check-version.mjs",
     "test": "node --test \"tests/**/*.test.mjs\"",
     "test:component": "playwright test --config playwright.component.config.mjs",
@@ -20,6 +22,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.62.1",
+    "esbuild": "^0.28.2",
     "eslint": "^10.8.1",
     "globals": "^17.11.0",
     "lit": "^3.3.3",

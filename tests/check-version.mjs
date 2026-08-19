@@ -1,23 +1,36 @@
 import { readFile } from "node:fs/promises";
 
-const [packageJson, cardSource, changelog, security] = await Promise.all([
+const [packageJson, srcSource, distSource, changelog, security] = await Promise.all([
   readFile(new URL("../package.json", import.meta.url), "utf8"),
+  readFile(new URL("../src/xiaomi-vacuum-card.js", import.meta.url), "utf8"),
   readFile(new URL("../dist/xiaomi-vacuum-card.js", import.meta.url), "utf8"),
   readFile(new URL("../CHANGELOG.md", import.meta.url), "utf8"),
   readFile(new URL("../SECURITY.md", import.meta.url), "utf8").catch(() => null),
 ]);
 
 const { version } = JSON.parse(packageJson);
-const bannerMatch = cardSource.match(/%c XIAOMI-VACUUM-CARD-REBORN %c ([^ ]+) /);
+const srcBannerMatch = srcSource.match(/%c XIAOMI-VACUUM-CARD-REBORN %c ([^ ]+) /);
+const distBannerMatch = distSource.match(/%c XIAOMI-VACUUM-CARD-REBORN %c ([^ ]+) /);
 
-if (!bannerMatch) {
-  throw new Error("Unable to find XIAOMI-VACUUM-CARD-REBORN version banner");
+if (!srcBannerMatch) {
+  throw new Error(
+    "Unable to find XIAOMI-VACUUM-CARD-REBORN version banner in src/xiaomi-vacuum-card.js",
+  );
+}
+if (!distBannerMatch) {
+  throw new Error(
+    "Unable to find XIAOMI-VACUUM-CARD-REBORN version banner in dist/xiaomi-vacuum-card.js",
+  );
 }
 
-const bannerVersion = bannerMatch[1];
+const srcBannerVersion = srcBannerMatch[1];
+const distBannerVersion = distBannerMatch[1];
 
-if (version !== bannerVersion) {
-  throw new Error(`Version mismatch: package.json ${version} != banner ${bannerVersion}`);
+if (version !== srcBannerVersion) {
+  throw new Error(`Version mismatch: package.json ${version} != src banner ${srcBannerVersion}`);
+}
+if (version !== distBannerVersion) {
+  throw new Error(`Version mismatch: package.json ${version} != dist banner ${distBannerVersion}`);
 }
 
 const escapedVersion = version.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

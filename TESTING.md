@@ -9,15 +9,27 @@ reviewed in [docs/maintainers/testing-strategy.md](docs/maintainers/testing-stra
 That document is the source of truth for test-layer responsibilities and quality
 gates; this file describes the commands available in the current repository.
 
-## Quick Syntax Check
+## Quick Build & Syntax Check
 
-Run this after editing the distributed card file:
+Compile source files from `src/` into `dist/xiaomi-vacuum-card.js`:
 
 ```sh
-node --check dist/xiaomi-vacuum-card.js
+npm run build
 ```
 
-This catches JavaScript syntax errors without starting Home Assistant.
+Check syntax of both `src/` and `dist/`:
+
+```sh
+npm run check:syntax
+```
+
+Or verify build synchronization directly:
+
+```sh
+npm run check:build
+```
+
+This catches syntax errors and ensures the compiled bundle is up to date without starting Home Assistant.
 
 ## Full Local Check
 
@@ -33,8 +45,8 @@ Run the complete local validation suite:
 npm run check
 ```
 
-`npm run check` runs syntax validation, version checks, ESLint, Prettier format
-checking, and the Node test suite.
+`npm run check` runs build artifact synchronization (`check:build`), syntax validation
+(`check:syntax`), version checks, ESLint, Prettier format checking, and the Node test suite.
 
 ## Unit And Source VM Tests
 

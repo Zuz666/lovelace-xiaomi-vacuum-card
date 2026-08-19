@@ -110,7 +110,7 @@ Every pull request must target the `main` branch of `Zuz666/lovelace-xiaomi-vacu
 
 ### 5. HACS And Release Impact (`## HACS And Release Impact`)
 
-- Detail any HACS resource impacts (note that `dist/xiaomi-vacuum-card.js` is the canonical asset).
+- Detail any HACS resource impacts (note that `dist/xiaomi-vacuum-card.js` is the compiled canonical asset).
 - Specify whether release notes are needed and what text should be included.
 - State whether the pull request introduces breaking changes.
 
@@ -162,7 +162,7 @@ diff and running the repository validation suite.
 
 The repository relies on Dependabot for automated maintenance of `devDependencies` and GitHub Actions.
 
-- The client card (`dist/xiaomi-vacuum-card.js`) has **zero** runtime npm dependencies. All npm dependencies are development tooling (linters, formatters, test runners).
+- The client card (`dist/xiaomi-vacuum-card.js`) has **zero** runtime npm dependencies. All npm dependencies (including the `esbuild` bundler, linters, formatters, and test runners) are development tooling.
 - Automated dependency updates must pass all CI checks (`checks`, `ha-smoke`, `validate-hacs`) and automated code reviews.
 - For stale or behind pull requests, trigger `@dependabot rebase` in a comment to bring the branch up to date with `main`.
 - Internal developer tooling updates do not require an entry in `CHANGELOG.md` unless contributor prerequisites change.
@@ -175,7 +175,7 @@ The repository relies on Dependabot for automated maintenance of `devDependencie
 - Follow the [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/) format.
 - Place unreleased contributions under the `## [Unreleased]` heading.
 - When preparing a release, move entries to `## [X.Y.Z] - YYYY-MM-DD` and update comparison links at the bottom.
-- `npm run check:version` automatically verifies that `package.json`, `dist/xiaomi-vacuum-card.js`, and `CHANGELOG.md` stay synchronized.
+- `npm run check:version` automatically verifies that `package.json`, `src/xiaomi-vacuum-card.js`, `dist/xiaomi-vacuum-card.js`, and `CHANGELOG.md` stay synchronized.
 - For the full release lifecycle and automated GitHub Actions publishing steps, see [docs/release-workflow.md](docs/release-workflow.md).
 
 ## Workspace Scope & Documentation
@@ -184,8 +184,9 @@ The repository relies on Dependabot for automated maintenance of `devDependencie
 - Do not commit credentials or local-only session files.
 - Public architectural decisions and finalized plans belong in the public `/docs/` folder.
 
-## Card Architecture & Direct Browser Loading
+## Card Architecture & Build Pipeline
 
-`dist/xiaomi-vacuum-card.js` is the shipped canonical Home Assistant/HACS browser resource.
-It is loaded directly by Home Assistant as an ES module in the browser. Do not add
-bundler, package-build, or node-import assumptions.
+Source code is authored in `src/` and compiled to `dist/xiaomi-vacuum-card.js` via `npm run build` (using `esbuild`).
+The output file `dist/xiaomi-vacuum-card.js` is the shipped canonical Home Assistant/HACS browser resource.
+It is loaded directly by Home Assistant as an ES module in the browser, consuming Lit from Home Assistant globals (`window.LitElement`).
+CI enforces that `dist/xiaomi-vacuum-card.js` is kept in sync with `src/` via `npm run check:build`.

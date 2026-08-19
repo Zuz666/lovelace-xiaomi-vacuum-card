@@ -17,7 +17,7 @@ export default [
   },
   js.configs.recommended,
   {
-    files: ["dist/**/*.js"],
+    files: ["src/**/*.js", "dist/**/*.js"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
@@ -27,7 +27,7 @@ export default [
     },
   },
   {
-    files: ["tests/**/*.mjs", "*.config.mjs", "eslint.config.mjs"],
+    files: ["scripts/**/*.mjs", "tests/**/*.mjs", "*.config.mjs", "eslint.config.mjs"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
@@ -38,7 +38,14 @@ export default [
     },
   },
   {
-    files: ["dist/**/*.js", "tests/**/*.mjs", "*.config.mjs", "eslint.config.mjs"],
+    files: [
+      "src/**/*.js",
+      "dist/**/*.js",
+      "scripts/**/*.mjs",
+      "tests/**/*.mjs",
+      "*.config.mjs",
+      "eslint.config.mjs",
+    ],
     rules: {
       "no-console": "off",
       "no-empty": "off",
