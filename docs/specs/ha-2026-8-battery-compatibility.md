@@ -1,8 +1,8 @@
-# Specification: Home Assistant 2026.9 Battery Compatibility
+# Specification: Home Assistant 2026.8+ Battery Compatibility
 
 ## Context & Core References
 
-In Home Assistant Core 2026.8 ([home-assistant/core#175687](https://github.com/home-assistant/core/pull/175687)), `xiaomi_miio` removed legacy `battery_level` property and `battery_icon` attributes. Generic `StateVacuumEntity` property removal ([home-assistant/core#175682](https://github.com/home-assistant/core/pull/175682)) and the dedicated `xiaomi_miio` battery diagnostic sensor (`SensorDeviceClass.BATTERY`, [home-assistant/core#179095](https://github.com/home-assistant/core/pull/179095)) land in Home Assistant Core 2026.9 under the entity ID pattern:
+In Home Assistant Core 2026.8+ ([home-assistant/core#175682](https://github.com/home-assistant/core/pull/175682), [home-assistant/core#175687](https://github.com/home-assistant/core/pull/175687)), `vacuum` platform entities deprecate and remove the legacy `battery_level` property and `battery_icon` attributes, while dedicated battery diagnostic sensors (`SensorDeviceClass.BATTERY`, [home-assistant/core#179095](https://github.com/home-assistant/core/pull/179095)) are introduced under the entity ID pattern:
 
 - **`sensor.<vacuum_name>_battery`** (for example `sensor.test_vacuum_cleaner_battery`).
 
