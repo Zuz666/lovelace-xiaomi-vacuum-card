@@ -300,6 +300,30 @@ test("action presentation: custom buttons default to visible even with recognize
   assert.equal(customAutoSpotEval.visible, false);
 });
 
+test("action presentation: user-supplied id or custom in button config cannot override computed keys", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+
+  card.setConfig({
+    entity: "vacuum.override_test",
+    buttons: {
+      start: {
+        id: "malicious_spoofed_id",
+        custom: true,
+      },
+      custom_action: {
+        id: "start",
+        custom: false,
+      },
+    },
+  });
+
+  assert.equal(card.config.buttons.start.id, "start");
+  assert.equal(card.config.buttons.start.custom, false);
+  assert.equal(card.config.buttons.custom_action.id, "custom_action");
+  assert.equal(card.config.buttons.custom_action.custom, true);
+});
+
 test("action presentation: table-driven matrix for every action and activity state", async () => {
   const { Card } = await loadCard();
   const card = new Card();

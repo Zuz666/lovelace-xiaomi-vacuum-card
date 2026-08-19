@@ -1298,7 +1298,7 @@
       if (mergedButtons && typeof mergedButtons === "object") {
         Object.entries(mergedButtons).forEach(([id, btn]) => {
           if (btn && typeof btn === "object") {
-            mergedButtons[id] = Object.assign({ id, custom: !(id in buttons) }, btn);
+            mergedButtons[id] = Object.assign({}, btn, { id, custom: !(id in buttons) });
           }
         });
       }
