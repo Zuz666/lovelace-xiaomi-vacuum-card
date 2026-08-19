@@ -198,8 +198,8 @@ test("ci.yml has pull-request concurrency cancellation, artifact upload, and con
   );
   assert.match(
     ciWorkflow,
-    /name:\s*Add smoke test summary\s*\n\s*if:\s*always\(\)[\s\S]*?\${{\s*env\.HA_BASELINE_RELEASE\s*}}[\s\S]*?\${{\s*env\.HA_IMAGE\s*}}/,
-    "ci.yml must write summary with baseline release and digest on always() condition",
+    /name:\s*Add smoke test summary\s*\n\s*if:\s*always\(\)[\s\S]*?\$\{?HA_BASELINE_RELEASE\}?[\s\S]*?\$\{?HA_IMAGE\}?[\s\S]*?npm run test:ha-smoke/,
+    "ci.yml must write summary with baseline release, digest, and scenario on always() condition",
   );
   assert.match(
     ciWorkflow,
@@ -258,8 +258,13 @@ test("ha-canary.yml exists with allowed triggers, permissions, and failure handl
     "ha-canary.yml must upload HA logs on failure",
   );
   assert.ok(
-    canaryWorkflow.includes("Upload Playwright artifacts on failure"),
-    "ha-canary.yml must upload Playwright artifacts on failure",
+    canaryWorkflow.includes("Add canary summary"),
+    "ha-canary.yml must write canary summary",
+  );
+  assert.match(
+    canaryWorkflow,
+    /name:\s*Add canary summary\s*\n\s*if:\s*always\(\)[\s\S]*?npm run test:ha-smoke/,
+    "ha-canary.yml must report scenario npm run test:ha-smoke in summary",
   );
   assert.match(
     canaryWorkflow,

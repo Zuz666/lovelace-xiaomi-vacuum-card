@@ -143,16 +143,20 @@ jobs:
 
       - name: Add canary summary
         if: always()
+        env:
+          CANARY_CHANNEL: ${{ matrix.channel }}
+          CARD_COMMIT: ${{ github.sha }}
+          JOB_RESULT: ${{ job.status }}
         run: |
           RESOLVED_IMAGE_ID=$(docker inspect --format='{{index .RepoDigests 0}}' "${HA_IMAGE}" 2>/dev/null || echo "${HA_IMAGE}")
-          echo "### Home Assistant Canary Summary (${{ matrix.channel }})" >> $GITHUB_STEP_SUMMARY
-          echo "- **Channel**: \`${{ matrix.channel }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Target Image Tag**: \`${{ env.HA_IMAGE }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Resolved Digest**: \`${RESOLVED_IMAGE_ID}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Card Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Browser**: Chromium" >> $GITHUB_STEP_SUMMARY
-          echo "- **Result**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-
+          echo "### Home Assistant Canary Summary (${CANARY_CHANNEL})" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Channel**: \`${CANARY_CHANNEL}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Target Image Tag**: \`${HA_IMAGE}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Resolved Digest**: \`${RESOLVED_IMAGE_ID}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Card Commit**: \`${CARD_COMMIT}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Browser**: Chromium" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Scenario**: \`npm run test:ha-smoke\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Result**: ${JOB_RESULT}" >> "$GITHUB_STEP_SUMMARY"
       - name: Stop and remove Home Assistant container
         if: always()
         run: |

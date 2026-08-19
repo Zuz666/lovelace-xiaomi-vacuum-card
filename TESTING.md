@@ -103,12 +103,17 @@ Remove-Item -Recurse -Force ".ha-smoke" -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Path ".ha-smoke\www\community\lovelace-xiaomi-vacuum-card"
 Copy-Item -Recurse "tests\ha-smoke\home-assistant\*" ".ha-smoke\"
 Copy-Item "dist\xiaomi-vacuum-card.js" ".ha-smoke\www\community\lovelace-xiaomi-vacuum-card\xiaomi-vacuum-card.js"
-docker run -d --name xiaomi-vacuum-card-ha-smoke -p 8123:8123 -v "${PWD}\.ha-smoke:/config" ghcr.io/home-assistant/home-assistant@sha256:59aa8824955c9db491b75d2eebe42bd68494f80c2ec69ec0d66d9dae37d37514
+$smokeExitCode = 0
 try {
+  docker run -d --name xiaomi-vacuum-card-ha-smoke -p 8123:8123 -v "${PWD}\.ha-smoke:/config" ghcr.io/home-assistant/home-assistant@sha256:59aa8824955c9db491b75d2eebe42bd68494f80c2ec69ec0d66d9dae37d37514
+  if ($LASTEXITCODE -ne 0) { throw "Failed to start Home Assistant container" }
   npx playwright install chromium
+  if ($LASTEXITCODE -ne 0) { throw "Failed to install Playwright browser binaries" }
   npm run test:ha-smoke
+  $smokeExitCode = $LASTEXITCODE
 } finally {
   docker rm -f xiaomi-vacuum-card-ha-smoke
+  if ($smokeExitCode -ne 0) { exit $smokeExitCode }
 }
 ```
 

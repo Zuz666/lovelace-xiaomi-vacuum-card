@@ -194,14 +194,17 @@ jobs:
 
       - name: Add smoke test summary
         if: always()
+        env:
+          CARD_COMMIT: ${{ github.sha }}
+          JOB_RESULT: ${{ job.status }}
         run: |
-          echo "### Home Assistant Smoke Test Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- **HA Baseline Release**: ${{ env.HA_BASELINE_RELEASE }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **HA Image**: \`${{ env.HA_IMAGE }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Card Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Browser**: Chromium" >> $GITHUB_STEP_SUMMARY
-          echo "- **Result**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-
+          echo "### Home Assistant Smoke Test Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **HA Baseline Release**: ${HA_BASELINE_RELEASE}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **HA Image**: \`${HA_IMAGE}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Card Commit**: \`${CARD_COMMIT}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Browser**: Chromium" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Scenario**: \`npm run test:ha-smoke\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Result**: ${JOB_RESULT}" >> "$GITHUB_STEP_SUMMARY"
       - name: Stop and remove Home Assistant container
         if: always()
         run: |
