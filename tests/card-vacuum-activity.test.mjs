@@ -348,26 +348,45 @@ test("dispatch guard: re-evaluates state and blocks service call when action is 
     VACUUM_FEATURES.STOP |
     VACUUM_FEATURES.RETURN_HOME;
 
+  const entityState = {
+    attributes: { supported_features: allFeatures },
+    entity_id: "vacuum.guarded",
+    state: "docked", // Initially docked -> Start is enabled
+  };
+
   const hass = createHass({
     states: {
-      "vacuum.guarded": {
-        attributes: { supported_features: allFeatures },
-        entity_id: "vacuum.guarded",
-        state: "cleaning", // Start is disabled while cleaning
-      },
+      "vacuum.guarded": { ...entityState },
     },
   });
 
   card.setConfig({ entity: "vacuum.guarded" });
   card.hass = hass;
 
-  // Attempting to call vacuum.start while vacuum is cleaning must be guarded
+  // Verify that Start is initially evaluated as enabled at render time
+  const initialEval = card.evaluateButton(card.config.buttons.start);
+  assert.equal(initialEval.visible, true);
+  assert.equal(initialEval.disabled, false);
+  assert.equal(initialEval.callable, true);
+
+  // State transitions from docked -> cleaning before user click / dispatch completes
+  card.hass = {
+    ...hass,
+    states: {
+      "vacuum.guarded": {
+        ...entityState,
+        state: "cleaning", // Start becomes disabled while cleaning
+      },
+    },
+  };
+
+  // Attempting to dispatch the previously enabled Start action must be blocked by runtime guard
   await card.callActionButton(card.config.buttons.start);
 
   assert.deepEqual(
     hass.calls.services,
     [],
-    "Service call should not be dispatched for blocked action",
+    "Service call should not be dispatched for blocked action after state transition",
   );
 });
 
@@ -375,29 +394,50 @@ test("dispatch guard: re-evaluates capability and blocks service call when featu
   const { Card } = await loadCard();
   const card = new Card();
 
-  // No STOP feature
-  const features = VACUUM_FEATURES.START | VACUUM_FEATURES.RETURN_HOME;
+  // Initially has STOP feature
+  const initialFeatures =
+    VACUUM_FEATURES.START | VACUUM_FEATURES.STOP | VACUUM_FEATURES.RETURN_HOME;
+
+  const entityState = {
+    attributes: { supported_features: initialFeatures },
+    entity_id: "vacuum.guarded",
+    state: "cleaning", // Stop is enabled while cleaning
+  };
 
   const hass = createHass({
     states: {
-      "vacuum.guarded": {
-        attributes: { supported_features: features },
-        entity_id: "vacuum.guarded",
-        state: "cleaning",
-      },
+      "vacuum.guarded": { ...entityState },
     },
   });
 
   card.setConfig({ entity: "vacuum.guarded" });
   card.hass = hass;
 
-  // Stop is unsupported -> should be guarded
+  // Verify Stop is initially evaluated as enabled at render time
+  const initialEval = card.evaluateButton(card.config.buttons.stop);
+  assert.equal(initialEval.visible, true);
+  assert.equal(initialEval.disabled, false);
+  assert.equal(initialEval.callable, true);
+
+  // Capability loses STOP feature before click dispatch
+  const featuresWithoutStop = VACUUM_FEATURES.START | VACUUM_FEATURES.RETURN_HOME;
+  card.hass = {
+    ...hass,
+    states: {
+      "vacuum.guarded": {
+        ...entityState,
+        attributes: { supported_features: featuresWithoutStop },
+      },
+    },
+  };
+
+  // Stop is now unsupported -> dispatch must be blocked by runtime guard
   await card.callActionButton(card.config.buttons.stop);
 
   assert.deepEqual(
     hass.calls.services,
     [],
-    "Service call should not be dispatched when feature is unsupported",
+    "Service call should not be dispatched when feature is unsupported after capability transition",
   );
 });
 
