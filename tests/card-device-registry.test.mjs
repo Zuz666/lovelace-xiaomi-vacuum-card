@@ -499,6 +499,21 @@ test("entity eligibility: excluded disabled, hidden, wrong-domain, wrong-device-
   card.hass = hassNullEntities;
   assert.equal(card.resolveDiscoveredBatteryEntity(), null);
   assert.equal(card.resolveAttributeSource(card.config.state.battery).rawValue, "50");
+
+  // 12. vacuum absent from hass.entities -> discovery skipped, name fallback used
+  const hassNoVacuumEntry = createHass({
+    states: {
+      "vacuum.my_vacuum": { attributes: {}, entity_id: "vacuum.my_vacuum", state: "docked" },
+      "sensor.candidate_battery": { attributes: { device_class: "battery" }, state: "80" },
+      "sensor.my_vacuum_battery": { attributes: {}, state: "50" },
+    },
+    entities: {
+      "sensor.candidate_battery": { device_id: "dev_1", platform: "roborock" },
+    },
+  });
+  card.hass = hassNoVacuumEntry;
+  assert.equal(card.resolveDiscoveredBatteryEntity(), null);
+  assert.equal(card.resolveAttributeSource(card.config.state.battery).rawValue, "50");
 });
 
 test("unavailable and unknown stability: discovered entities in unavailable/unknown state stay selected and do not fall back", async () => {
