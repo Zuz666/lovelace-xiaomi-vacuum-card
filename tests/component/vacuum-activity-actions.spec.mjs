@@ -35,6 +35,7 @@ test.describe("Vacuum Activity and Action Capabilities", () => {
 
     const statusRow = cardLocator.locator(".grid-left > div").first();
     await expect(statusRow).toContainText("Docked");
+    await expect(statusRow).not.toContainText("legacy namespace");
 
     // Transition state from docked -> cleaning
     await updateEntityState(page, "vacuum.roborock_s7", {
@@ -42,6 +43,7 @@ test.describe("Vacuum Activity and Action Capabilities", () => {
       state: "cleaning",
     });
     await expect(statusRow).toContainText("Cleaning");
+    await expect(statusRow).not.toContainText("legacy namespace");
 
     // Transition state from cleaning -> returning
     await updateEntityState(page, "vacuum.roborock_s7", {
@@ -49,6 +51,7 @@ test.describe("Vacuum Activity and Action Capabilities", () => {
       state: "returning",
     });
     await expect(statusRow).toContainText("Returning");
+    await expect(statusRow).not.toContainText("legacy namespace");
   });
 
   test("unsupported automatic actions are absent from the DOM", async ({ page }) => {

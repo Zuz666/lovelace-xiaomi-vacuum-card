@@ -251,6 +251,54 @@ test("action presentation: show: true bypasses feature check but enforces state 
   assert.equal(pauseEval.visible, true);
   assert.equal(pauseEval.disabled, false);
 });
+test("action presentation: custom buttons default to visible even with recognized services without capabilities", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+
+  const hass = createHass({
+    states: {
+      "vacuum.custom_test": {
+        attributes: { supported_features: 0 },
+        entity_id: "vacuum.custom_test",
+        state: "docked",
+      },
+    },
+  });
+
+  card.setConfig({
+    entity: "vacuum.custom_test",
+    buttons: {
+      custom_spot: {
+        service: "vacuum.clean_spot",
+        icon: "mdi:broom",
+      },
+      custom_unrecognized: {
+        service: "custom_domain.clean",
+        icon: "mdi:vacuum",
+      },
+      custom_auto_spot: {
+        service: "vacuum.clean_spot",
+        icon: "mdi:broom",
+        show: "auto",
+      },
+    },
+  });
+  card.hass = hass;
+
+  // Custom button with recognized service defaults to visible
+  const customSpotEval = card.evaluateButton(card.config.buttons.custom_spot);
+  assert.equal(customSpotEval.visible, true);
+  assert.equal(customSpotEval.disabled, false);
+
+  // Custom button with unrecognized service defaults to visible
+  const customUnrecognizedEval = card.evaluateButton(card.config.buttons.custom_unrecognized);
+  assert.equal(customUnrecognizedEval.visible, true);
+  assert.equal(customUnrecognizedEval.disabled, false);
+
+  // Custom button with recognized service and show: 'auto' participates in capability filtering (hidden)
+  const customAutoSpotEval = card.evaluateButton(card.config.buttons.custom_auto_spot);
+  assert.equal(customAutoSpotEval.visible, false);
+});
 
 test("action presentation: table-driven matrix for every action and activity state", async () => {
   const { Card } = await loadCard();
@@ -486,6 +534,46 @@ test("legacy compatibility: vendor preset with vacuum.turn_on dispatches when en
       domain: "vacuum",
       service: "turn_on",
       data: { entity_id: "vacuum.deebot" },
+    },
+  ]);
+});
+
+test("legacy compatibility: vendor preset robovac hides stop and forces spot visible", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+
+  const hass = createHass({
+    states: {
+      "vacuum.eufy_robovac": {
+        attributes: { supported_features: 0 },
+        entity_id: "vacuum.eufy_robovac",
+        state: "docked",
+      },
+    },
+  });
+
+  card.setConfig({ entity: "vacuum.eufy_robovac", vendor: "robovac" });
+  card.hass = hass;
+
+  // Robovac preset hides stop
+  const stopButton = card.config.buttons.stop;
+  const stopEval = card.evaluateButton(stopButton);
+  assert.equal(stopEval.visible, false);
+
+  // Robovac preset forces spot visible (show: true)
+  const spotButton = card.config.buttons.spot;
+  assert.equal(spotButton.show, true);
+  const spotEval = card.evaluateButton(spotButton);
+  assert.equal(spotEval.visible, true);
+  assert.equal(spotEval.disabled, false);
+
+  await card.callActionButton(spotButton);
+
+  assert.deepEqual(hass.calls.services, [
+    {
+      domain: "vacuum",
+      service: "clean_spot",
+      data: { entity_id: "vacuum.eufy_robovac" },
     },
   ]);
 });

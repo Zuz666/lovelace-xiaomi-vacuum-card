@@ -707,7 +707,8 @@
       if (data.show === false) return { visible: false, disabled: true, callable: false };
       const service = data.service || "";
       const isLegacyToggle = service === "vacuum.turn_on" || service === "vacuum.turn_off";
-      const explicitShow = data.show === true || isLegacyToggle || data.custom && !(service in SERVICE_TO_FEATURE) && data.show !== "auto";
+      const isCustom = data.custom === true || data.id && !(data.id in buttons);
+      const explicitShow = data.show === true || isLegacyToggle || isCustom && data.show !== "auto";
       const stateObj = this.stateObj;
       if (!stateObj) {
         return { visible: explicitShow, disabled: true, callable: false };
@@ -1038,6 +1039,14 @@
       const image = this.getConfigImage(config.image);
       const showName = config.name !== false;
       const showButtons = config.buttons !== false;
+      const mergedButtons = this.deepMerge(buttons, vendor.buttons, config.buttons);
+      if (mergedButtons && typeof mergedButtons === "object") {
+        Object.entries(mergedButtons).forEach(([id, btn]) => {
+          if (btn && typeof btn === "object") {
+            mergedButtons[id] = Object.assign({ id, custom: !(id in buttons) }, btn);
+          }
+        });
+      }
       this.config = {
         name: config.name,
         entity: config.entity,
@@ -1049,7 +1058,7 @@
           attributes: config.attributes !== false,
           buttons: showButtons
         },
-        buttons: this.deepMerge(buttons, vendor.buttons, config.buttons),
+        buttons: mergedButtons,
         state: this.deepMerge(state, vendor.state, config.state),
         attributes: this.deepMerge(attributes, vendor.attributes, config.attributes),
         styles: this.getCardStyles(image, showName, showButtons)
@@ -1527,6 +1536,7 @@
       if (!row.show)
         return Object.keys(rowConfig).length ? Object.assign({ show: false }, rowConfig) : false;
       if (row.show && defaultValue.show === false) rowConfig.show = true;
+      if (row.custom && row.show === true) rowConfig.show = true;
       return Object.keys(rowConfig).length ? rowConfig : void 0;
     }
     hasConfigChange(value, defaultValue) {

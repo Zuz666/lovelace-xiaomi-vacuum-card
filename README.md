@@ -182,7 +182,7 @@ Built-in buttons automatically adapt to your vacuum's supported capabilities (`V
   - Supported capabilities that are temporarily invalid in the current activity (e.g. Start while cleaning, Pause while docked, or any action while unavailable) are rendered with native **disabled** semantics (`ha-icon-button[disabled]`, `aria-disabled="true"`, non-interactive).
   - Supported and valid capabilities are rendered enabled and clickable.
 - **Custom Buttons**: Omitted `show` defaults to `true`. Custom buttons with unrecognized services remain unconditionally visible, while custom buttons targeting recognized vacuum services participate in capability filtering when configured with `show: "auto"`.
-- **Explicit Visibility (`show: true`)**: Forces the button visible even if the integration's feature flags are incomplete, while preserving runtime state and entity-availability safety guards.
+- **Explicit Visibility (`show: true`)**: Forces the button visible even if the integration's feature flags are incomplete, while preserving capability, activity-state, disabled, and entity-availability pre-dispatch guards.
 - **Explicit Hidden (`show: false`)**: Unconditionally hides the action button.
 
 Capability mapping follows the effective service (including valid remappings such as mapping Pause to `vacuum.stop`), and unrecognized services have no inferred feature requirements.
