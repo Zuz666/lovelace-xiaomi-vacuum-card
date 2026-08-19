@@ -103,6 +103,7 @@ Use GitHub's native close reasons for completed, duplicate, and not-planned issu
 
 - `source:upstream` — derived from historical upstream issues or pull requests;
 - `breaking-change` — may require a configuration migration or incompatible behavior change;
+- `dependencies` — dependency-file updates on automated or manual pull requests; it supplements rather than replaces `type:chore` and `area:ci-release`;
 - `good first issue` — isolated and documented work suitable for a new contributor;
 - `help wanted` — maintainer requests implementation help or device-specific evidence.
 
