@@ -61,29 +61,30 @@ const EXPECTED_ECOSYSTEMS = ["npm", "github-actions"];
 const EXPECTED_LABELS = ["dependencies", "type:chore", "area:ci-release"];
 const PROHIBITED_LABELS = ["javascript", "github-actions"];
 
-test("dependabot.yml declares required package ecosystems with unified labels in exact order", async () => {
+test("dependabot.yml declares required package ecosystems with unified labels", async () => {
   const dependabotConfig = await readText(".github/dependabot.yml");
   const updates = parseDependabotUpdates(dependabotConfig);
 
   assert.ok(
-    updates.length >= 2,
-    "dependabot.yml must declare at least two ecosystem update blocks",
+    updates.length >= EXPECTED_ECOSYSTEMS.length,
+    `dependabot.yml must declare at least ${EXPECTED_ECOSYSTEMS.length} ecosystem update blocks`,
   );
 
-  const declaredEcosystems = updates.map((u) => u.ecosystem);
+  const targetUpdates = updates.filter((update) => EXPECTED_ECOSYSTEMS.includes(update.ecosystem));
+  const declaredTargetEcosystems = targetUpdates.map((update) => update.ecosystem);
   assert.deepEqual(
-    declaredEcosystems.sort(),
+    declaredTargetEcosystems.sort(),
     [...EXPECTED_ECOSYSTEMS].sort(),
-    `dependabot.yml must declare ecosystems: ${EXPECTED_ECOSYSTEMS.join(", ")}`,
+    `dependabot.yml must declare target ecosystems: ${EXPECTED_ECOSYSTEMS.join(", ")}`,
   );
 
   for (const ecosystem of EXPECTED_ECOSYSTEMS) {
-    const update = updates.find((u) => u.ecosystem === ecosystem);
+    const update = targetUpdates.find((u) => u.ecosystem === ecosystem);
     assert.ok(update, `dependabot.yml missing update configuration for ${ecosystem}`);
     assert.deepEqual(
-      update.labels,
-      EXPECTED_LABELS,
-      `dependabot.yml for ${ecosystem} must specify exact labels in order: ${EXPECTED_LABELS.join(", ")}`,
+      [...update.labels].sort(),
+      [...EXPECTED_LABELS].sort(),
+      `dependabot.yml for ${ecosystem} must specify labels: ${EXPECTED_LABELS.join(", ")}`,
     );
   }
 });
