@@ -3,6 +3,8 @@ import vm from "node:vm";
 
 const cardSourceUrl = new URL("../../dist/xiaomi-vacuum-card.js", import.meta.url);
 
+export { VACUUM_FEATURES } from "./vacuum-features.mjs";
+
 export function toHost(value) {
   if (Array.isArray(value)) return Array.from(value, (item) => toHost(item));
   if (!value || typeof value !== "object") return value;
@@ -91,6 +93,7 @@ export async function loadCard() {
     cancelAnimationFrame(id) {
       animationFrames.delete(id);
     },
+    clearTimeout,
     console: consoleStub,
     customElements: registry,
     CustomEvent: FakeCustomEvent,
@@ -103,6 +106,7 @@ export async function loadCard() {
       calls.animationFrames.push({ id, callback });
       return id;
     },
+    setTimeout,
     window: {
       customCards: [],
       LitElement: FakeLitElement,

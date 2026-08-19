@@ -92,33 +92,33 @@ For `show: true`, the required-feature check is bypassed to preserve legacy inte
 
 ## Acceptance criteria
 
-- [ ] The default status row renders the main vacuum state without requiring `key: state`.
-- [ ] A legacy `attributes.status` source remains available through documented fallback or explicit configuration.
-- [ ] Each modern automatic built-in action derives its feature requirement from the defined service mapping.
-- [ ] `vacuum.turn_on`, `vacuum.turn_off`, `TURN_ON`, and `TURN_OFF` are not used for modern automatic capability inference.
-- [ ] Existing explicit legacy toggle-service mappings remain usable through documented explicit-visibility compatibility behavior.
-- [ ] In `show: auto` or omitted `show`, unsupported actions are hidden and supported but state-blocked actions are disabled.
-- [ ] Hidden actions are absent from the focus order and disabled actions expose native disabled semantics.
-- [ ] For automatic actions, the handler re-evaluates capability; for all modes, it re-evaluates state and availability before dispatch.
-- [ ] Pointer, keyboard, or programmatic activation of a disabled automatic action never calls a Home Assistant service.
-- [ ] `show: false`, `show: auto`, and `show: true` follow the documented precedence.
-- [ ] Explicit visibility preserves legacy integrations with incomplete feature flags without bypassing unavailable-state safety.
-- [ ] Custom services are not silently assigned an undocumented feature requirement.
-- [ ] Fixtures cover modern Roborock-like, Eufy/robovac-like, legacy attribute-based, incomplete-feature, and vendor-service-remapping entity shapes.
+- [x] The default status row renders the main vacuum state without requiring `key: state`.
+- [x] A legacy `attributes.status` source remains available through documented fallback or explicit configuration.
+- [x] Each modern automatic built-in action derives its feature requirement from the defined service mapping.
+- [x] `vacuum.turn_on`, `vacuum.turn_off`, `TURN_ON`, and `TURN_OFF` are not used for modern automatic capability inference.
+- [x] Existing explicit legacy toggle-service mappings remain usable through documented explicit-visibility compatibility behavior.
+- [x] In `show: auto` or omitted `show`, unsupported actions are hidden and supported but state-blocked actions are disabled.
+- [x] Hidden actions are absent from the focus order and disabled actions expose native disabled semantics.
+- [x] For automatic actions, the handler re-evaluates capability; for all modes, it re-evaluates state and availability before dispatch.
+- [x] Pointer, keyboard, or programmatic activation of a disabled automatic action never calls a Home Assistant service.
+- [x] `show: false`, `show: auto`, and `show: true` follow the documented precedence.
+- [x] Explicit visibility preserves legacy integrations with incomplete feature flags without bypassing unavailable-state safety.
+- [x] Custom services are not silently assigned an undocumented feature requirement.
+- [x] Fixtures cover modern Roborock-like, Eufy/robovac-like, legacy attribute-based, incomplete-feature, and vendor-service-remapping entity shapes.
 
 ## Test plan
 
-- [ ] Unit tests for status source precedence
-- [ ] Unit tests for every modern service-to-feature mapping
-- [ ] Negative tests proving deprecated toggle services are not auto-inferred
-- [ ] Compatibility tests for explicit `vacuum.turn_on` and `vacuum.turn_off` mappings
-- [ ] Table-driven unit tests for every action and blocked-state combination
-- [ ] Tests for `show: false`, `show: auto`, `show: true`, and custom-button compatibility
-- [ ] Service-dispatch guard tests that mutate state between render and activation
-- [ ] Real browser component tests for hidden DOM, disabled semantics, focus order, keyboard activation, and pointer activation
-- [ ] Regression test for upstream issue #123 behavior
-- [ ] Targeted Home Assistant smoke test for representative enabled, disabled, and hidden actions
-- [ ] Existing contract, component, lint, formatting, and smoke suites pass
+- [x] Unit tests for status source precedence
+- [x] Unit tests for every modern service-to-feature mapping
+- [x] Negative tests proving deprecated toggle services are not auto-inferred
+- [x] Compatibility tests for explicit `vacuum.turn_on` and `vacuum.turn_off` mappings
+- [x] Table-driven unit tests for every action and blocked-state combination
+- [x] Tests for `show: false`, `show: auto`, `show: true`, and custom-button compatibility
+- [x] Service-dispatch guard tests that mutate state between render and activation
+- [x] Real browser component tests for hidden DOM, disabled semantics, focus order, keyboard activation, and pointer activation
+- [x] Regression test for upstream issue #123 behavior
+- [x] Targeted Home Assistant smoke test for card loading and dynamic action button execution
+- [x] Existing contract, component, lint, formatting, and smoke suites pass
 
 ## Compatibility and migration
 

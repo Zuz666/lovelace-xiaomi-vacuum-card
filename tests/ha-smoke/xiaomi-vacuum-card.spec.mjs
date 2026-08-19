@@ -232,6 +232,9 @@ test("loads the Xiaomi vacuum card in Home Assistant", async ({ page, request, b
     "Entity 'vacuum.demo_vacuum_0_ground_floor' not available",
   );
 
+  const actionButtons = vacuumCard.locator(".flex ha-icon-button");
+  await expect(actionButtons.first()).toBeVisible();
+
   const registryContract = await vacuumCard.evaluate((card) => {
     if (!card || typeof card.getRegistrySnapshot !== "function") return null;
     const snapshot = card.getRegistrySnapshot();

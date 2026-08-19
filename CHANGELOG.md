@@ -9,10 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Native vacuum capability evaluation based on `VacuumEntityFeature` bitmasks (`START`, `PAUSE`, `STOP`, `RETURN_HOME`, `LOCATE`, `CLEAN_SPOT`) with presentation modes (`show: auto`, `show: true`, `show: false`), native disabled button semantics, and independent runtime service dispatch guards ([#33](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/issues/33)).
 - Device-registry-aware battery and charging discovery (`sensor.*` with `device_class: battery` and `binary_sensor.*` with `device_class: battery_charging` attached to the same Home Assistant device as the vacuum) with platform preference, deterministic tie-breaking, sanitized diagnostics, and registry adapter snapshot contract ([#34](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/issues/34)).
 
 ### Fixed
 
+- Default status row resolution directly from the canonical Home Assistant `vacuum.*` entity state (`cleaning`, `docked`, `idle`, `paused`, `returning`, `error`), resolving "Unavailable" status for modern `StateVacuumEntity` vacuums while maintaining legacy `attributes.status` fallback ([#33](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/issues/33)).
 - Reactive card re-rendering when referenced external entities (`sensor.*`, `binary_sensor.*`, auto-discovered battery sensors, or media-source images) update without changing the main vacuum state object ([#32](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/issues/32)).
 
 ## [4.6.2] - 2026-08-18

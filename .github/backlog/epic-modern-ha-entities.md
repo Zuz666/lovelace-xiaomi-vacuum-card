@@ -33,15 +33,15 @@ The existing VM harness cannot validate actual Lit update behavior. This epic th
 
 - [x] {{issue:p0-real-lit-component-tests}} — add real Lit browser component tests for lifecycle and interactions
 - [x] {{issue:p0-reactive-external-entities}} — update the card when referenced external entities change
-- [ ] {{issue:p0-native-vacuum-state-features}} — use native vacuum activity and supported feature flags
+- [x] {{issue:p0-native-vacuum-state-features}} — use native vacuum activity and supported feature flags
 - [x] {{issue:p0-device-aware-battery}} — discover battery and charging entities through the device registry
 - [x] {{issue:p1-reproducible-ha-smoke}} — make HA smoke tests reproducible and diagnostic
 
 ## Exit criteria
 
-- [ ] All required child issues are completed.
+- [x] All required child issues are completed.
 - [x] The stale external-entity scenario is covered by a real Lit and DOM test.
-- [ ] The default status and action UI follows the modern Home Assistant vacuum contract.
+- [x] The default status and action UI follows the modern Home Assistant vacuum contract.
 - [x] Every displayed external entity is a tracked reactive dependency.
 - [x] Renamed same-device battery entities work without manual YAML.
 - [x] Legacy YAML and documented fallbacks remain covered by tests.

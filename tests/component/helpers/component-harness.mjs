@@ -9,23 +9,26 @@
  */
 export function createDefaultVacuumState({
   entityId = "vacuum.test_vacuum",
-  state = "cleaning",
+  state,
   status = "Cleaning",
   batteryLevel = 80,
   fanSpeed = "Standard",
   fanSpeedList = ["Silent", "Standard", "Turbo", "Max"],
   friendlyName = "Test Vacuum",
+  supportedFeatures = 13884, // STATE | START | PAUSE | STOP | RETURN_HOME | FAN_SPEED | LOCATE | CLEAN_SPOT
   attributes = {},
 } = {}) {
+  const resolvedState = state ?? (typeof status === "string" ? status.toLowerCase() : "cleaning");
   return {
     entity_id: entityId,
-    state,
+    state: resolvedState,
     attributes: {
       friendly_name: friendlyName,
       status,
       battery_level: batteryLevel,
       fan_speed: fanSpeed,
       fan_speed_list: fanSpeedList,
+      supported_features: supportedFeatures,
       ...attributes,
     },
   };
@@ -71,12 +74,19 @@ export async function mountCard(page, { config, hass, trackRenders = true } = {}
         localize: (key) => {
           const dict = {
             "state.default.unavailable": "Unavailable",
-            "state.vacuum.cleaning": "Cleaning",
-            "state.vacuum.docked": "Docked",
-            "state.vacuum.paused": "Paused",
-            "state.vacuum.idle": "Idle",
-            "state.vacuum.returning": "Returning home",
-            "state.vacuum.error": "Error",
+            "state.default.unknown": "Unknown",
+            "state.vacuum.cleaning": "Cleaning (legacy namespace)",
+            "state.vacuum.docked": "Docked (legacy namespace)",
+            "state.vacuum.paused": "Paused (legacy namespace)",
+            "state.vacuum.idle": "Idle (legacy namespace)",
+            "state.vacuum.returning": "Returning (legacy namespace)",
+            "state.vacuum.error": "Error (legacy namespace)",
+            "component.vacuum.entity_component._.state.cleaning": "Cleaning",
+            "component.vacuum.entity_component._.state.docked": "Docked",
+            "component.vacuum.entity_component._.state.paused": "Paused",
+            "component.vacuum.entity_component._.state.idle": "Idle",
+            "component.vacuum.entity_component._.state.returning": "Returning",
+            "component.vacuum.entity_component._.state.error": "Error",
           };
           return dict[key] || key;
         },

@@ -43,6 +43,30 @@
       unit: " h"
     }
   };
+  const VACUUM_FEATURES = {
+    TURN_ON: 1,
+    TURN_OFF: 2,
+    PAUSE: 4,
+    STOP: 8,
+    RETURN_HOME: 16,
+    FAN_SPEED: 32,
+    STATUS: 128,
+    SEND_COMMAND: 256,
+    LOCATE: 512,
+    CLEAN_SPOT: 1024,
+    MAP: 2048,
+    STATE: 4096,
+    START: 8192,
+    CLEAN_AREA: 16384
+  };
+  const SERVICE_TO_FEATURE = {
+    "vacuum.start": VACUUM_FEATURES.START,
+    "vacuum.pause": VACUUM_FEATURES.PAUSE,
+    "vacuum.stop": VACUUM_FEATURES.STOP,
+    "vacuum.return_to_base": VACUUM_FEATURES.RETURN_HOME,
+    "vacuum.locate": VACUUM_FEATURES.LOCATE,
+    "vacuum.clean_spot": VACUUM_FEATURES.CLEAN_SPOT
+  };
   const buttons = {
     start: {
       label: "Start",
@@ -60,7 +84,6 @@
       service: "vacuum.stop"
     },
     spot: {
-      show: false,
       label: "Clean Spot",
       icon: "mdi:broom",
       service: "vacuum.clean_spot"
@@ -342,6 +365,11 @@
         .xvc-option[selected] {
           color: var(--primary-color, #03a9f4);
         }
+        ha-icon-button[disabled] {
+          opacity: var(--disabled-opacity, 0.4);
+          cursor: not-allowed;
+          pointer-events: none;
+        }
       `;
     }
     render() {
@@ -526,6 +554,38 @@
         const entityState = states[sensorKey];
         return { rawValue: entityState.state, entityState, isBattery: false };
       }
+      const isStatus = data.id === "status" || data.key === "status" || data.key === "state";
+      if (isStatus) {
+        if (data.attribute && this.stateObj && this.stateObj.attributes && data.attribute in this.stateObj.attributes) {
+          return {
+            rawValue: this.stateObj.attributes[data.attribute],
+            entityState: null,
+            isBattery: false
+          };
+        }
+        if (this.stateObj && this.stateObj.state !== void 0 && this.stateObj.state !== null) {
+          return {
+            rawValue: this.stateObj.state,
+            entityState: null,
+            isBattery: false
+          };
+        }
+        if (this.stateObj && this.stateObj.attributes && "status" in this.stateObj.attributes) {
+          return {
+            rawValue: this.stateObj.attributes.status,
+            entityState: null,
+            isBattery: false
+          };
+        }
+        if (this.stateObj && data.key && data.key in this.stateObj) {
+          return {
+            rawValue: this.stateObj[data.key],
+            entityState: null,
+            isBattery: false
+          };
+        }
+        return { rawValue: null, entityState: null, isBattery: false };
+      }
       if (this.stateObj && this.stateObj.attributes && data.key && data.key in this.stateObj.attributes) {
         return {
           rawValue: this.stateObj.attributes[data.key],
@@ -551,7 +611,22 @@
       } else if (raw === "unknown") {
         value = unknownText;
       } else if (raw !== null && raw !== void 0) {
-        const computed = computeFunc(raw);
+        let formatted = raw;
+        const isStatus = data.id === "status" || data.key === "status" || data.key === "state";
+        if (isStatus && typeof raw === "string" && this._hass) {
+          if (typeof this._hass.formatEntityState === "function" && this.stateObj && !data.entity && this.stateObj.state === raw) {
+            formatted = this._hass.formatEntityState(this.stateObj);
+          } else if (typeof this._hass.localize === "function") {
+            const localized = this._hass.localize(`component.vacuum.entity_component._.state.${raw}`) || this._hass.localize(`state.vacuum.${raw}`);
+            if (localized && !localized.startsWith("component.") && !localized.startsWith("state.")) {
+              formatted = localized;
+            }
+          }
+        }
+        if (isStatus && formatted === raw && typeof raw === "string" && raw.length > 0) {
+          formatted = raw.charAt(0).toUpperCase() + raw.slice(1);
+        }
+        const computed = computeFunc(formatted);
         value = computed === "-" ? "-" : computed + (data.unit || "");
       }
       const list = this.stateObj && this.stateObj.attributes && data.key ? this.stateObj.attributes[`${data.key}_list`] : void 0;
@@ -619,16 +694,78 @@
             style="margin-right: 10px; ${this.config.styles.icon}"
           ></ha-icon>` : null;
     }
+    getRequiredFeatureForService(service) {
+      return SERVICE_TO_FEATURE[service];
+    }
+    getRequiredFeatureForButton(buttonData) {
+      if (!buttonData) return void 0;
+      const service = buttonData.service || "";
+      return this.getRequiredFeatureForService(service);
+    }
+    evaluateButton(data) {
+      if (!data) return { visible: false, disabled: true, callable: false };
+      if (data.show === false) return { visible: false, disabled: true, callable: false };
+      const service = data.service || "";
+      const isLegacyToggle = service === "vacuum.turn_on" || service === "vacuum.turn_off";
+      const isCustom = data.custom === true || data.id && !(data.id in buttons);
+      const explicitShow = data.show === true || isLegacyToggle || isCustom && data.show !== "auto";
+      const stateObj = this.stateObj;
+      if (!stateObj) {
+        return { visible: explicitShow, disabled: true, callable: false };
+      }
+      const currentState = stateObj.state;
+      const isStateUnavailable = currentState === "unavailable" || currentState === "unknown";
+      const requiredFeature = this.getRequiredFeatureForButton(data);
+      if (!explicitShow && requiredFeature !== void 0) {
+        const supportedFeatures = stateObj.attributes && typeof stateObj.attributes.supported_features === "number" ? stateObj.attributes.supported_features : 0;
+        const isSupported = (supportedFeatures & requiredFeature) !== 0;
+        if (!isSupported) {
+          return { visible: false, disabled: true, callable: false };
+        }
+      }
+      if (isStateUnavailable) {
+        return { visible: true, disabled: true, callable: false };
+      }
+      let isBlocked = false;
+      if (service === "vacuum.start") {
+        isBlocked = ["cleaning", "on"].includes(currentState);
+      } else if (service === "vacuum.pause" || data.id === "pause" && service === "vacuum.stop") {
+        isBlocked = !["cleaning", "on"].includes(currentState);
+      } else if (service === "vacuum.stop") {
+        isBlocked = ["docked", "off", "idle"].includes(currentState);
+      } else if (service === "vacuum.return_to_base") {
+        isBlocked = currentState === "returning";
+      }
+      return {
+        visible: true,
+        disabled: isBlocked,
+        callable: !isBlocked
+      };
+    }
     renderButton(data) {
-      const payload = data && data.service_data_mode === "dynamic" ? data.service_data_template : data ? data.service_data : void 0;
-      return data && data.show !== false ? html`<ha-icon-button
-            @click="${() => this.callService(data.service, payload)}"
-            label="${data.label || ""}"
-            title="${data.label || ""}"
-            style="${this.config.styles.icon}"
-          >
-            <ha-icon style="display:flex;" icon="${data.icon}"></ha-icon>
-          </ha-icon-button>` : null;
+      if (!data) return null;
+      const buttonState = this.evaluateButton(data);
+      if (!buttonState.visible) return null;
+      const disabled = buttonState.disabled;
+      return html`<ha-icon-button
+        .disabled=${disabled}
+        ?disabled=${disabled}
+        aria-disabled=${disabled ? "true" : "false"}
+        tabindex=${disabled ? "-1" : "0"}
+        @click="${() => this.callActionButton(data)}"
+        label="${data.label || ""}"
+        title="${data.label || ""}"
+        style="${this.config.styles.icon}"
+      >
+        <ha-icon style="display:flex;" icon="${data.icon}"></ha-icon>
+      </ha-icon-button>`;
+    }
+    async callActionButton(data) {
+      if (!data) return;
+      const buttonState = this.evaluateButton(data);
+      if (!buttonState.callable) return;
+      const payload = data.service_data_mode === "dynamic" ? data.service_data_template : data.service_data;
+      await this.callService(data.service, payload);
     }
     renderDropdown(attribute, key, service, label) {
       const list = Array.isArray(this.stateObj.attributes[`${key}_list`]) ? this.stateObj.attributes[`${key}_list`] : [];
@@ -709,7 +846,8 @@
           dropdown.open ? dropdown.active : dropdown.value,
           event.key
         );
-        this._dropdown = dropdown.open ? Object.assign({}, dropdown, { active: next }) : Object.assign({}, dropdown, { active: next, value: next });
+        const shouldOpen = event.key === "ArrowDown" || event.key === "ArrowUp";
+        this._dropdown = dropdown.open ? Object.assign({}, dropdown, { active: next }) : Object.assign({}, dropdown, { active: next, value: next, open: shouldOpen });
         return;
       }
       if (event.key === "Enter") {
@@ -758,6 +896,12 @@
       if (this._dropdownCloseFrame) {
         cancelAnimationFrame(this._dropdownCloseFrame);
         this._dropdownCloseFrame = null;
+      }
+      if (this._activeTemplateCleanups) {
+        for (const cleanup of this._activeTemplateCleanups) {
+          cleanup();
+        }
+        this._activeTemplateCleanups.clear();
       }
       super.disconnectedCallback();
     }
@@ -902,6 +1046,14 @@
       const image = this.getConfigImage(config.image);
       const showName = config.name !== false;
       const showButtons = config.buttons !== false;
+      const mergedButtons = this.deepMerge(buttons, vendor.buttons, config.buttons);
+      if (mergedButtons && typeof mergedButtons === "object") {
+        Object.entries(mergedButtons).forEach(([id, btn]) => {
+          if (btn && typeof btn === "object") {
+            mergedButtons[id] = Object.assign({}, btn, { id, custom: !(id in buttons) });
+          }
+        });
+      }
       this.config = {
         name: config.name,
         entity: config.entity,
@@ -913,7 +1065,7 @@
           attributes: config.attributes !== false,
           buttons: showButtons
         },
-        buttons: this.deepMerge(buttons, vendor.buttons, config.buttons),
+        buttons: mergedButtons,
         state: this.deepMerge(state, vendor.state, config.state),
         attributes: this.deepMerge(attributes, vendor.attributes, config.attributes),
         styles: this.getCardStyles(image, showName, showButtons)
@@ -995,7 +1147,7 @@
       this._hass = hass;
       if (hass && this.config) {
         const nextStateObj = this.config.entity in hass.states ? hass.states[this.config.entity] : null;
-        if (this._dropdown && nextStateObj && nextStateObj.attributes[this._dropdown.key] !== this._dropdown.committed) {
+        if (this._dropdown && nextStateObj && nextStateObj.attributes && nextStateObj.attributes[this._dropdown.key] !== this._dropdown.committed) {
           this._dropdown = null;
         }
         this.stateObj = nextStateObj;
@@ -1018,7 +1170,16 @@
         let unsub = null;
         let settled = false;
         let pendingUnsub = false;
+        let timer = null;
+        if (!this._activeTemplateCleanups) {
+          this._activeTemplateCleanups = /* @__PURE__ */ new Set();
+        }
         const cleanup = async () => {
+          if (timer) {
+            clearTimeout(timer);
+            timer = null;
+          }
+          this._activeTemplateCleanups.delete(cleanup);
           if (unsub) {
             try {
               await unsub();
@@ -1029,6 +1190,13 @@
             pendingUnsub = true;
           }
         };
+        this._activeTemplateCleanups.add(cleanup);
+        timer = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          reject(new Error("Template render timed out"));
+        }, 5e3);
         const callback = (event) => {
           if (settled) return;
           settled = true;
@@ -1067,6 +1235,7 @@
               (err) => {
                 if (!settled) {
                   settled = true;
+                  cleanup();
                   reject(err);
                 }
               }
@@ -1074,13 +1243,19 @@
           }
         } catch (err) {
           settled = true;
+          cleanup();
           reject(err);
         }
       });
     }
     async callService(service, data) {
       if (!this.stateObj || !service) return;
+      if (this.stateObj.state === "unavailable" || this.stateObj.state === "unknown") return;
       const [domain, name] = service.split(".");
+      if (!domain || !name) {
+        console.error("[xiaomi-vacuum-card] Invalid service, expected 'domain.service':", service);
+        return;
+      }
       let resolvedData = data ?? { entity_id: this.stateObj.entity_id };
       if (typeof data === "string") {
         try {
@@ -1102,12 +1277,12 @@
       this._hass.callService(domain, name, resolvedData);
     }
     fireEvent(type, options = {}) {
-      const event = new Event(type, {
+      const event = new CustomEvent(type, {
         bubbles: options.bubbles !== false,
         cancelable: options.cancelable !== false,
-        composed: options.composed !== false
+        composed: options.composed !== false,
+        detail: { entityId: this.stateObj && this.stateObj.entity_id }
       });
-      event.detail = { entityId: this.stateObj && this.stateObj.entity_id };
       this.dispatchEvent(event);
     }
     deepMerge(...sources) {
@@ -1388,8 +1563,9 @@
         }
       }
       if (!row.show)
-        return Object.keys(rowConfig).length ? Object.assign({ show: false }, rowConfig) : defaultValue.show === false ? void 0 : false;
-      if (defaultValue.show === false) rowConfig.show = true;
+        return Object.keys(rowConfig).length ? Object.assign({ show: false }, rowConfig) : false;
+      if (row.show && defaultValue.show === false) rowConfig.show = true;
+      if (row.custom && row.show === true) rowConfig.show = true;
       return Object.keys(rowConfig).length ? rowConfig : void 0;
     }
     hasConfigChange(value, defaultValue) {
@@ -1584,6 +1760,7 @@
                   class="service-data-mode-button"
                   size="s"
                   variant="brand"
+                  aria-pressed=${serviceDataMode === "static" ? "true" : "false"}
                   appearance=${serviceDataMode === "static" ? "accent" : "filled"}
                   @mousedown=${(ev) => ev.stopPropagation()}
                   @click=${(ev) => this.updateServiceDataMode(index, "static", ev)}
@@ -1593,12 +1770,12 @@
                   class="service-data-mode-button"
                   size="s"
                   variant="brand"
+                  aria-pressed=${serviceDataMode === "dynamic" ? "true" : "false"}
                   appearance=${serviceDataMode === "dynamic" ? "accent" : "filled"}
                   @mousedown=${(ev) => ev.stopPropagation()}
                   @click=${(ev) => this.updateServiceDataMode(index, "dynamic", ev)}
                   >Dynamic</ha-button
                 >
-              </div>
             </div>
             ${this.renderForm(dataSchema, dataModel, (ev) => this.updateRow("buttons", index, ev))}
           </ha-expansion-panel>
@@ -1744,8 +1921,12 @@
       return String(mediaContentId).startsWith("media-source://") ? clean : mediaContentId;
     }
   }
-  customElements.define("xiaomi-vacuum-card-editor", XiaomiVacuumCardEditor);
-  customElements.define("xiaomi-vacuum-card", XiaomiVacuumCard);
+  if (!customElements.get("xiaomi-vacuum-card-editor")) {
+    customElements.define("xiaomi-vacuum-card-editor", XiaomiVacuumCardEditor);
+  }
+  if (!customElements.get("xiaomi-vacuum-card")) {
+    customElements.define("xiaomi-vacuum-card", XiaomiVacuumCard);
+  }
   window.customCards = window.customCards || [];
   if (!window.customCards.some((c) => c.type === "xiaomi-vacuum-card")) {
     window.customCards.push({
