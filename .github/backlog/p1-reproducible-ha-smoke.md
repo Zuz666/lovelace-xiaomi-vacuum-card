@@ -74,7 +74,7 @@ On failure, maintainers can download the Playwright report, trace, screenshots, 
 - [x] Unit or repository test accepting a valid lowercase sha256 image reference
 - [x] Negative tests rejecting `:stable`, `:beta`, `:dev`, semantic version tags, malformed digests, and tag-plus-no-digest references
 - [x] Verify the documented release identifier corresponds to the resolved digest during baseline updates
-- [x] Manually dispatch each configured canary channel (verified via repo governance tests; GitHub dispatch requires merge to main)
+- [ ] Manually dispatch each configured canary channel (verified via repo governance tests; GitHub dispatch requires merge to main)
 - [x] Force a controlled Playwright failure and verify downloadable artifacts
 - [x] Force a controlled HA startup failure and verify retained container logs
 - [x] Push a superseding commit and verify the older PR run is cancelled

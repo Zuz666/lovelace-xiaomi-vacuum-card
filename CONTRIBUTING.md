@@ -121,7 +121,7 @@ Every pull request must target the `main` branch of `Zuz666/lovelace-xiaomi-vacu
 
 ### 7. Checklist (`## Checklist`)
 
-- Verify that Conventional Commits are used, browser ES module compatibility is maintained, tests/docs are updated, managed backlog files (`.github/backlog/*.md`) and parent epics are updated when closing or advancing backlog items, CodeQL security scanning checks pass, and automated review findings (CodeRabbit) are reviewed.
+- Verify that Conventional Commits are used, browser ES module compatibility is maintained, tests/docs are updated, managed backlog source files declared in `.github/backlog/issues.json` and parent epics are updated when closing or advancing backlog items, CodeQL security scanning checks pass, and automated review findings (CodeRabbit) are reviewed.
 
 ### 8. Review (`## Review`)
 
