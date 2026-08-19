@@ -36,7 +36,7 @@ The implementation also needs reusable entity fixtures and real browser componen
 
 Shared testing prerequisite:
 
-- [ ] {{issue:p0-real-lit-component-tests}} — provide real Lit and DOM component coverage
+- [x] {{issue:p0-real-lit-component-tests}} — provide real Lit and DOM component coverage
 
 Planned decomposition after the design is approved:
 

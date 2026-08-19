@@ -40,13 +40,13 @@ The existing VM harness cannot validate actual Lit update behavior. This epic th
 ## Exit criteria
 
 - [ ] All required child issues are completed.
-- [ ] The stale external-entity scenario is covered by a real Lit and DOM test.
+- [x] The stale external-entity scenario is covered by a real Lit and DOM test.
 - [ ] The default status and action UI follows the modern Home Assistant vacuum contract.
-- [ ] Every displayed external entity is a tracked reactive dependency.
+- [x] Every displayed external entity is a tracked reactive dependency.
 - [x] Renamed same-device battery entities work without manual YAML.
-- [ ] Legacy YAML and documented fallbacks remain covered by tests.
-- [ ] Contract, component, pinned HA smoke, HACS, and CodeQL checks pass.
-- [ ] README and changelog reflect user-visible behavior.
+- [x] Legacy YAML and documented fallbacks remain covered by tests.
+- [x] Contract, component, pinned HA smoke, HACS, and CodeQL checks pass.
+- [x] README and changelog reflect user-visible behavior.
 
 ## Upstream and Home Assistant references
 

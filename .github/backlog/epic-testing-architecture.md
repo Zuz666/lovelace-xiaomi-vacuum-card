@@ -39,14 +39,14 @@ The detailed review and target architecture are documented in the [maintainer te
 
 ## Exit criteria
 
-- [ ] The stale external-entity scenario is covered by a real Lit and DOM regression test.
-- [ ] Fast tests and component tests have clearly separated responsibilities.
-- [ ] The required HA smoke run uses an explicit supported baseline.
-- [ ] Moving HA channel failures are visible without making unrelated PR checks nondeterministic.
-- [ ] Failed browser and HA tests retain actionable artifacts.
+- [x] The stale external-entity scenario is covered by a real Lit and DOM regression test.
+- [x] Fast tests and component tests have clearly separated responsibilities.
+- [x] The required HA smoke run uses an explicit supported baseline.
+- [x] Moving HA channel failures are visible without making unrelated PR checks nondeterministic.
+- [x] Failed browser and HA tests retain actionable artifacts.
 - [ ] Sanitized entity fixtures are shared by at least two test layers.
-- [ ] Interaction-sensitive controls have real keyboard, focus, and availability assertions.
-- [ ] Contributor and maintainer documentation describes which test layer is required for each change type.
+- [x] Interaction-sensitive controls have real keyboard, focus, and availability assertions.
+- [x] Contributor and maintainer documentation describes which test layer is required for each change type.
 
 ## Release plan
 
