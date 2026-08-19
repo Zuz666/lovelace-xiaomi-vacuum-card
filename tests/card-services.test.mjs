@@ -317,3 +317,52 @@ test("unsubscribe failure logs cleanup error but does not block service call", a
   );
   assert.ok(errorLog);
 });
+
+test("callService rejects invalid service string without dot", async () => {
+  const { calls: harnessCalls, Card } = await loadCard();
+  const card = new Card();
+  const hass = createHass({
+    states: {
+      "vacuum.xiaomi": {
+        attributes: {},
+        entity_id: "vacuum.xiaomi",
+        state: "docked",
+      },
+    },
+  });
+
+  card.setConfig({ entity: "vacuum.xiaomi" });
+  card.hass = hass;
+
+  await card.callService("invalid_service_without_dot", {});
+
+  assert.equal(hass.calls.services.length, 0);
+  const errorLog = harnessCalls.console.find((c) =>
+    c.args.some((a) => String(a).includes("Invalid service, expected 'domain.service'")),
+  );
+  assert.ok(errorLog);
+});
+
+test("hass setter guards malformed state object without attributes", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+  card.setConfig({ entity: "vacuum.xiaomi" });
+
+  // Set initial state with dropdown active
+  card._dropdown = { key: "fan_speed", committed: "Silent", open: true };
+
+  // Incoming state object lacks attributes entirely
+  const malformedHass = {
+    states: {
+      "vacuum.xiaomi": {
+        entity_id: "vacuum.xiaomi",
+        state: "docked",
+      },
+    },
+  };
+
+  // Must not throw TypeError reading attributes
+  assert.doesNotThrow(() => {
+    card.hass = malformedHass;
+  });
+});

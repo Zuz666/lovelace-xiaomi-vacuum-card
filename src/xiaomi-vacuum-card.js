@@ -1048,9 +1048,10 @@
           dropdown.open ? dropdown.active : dropdown.value,
           event.key,
         );
+        const shouldOpen = event.key === "ArrowDown" || event.key === "ArrowUp";
         this._dropdown = dropdown.open
           ? Object.assign({}, dropdown, { active: next })
-          : Object.assign({}, dropdown, { active: next, value: next });
+          : Object.assign({}, dropdown, { active: next, value: next, open: shouldOpen });
         return;
       }
 
@@ -1105,6 +1106,12 @@
       if (this._dropdownCloseFrame) {
         cancelAnimationFrame(this._dropdownCloseFrame);
         this._dropdownCloseFrame = null;
+      }
+      if (this._activeTemplateCleanups) {
+        for (const cleanup of this._activeTemplateCleanups) {
+          cleanup();
+        }
+        this._activeTemplateCleanups.clear();
       }
       super.disconnectedCallback();
     }
@@ -1408,6 +1415,7 @@
         if (
           this._dropdown &&
           nextStateObj &&
+          nextStateObj.attributes &&
           nextStateObj.attributes[this._dropdown.key] !== this._dropdown.committed
         ) {
           this._dropdown = null;
@@ -1439,8 +1447,18 @@
         let unsub = null;
         let settled = false;
         let pendingUnsub = false;
+        let timer = null;
+
+        if (!this._activeTemplateCleanups) {
+          this._activeTemplateCleanups = new Set();
+        }
 
         const cleanup = async () => {
+          if (timer) {
+            clearTimeout(timer);
+            timer = null;
+          }
+          this._activeTemplateCleanups.delete(cleanup);
           if (unsub) {
             try {
               await unsub();
@@ -1451,6 +1469,15 @@
             pendingUnsub = true;
           }
         };
+
+        this._activeTemplateCleanups.add(cleanup);
+
+        timer = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          reject(new Error("Template render timed out"));
+        }, 5000);
 
         const callback = (event) => {
           if (settled) return;
@@ -1491,6 +1518,7 @@
               (err) => {
                 if (!settled) {
                   settled = true;
+                  cleanup();
                   reject(err);
                 }
               },
@@ -1498,6 +1526,7 @@
           }
         } catch (err) {
           settled = true;
+          cleanup();
           reject(err);
         }
       });
@@ -1507,6 +1536,10 @@
       if (!this.stateObj || !service) return;
       if (this.stateObj.state === "unavailable" || this.stateObj.state === "unknown") return;
       const [domain, name] = service.split(".");
+      if (!domain || !name) {
+        console.error("[xiaomi-vacuum-card] Invalid service, expected 'domain.service':", service);
+        return;
+      }
       let resolvedData = data ?? { entity_id: this.stateObj.entity_id };
       if (typeof data === "string") {
         try {
@@ -1529,12 +1562,12 @@
     }
 
     fireEvent(type, options = {}) {
-      const event = new Event(type, {
+      const event = new CustomEvent(type, {
         bubbles: options.bubbles !== false,
         cancelable: options.cancelable !== false,
         composed: options.composed !== false,
+        detail: { entityId: this.stateObj && this.stateObj.entity_id },
       });
-      event.detail = { entityId: this.stateObj && this.stateObj.entity_id };
       this.dispatchEvent(event);
     }
 
@@ -2076,6 +2109,7 @@
                   class="service-data-mode-button"
                   size="s"
                   variant="brand"
+                  aria-pressed=${serviceDataMode === "static" ? "true" : "false"}
                   appearance=${serviceDataMode === "static" ? "accent" : "filled"}
                   @mousedown=${(ev) => ev.stopPropagation()}
                   @click=${(ev) => this.updateServiceDataMode(index, "static", ev)}
@@ -2085,12 +2119,12 @@
                   class="service-data-mode-button"
                   size="s"
                   variant="brand"
+                  aria-pressed=${serviceDataMode === "dynamic" ? "true" : "false"}
                   appearance=${serviceDataMode === "dynamic" ? "accent" : "filled"}
                   @mousedown=${(ev) => ev.stopPropagation()}
                   @click=${(ev) => this.updateServiceDataMode(index, "dynamic", ev)}
                   >Dynamic</ha-button
                 >
-              </div>
             </div>
             ${this.renderForm(dataSchema, dataModel, (ev) => this.updateRow("buttons", index, ev))}
           </ha-expansion-panel>
@@ -2263,8 +2297,12 @@
     }
   }
 
-  customElements.define("xiaomi-vacuum-card-editor", XiaomiVacuumCardEditor);
-  customElements.define("xiaomi-vacuum-card", XiaomiVacuumCard);
+  if (!customElements.get("xiaomi-vacuum-card-editor")) {
+    customElements.define("xiaomi-vacuum-card-editor", XiaomiVacuumCardEditor);
+  }
+  if (!customElements.get("xiaomi-vacuum-card")) {
+    customElements.define("xiaomi-vacuum-card", XiaomiVacuumCard);
+  }
 
   window.customCards = window.customCards || [];
   if (!window.customCards.some((c) => c.type === "xiaomi-vacuum-card")) {

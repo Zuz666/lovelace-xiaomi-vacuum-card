@@ -93,6 +93,7 @@ export async function loadCard() {
     cancelAnimationFrame(id) {
       animationFrames.delete(id);
     },
+    clearTimeout,
     console: consoleStub,
     customElements: registry,
     CustomEvent: FakeCustomEvent,
@@ -105,6 +106,7 @@ export async function loadCard() {
       calls.animationFrames.push({ id, callback });
       return id;
     },
+    setTimeout,
     window: {
       customCards: [],
       LitElement: FakeLitElement,
