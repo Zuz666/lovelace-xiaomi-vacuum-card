@@ -23,7 +23,7 @@ This is a targeted upgrade, not a test-stack rewrite. The component layer and im
 
 The current suite directly tests the shipped browser resource rather than a parallel implementation. That is an important property and must be preserved when the source tree is later modularized.
 
-The current required Home Assistant job uses the moving `ghcr.io/home-assistant/home-assistant:stable` tag. It is a real integration check, but it is not yet the reproducible pinned baseline described in the target architecture.
+The required Home Assistant smoke job uses an immutable `ghcr.io/home-assistant/home-assistant@sha256:<digest>` image reference, while moving channels run in a separate canary workflow.
 
 ## What works well
 
@@ -49,17 +49,17 @@ The repository currently avoids a large unit-test framework. The Node test runne
 
 ## Findings and risks
 
-| Severity | Finding                                                                                                                                             | Consequence                                                                                                                              |
-| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Critical | The VM harness uses a fake `LitElement`; `requestUpdate()` is a no-op and no real reactive property or update cycle runs                            | Stale UI and `shouldUpdate()` defects can pass all fast tests                                                                            |
-| High     | The harness has no Shadow DOM, rendered DOM, focus management, event propagation, accessibility tree, or real keyboard behavior                     | Interaction and accessibility regressions are only weakly represented by direct method calls                                             |
-| High     | Several tests inspect the internal `{ strings, values }` representation returned by the fake `html` tag                                             | Tests can be coupled to implementation structure while missing user-visible DOM behavior                                                 |
-| High     | The required smoke job uses the mutable `home-assistant:stable` container tag                                                                       | A new Home Assistant release can change the required PR check without a repository change                                                |
-| High     | The HA smoke suite has one primary scenario and one demo vacuum shape                                                                               | External entity reactivity, feature flags, unavailable states, selects, editor round trips, and vendor entity models are not represented |
-| Medium   | Playwright traces are retained locally on failure, but CI does not upload traces, screenshots, the HTML report, or Home Assistant logs as artifacts | A failed smoke run is harder to diagnose after the runner is destroyed                                                                   |
-| Medium   | Entity states and integration shapes are embedded independently in tests                                                                            | Fixtures cannot be reused across contract, component, and HA scenarios, and compatibility claims can drift                               |
-| Medium   | No real-browser accessibility assertions cover the ARIA combobox and future controls                                                                | Roles, focus, keyboard navigation, labels, and disabled behavior may regress silently                                                    |
-| Low      | There is no coverage baseline                                                                                                                       | Untested branches are less visible, although a numeric coverage target alone would not address the critical lifecycle gap                |
+| Severity | Finding                                                                                                                         | Consequence                                                                                                                              |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Critical | The VM harness uses a fake `LitElement`; `requestUpdate()` is a no-op and no real reactive property or update cycle runs        | Stale UI and `shouldUpdate()` defects can pass all fast tests                                                                            |
+| High     | The harness has no Shadow DOM, rendered DOM, focus management, event propagation, accessibility tree, or real keyboard behavior | Interaction and accessibility regressions are only weakly represented by direct method calls                                             |
+| High     | Several tests inspect the internal `{ strings, values }` representation returned by the fake `html` tag                         | Tests can be coupled to implementation structure while missing user-visible DOM behavior                                                 |
+| High     | The required smoke job used the mutable `home-assistant:stable` container tag (resolved in #35)                                 | A new Home Assistant release could change the required PR check without a repository change                                              |
+| High     | The HA smoke suite has one primary scenario and one demo vacuum shape                                                           | External entity reactivity, feature flags, unavailable states, selects, editor round trips, and vendor entity models are not represented |
+| Medium   | CI previously did not upload Playwright traces, screenshots, or logs on failure (resolved in #35)                               | A failed smoke run was harder to diagnose after the runner was destroyed                                                                 |
+| Medium   | Entity states and integration shapes are embedded independently in tests                                                        | Fixtures cannot be reused across contract, component, and HA scenarios, and compatibility claims can drift                               |
+| Medium   | No real-browser accessibility assertions cover the ARIA combobox and future controls                                            | Roles, focus, keyboard navigation, labels, and disabled behavior may regress silently                                                    |
+| Low      | There is no coverage baseline                                                                                                   | Untested branches are less visible, although a numeric coverage target alone would not address the critical lifecycle gap                |
 
 ## Target test architecture
 
@@ -109,9 +109,21 @@ This layer should cover behavior such as:
 
 ### Layer 3: immutable Home Assistant smoke baseline
 
-Keep a required Chromium smoke test against an immutable Home Assistant container digest such as `ghcr.io/home-assistant/home-assistant@sha256:<digest>`. A human-readable Home Assistant release is recorded alongside the digest, but a tag alone is not the runtime identity.
+Keep a required Chromium smoke test against an immutable Home Assistant container digest:
 
-It should continue to verify:
+```text
+ghcr.io/home-assistant/home-assistant@sha256:<64-lowercase-hex-characters>
+```
+
+#### Baseline reference and resolution evidence
+
+- **Runtime image**: `ghcr.io/home-assistant/home-assistant@sha256:59aa8824955c9db491b75d2eebe42bd68494f80c2ec69ec0d66d9dae37d37514`
+- **Baseline release**: Home Assistant `2026.6.1`
+- **Resolution evidence**:
+  - Image tag: `ghcr.io/home-assistant/home-assistant:2026.6.1`
+  - RepoDigest: `ghcr.io/home-assistant/home-assistant@sha256:59aa8824955c9db491b75d2eebe42bd68494f80c2ec69ec0d66d9dae37d37514`
+  - Resolved from OCI image manifest on 2026-06-06 (Linux/amd64 multi-architecture index)
+    It continues to verify:
 
 - loading the HACS-style distributed resource;
 - registration and rendering inside Home Assistant;
@@ -120,7 +132,63 @@ It should continue to verify:
 - at least one real state update and one service or action dispatch;
 - absence of fatal browser errors.
 
-Repository validation must reject tag-only references for the required smoke job. The required digest should be updated intentionally through a reviewed pull request that records how the digest was resolved.
+Repository validation rejects tag-only and mutable references for the required smoke job.
+
+#### Baseline digest update procedure
+
+To update the pinned Home Assistant baseline digest intentionally:
+
+1. Identify the target release and pull its image:
+
+   ```bash
+   docker pull ghcr.io/home-assistant/home-assistant:2026.X.Y
+   ```
+
+2. Resolve the immutable repository digest:
+
+   ```bash
+   docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/home-assistant/home-assistant:2026.X.Y
+   ```
+
+3. Prepare the Home Assistant configuration and verify locally that the smoke test passes against the resolved digest:
+
+   ```bash
+   set -e
+   cleanup() {
+     docker rm -f ha-smoke-verify >/dev/null 2>&1 || true
+   }
+   trap cleanup EXIT
+
+   mkdir -p .ha-smoke/www/community/lovelace-xiaomi-vacuum-card
+   cp tests/ha-smoke/home-assistant/*.yaml .ha-smoke/
+   cp dist/xiaomi-vacuum-card.js .ha-smoke/www/community/lovelace-xiaomi-vacuum-card/xiaomi-vacuum-card.js
+   docker run --detach --name ha-smoke-verify --publish 8123:8123 --volume "$(pwd)/.ha-smoke:/config" ghcr.io/home-assistant/home-assistant@sha256:<digest>
+   ready=false
+   for attempt in $(seq 1 90); do
+     if curl --connect-timeout 2 --max-time 5 -fsS http://127.0.0.1:8123/manifest.json >/dev/null; then
+       ready=true
+       break
+     fi
+     sleep 2
+   done
+   [ "$ready" = true ] || { docker logs ha-smoke-verify; exit 1; }
+   npm run test:ha-smoke
+   ```
+
+4. Update the synchronized baseline constants and documentation across the repository:
+   - `HA_IMAGE` and `HA_BASELINE_RELEASE` in `.github/workflows/ci.yml`
+   - `EXPECTED_BASELINE_DIGEST` and `EXPECTED_BASELINE_RELEASE` in `tests/ha-smoke-governance.test.mjs`
+   - Runtime image, release, and resolution evidence in `docs/maintainers/testing-strategy.md`
+   - Example command and baseline note in `TESTING.md`
+5. Run `npm test` to verify that `tests/ha-smoke-governance.test.mjs` accepts the new digest and release.
+6. Submit a pull request recording the release notes, resolved digest, and smoke verification output.
+
+#### Readiness verification design
+
+Both workflow-level and test-level readiness checks are deliberately retained for complementary diagnostic purposes:
+
+- **Workflow readiness check (`Wait for Home Assistant` in `ci.yml`)**: polls `/manifest.json` via curl before launching Playwright. If Home Assistant fails to boot within the deadline, it outputs container logs immediately and fails the step, isolating startup failures from test logic.
+- **Test readiness check (`waitForHomeAssistant` in `xiaomi-vacuum-card.spec.mjs`)**: validates HTTP connectivity and readiness from the Playwright request context directly before initiating the onboarding flow, ensuring the test client is synchronized.
 
 ### Layer 4: compatibility canaries
 
@@ -175,7 +243,12 @@ For each resource, editor, registry, service, WebSocket, or integration-boundary
 - a change in the resolved image between otherwise identical runs must be treated as baseline drift and investigated;
 - the pull request must not claim that a reproducible pinned baseline was used.
 
-After the immutable baseline issue is complete, the required job must use `@sha256:` and tag-only references are rejected. Moving channels then run only as non-blocking canaries.
+After the immutable baseline issue is complete, the required job in `ci.yml` enforces the immutable digest baseline:
+
+- every pull request must pass against the pinned `ghcr.io/home-assistant/home-assistant@sha256:...` reference;
+- mutable channel tags (`:stable`, `:beta`, `:dev`) and unpinned release tags are prohibited for the required check and rejected by repository tests;
+- moving channels run independently as scheduled or manually dispatched canaries in `.github/workflows/ha-canary.yml`;
+- on failure, Playwright traces, screenshots, HTML report, and Home Assistant container logs are uploaded as workflow artifacts.
 
 ## Required sequence before major development
 

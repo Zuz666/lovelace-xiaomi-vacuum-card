@@ -33,8 +33,8 @@ The detailed review and target architecture are documented in the [maintainer te
 
 ## Child issues
 
-- [ ] {{issue:p0-real-lit-component-tests}} — add real Lit browser component tests for lifecycle and interactions
-- [ ] {{issue:p1-reproducible-ha-smoke}} — make Home Assistant smoke tests reproducible and diagnostic
+- [x] {{issue:p0-real-lit-component-tests}} — add real Lit browser component tests for lifecycle and interactions
+- [x] {{issue:p1-reproducible-ha-smoke}} — make Home Assistant smoke tests reproducible and diagnostic
 - [ ] {{issue:p1-entity-fixture-matrix}} — introduce reusable entity fixtures and a scenario matrix
 
 ## Exit criteria
