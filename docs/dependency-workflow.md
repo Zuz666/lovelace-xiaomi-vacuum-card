@@ -16,12 +16,14 @@ Because runtime card code is unbundled and free of npm runtime dependencies, dep
 
 ### 1. Developer Tooling (`package.json`)
 
-| Package                           | Purpose                                              |
-| --------------------------------- | ---------------------------------------------------- |
-| `eslint`, `@eslint/js`, `globals` | JavaScript linting and syntax consistency            |
-| `prettier`                        | Code formatting for JS, JSON, YAML, and Markdown     |
-| `markdownlint-cli2`               | Markdown linting across docs and specs               |
-| `@playwright/test`                | Browser end-to-end smoke testing with Home Assistant |
+| Package                           | Purpose                                                            |
+| --------------------------------- | ------------------------------------------------------------------ |
+| `esbuild`                         | Fast JavaScript bundler compiling `src/` into release bundle       |
+| `eslint`, `@eslint/js`, `globals` | JavaScript linting and syntax consistency                          |
+| `prettier`                        | Code formatting for JS, JSON, YAML, and Markdown                   |
+| `markdownlint-cli2`               | Markdown linting across docs and specs                             |
+| `@playwright/test`                | Browser component and end-to-end smoke testing with Home Assistant |
+| `lit`                             | Type references and Lit component testing library                  |
 
 ### 2. Transitive Lockfile Dependencies (`package-lock.json`)
 

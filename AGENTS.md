@@ -3,17 +3,18 @@
 ## Repository Shape
 
 - This repository is a maintained Home Assistant Lovelace custom card (HACS plugin) forked from benct.
-- The shipped canonical implementation is the single file `dist/xiaomi-vacuum-card.js`. There is no bundler or build pipeline.
+- Authors edit source files in `src/`. The bundled release artifact is compiled to `dist/xiaomi-vacuum-card.js` via `npm run build` (using `esbuild`).
 - `hacs.json` declares `"filename": "xiaomi-vacuum-card.js"`, meaning release assets are tied to this distributed filename.
 - Development requires Node.js 22.
 
 ## Development Commands
 
 - Install dependencies: `npm ci`
-- Run all checks: `npm run check` (runs syntax, version, lint, format, and Node tests).
-- Run syntax check: `npm run check:syntax` (`node --check dist/xiaomi-vacuum-card.js`).
-- Run version check: `npm run check:version` (`node tests/check-version.mjs`, validates `package.json`, `dist/xiaomi-vacuum-card.js`, and `CHANGELOG.md`).
-- Run linters: `npm run lint` (runs `eslint .` and `markdownlint-cli2 "**/*.md"`).
+- Build bundle: `npm run build` (compiles `src/` into `dist/xiaomi-vacuum-card.js`).
+- Run all checks: `npm run check` (runs build check, syntax, version, lint, format, and Node tests).
+- Run build check: `npm run check:build` (`npm run build && git diff --exit-code dist/`).
+- Run syntax check: `npm run check:syntax` (`node --check src/xiaomi-vacuum-card.js && node --check dist/xiaomi-vacuum-card.js`).
+- Run version check: `npm run check:version` (`node tests/check-version.mjs`, validates `package.json`, `src/`, `dist/`, and `CHANGELOG.md`).
 - Run JavaScript linter: `npm run lint:js` (`eslint .`).
 - Run Markdown linter: `npm run lint:md` (`markdownlint-cli2 "**/*.md"`).
 - Check formatting: `npm run format:check` (`prettier --check .`).

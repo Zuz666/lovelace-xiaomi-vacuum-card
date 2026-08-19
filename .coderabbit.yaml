@@ -14,17 +14,15 @@ reviews:
     auto_incremental_review: true
   path_filters:
     - "**"
-    - "dist/**"
-    - "dist/xiaomi-vacuum-card.js"
     - "!node_modules/**"
     - "!.local/**"
     - "!.ha-smoke/**"
   path_instructions:
-    - path: "dist/xiaomi-vacuum-card.js"
+    - path: "src/**"
       instructions: |
         Review with high rigor:
         - Ensure compatibility with direct browser execution as an ES module in Home Assistant Lovelace.
-        - Reject assumptions about bundlers, build pipelines, transpilers, or Node.js runtime globals.
+        - Reject assumptions about Node.js runtime globals in card source.
         - Prevent DOM injection and XSS vulnerabilities; verify proper HTML/attribute escaping and safe template handling.
         - Validate handling of untrusted entity states, attributes, user-supplied labels, and dynamic template output.
         - Enforce URL and media-source validation; reject unsafe protocols (e.g. javascript:) or unvalidated remote resources.
