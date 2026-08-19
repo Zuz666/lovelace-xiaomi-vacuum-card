@@ -2,7 +2,7 @@
 
 ## Context & Core References
 
-In modern Home Assistant Core ([StateVacuumEntity Documentation](https://developers.home-assistant.io/docs/core/entity/vacuum/)), modern vacuum integrations expose canonical activity in the entity state (`cleaning`, `docked`, `idle`, `paused`, `returning`, `error`, `on`, `off`) rather than in a vendor-specific `attributes.status`.
+In modern Home Assistant Core ([StateVacuumEntity Documentation](https://developers.home-assistant.io/docs/core/entity/vacuum/)), modern vacuum integrations expose canonical activity in the entity state (`cleaning`, `docked`, `idle`, `paused`, `returning`, `error`, with `on` and `off` supported as legacy compatibility states) rather than in a vendor-specific `attributes.status`.
 
 Furthermore, modern vacuum entities indicate their supported capabilities using the `VacuumEntityFeature` bitmask (`attributes.supported_features`):
 
@@ -24,7 +24,7 @@ The default `status` row (`id: 'status'`, `key: 'status'`, or `key: 'state'`) re
 
 1. **Explicit Entity**: `data.entity` if explicitly configured and present in `hass.states`.
 2. **Sensor Entity Prefix**: `${sensorEntity}_${data.key}` if present in `hass.states`.
-3. **Explicit Attribute Override**: `vacuumState.attributes[data.attribute]` or `vacuumState.attributes[data.key]` when explicitly configured (e.g. `attribute: 'status'` or `key: 'status'` with legacy attribute fallback).
+3. **Explicit Attribute Override**: `vacuumState.attributes[data.attribute]` when `attribute` is explicitly configured (e.g. `attribute: 'status'`). Note that `key: 'status'` alone resolves to canonical entity state rather than an attribute override.
 4. **Canonical Vacuum Entity State**: `vacuumState.state` (formatted/localized where available, e.g. "Cleaning", "Docked", "Paused", "Idle", "Returning", "Error").
 5. **Legacy Vacuum Attribute `status`**: `vacuumState.attributes.status` when `vacuumState.state` is not available.
 6. **Generic Vacuum Property**: `vacuumState[data.key]`.

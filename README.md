@@ -128,20 +128,21 @@ State and attribute sections are maps of row configurations displayed in a two-c
 
 Both sections share the same configuration fields and allow binding rows to any arbitrary external Home Assistant sensor or entity via `entity:`. The YAML map key represents the row ID.
 
-| Field    | Type      | Default        | Description                                                                                         |
-| :------- | :-------- | :------------- | :-------------------------------------------------------------------------------------------------- |
-| `show`   | `boolean` | `true`         | Set to `false` to hide this individual row.                                                         |
-| `key`    | `string`  | Row ID         | Vacuum entity attribute key to read value from (for example `status`, `fan_speed`).                 |
-| `entity` | `string`  | `undefined`    | Optional external Home Assistant entity ID to read value from (can be any sensor in your instance). |
-| `icon`   | `string`  | Preset default | Material Design icon to display for this row (for example `mdi:fan`).                               |
-| `label`  | `string`  | Preset default | Custom label prefix displayed before the value.                                                     |
-| `unit`   | `string`  | Preset default | Unit suffix displayed after the value (for example `" %"`, `" h"`, `" m²"`).                        |
+| Field       | Type      | Default        | Description                                                                                                                          |
+| :---------- | :-------- | :------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
+| `show`      | `boolean` | `true`         | Set to `false` to hide this individual row.                                                                                          |
+| `key`       | `string`  | Row ID         | Vacuum entity attribute key to read value from (for example `status`, `fan_speed`).                                                  |
+| `attribute` | `string`  | `undefined`    | Optional explicit vacuum entity attribute override (for example `attribute: status`), taking precedence over canonical state lookup. |
+| `entity`    | `string`  | `undefined`    | Optional external Home Assistant entity ID to read value from (can be any sensor in your instance).                                  |
+| `icon`      | `string`  | Preset default | Material Design icon to display for this row (for example `mdi:fan`).                                                                |
+| `label`     | `string`  | Preset default | Custom label prefix displayed before the value.                                                                                      |
+| `unit`      | `string`  | Preset default | Unit suffix displayed after the value (for example `" %"`, `" h"`, `" m²"`).                                                         |
 
 #### Status Resolution
 
 The default `status` row automatically displays the canonical activity state of modern Home Assistant `StateVacuumEntity` entities (`cleaning`, `docked`, `idle`, `paused`, `returning`, `error`) without requiring manual remapping.
 
-If a legacy vacuum integration provides a custom `attributes.status`, it remains accessible as a backward-compatible fallback when main state is unavailable, or via explicit configuration (`attribute: status`).
+For the default status row, `key: status` resolves to the canonical entity state (with `attributes.status` as a backward-compatible fallback if state is absent). To explicitly read an attribute rather than canonical state, configure `attribute` (for example `attribute: status`).
 
 #### Fan Speed Dropdown
 
@@ -176,26 +177,29 @@ Buttons represent the action controls displayed along the bottom of the card.
 
 Built-in buttons automatically adapt to your vacuum's supported capabilities (`VacuumEntityFeature` bitmasks) and live activity state:
 
-- **Automatic Presentation (`show: auto` or omitted `show`)**:
+- **Automatic Presentation (`show: auto` or omitted `show` for built-in buttons)**:
   - Unsupported capabilities (e.g. Spot Clean or Locate if not supported by the vacuum) are automatically **hidden** (absent from DOM and focus order).
   - Supported capabilities that are temporarily invalid in the current activity (e.g. Start while cleaning, Pause while docked, or any action while unavailable) are rendered with native **disabled** semantics (`ha-icon-button[disabled]`, `aria-disabled="true"`, non-interactive).
   - Supported and valid capabilities are rendered enabled and clickable.
+- **Custom Buttons**: Omitted `show` defaults to `true`. Custom buttons with unrecognized services remain unconditionally visible, while custom buttons targeting recognized vacuum services participate in capability filtering when configured with `show: "auto"`.
 - **Explicit Visibility (`show: true`)**: Forces the button visible even if the integration's feature flags are incomplete, while preserving runtime state and entity-availability safety guards.
 - **Explicit Hidden (`show: false`)**: Unconditionally hides the action button.
+
+Capability mapping follows the effective service (including valid remappings such as mapping Pause to `vacuum.stop`), and unrecognized services have no inferred feature requirements.
 
 Default buttons: `start` (Start / Resume), `pause` (Pause), `stop` (Stop), `spot` (Clean Spot), `locate` (Locate), `return` (Return to Base).
 
 For full details on feature bitmasks, blocked states, and pre-dispatch guards, see the [Vacuum Activity & Action Capabilities specification](docs/specs/vacuum-activity-and-action-capabilities.md).
 
-| Field                   | Type                  | Default        | Description                                                              |
-| :---------------------- | :-------------------- | :------------- | :----------------------------------------------------------------------- |
-| `show`                  | `boolean` \| `"auto"` | `"auto"`       | Whether the button is visible: `"auto"`, `true`, or `false`.             |
-| `icon`                  | `string`              | Preset default | Material Design icon for the button (for example `mdi:play`).            |
-| `label`                 | `string`              | Preset default | Accessible label and tooltip text displayed on hover.                    |
-| `service`               | `string`              | Preset default | Home Assistant service called when clicked (for example `vacuum.start`). |
-| `service_data_mode`     | `string`              | `static`       | Service payload mode: `static` or `dynamic`.                             |
-| `service_data`          | `object`              | `{}`           | Static payload object passed directly to the service call.               |
-| `service_data_template` | `string`              | `""`           | Jinja template evaluated dynamically on click.                           |
+| Field                   | Type                  | Default                               | Description                                                                                                                                  |
+| :---------------------- | :-------------------- | :------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------- |
+| `show`                  | `boolean` \| `"auto"` | `"auto"` (built-in) / `true` (custom) | Whether the button is visible: `"auto"`, `true`, or `false`. Built-in buttons default to automatic capability- and state-based presentation. |
+| `icon`                  | `string`              | Preset default                        | Material Design icon for the button (for example `mdi:play`).                                                                                |
+| `label`                 | `string`              | Preset default                        | Accessible label and tooltip text displayed on hover.                                                                                        |
+| `service`               | `string`              | Preset default                        | Home Assistant service called when clicked (for example `vacuum.start`). Effective service determines inferred capability flag.              |
+| `service_data_mode`     | `string`              | `static`                              | Service payload mode: `static` or `dynamic`.                                                                                                 |
+| `service_data`          | `object`              | `{}`                                  | Static payload object passed directly to the service call.                                                                                   |
+| `service_data_template` | `string`              | `""`                                  | Jinja template evaluated dynamically on click.                                                                                               |
 
 #### Dynamic Service Data Templates
 
