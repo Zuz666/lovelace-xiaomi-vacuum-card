@@ -14,27 +14,29 @@ On certain themes and background images, `opacity: 0.4` on solid glyphs (such as
 
 ## Scope
 
-1. Adjust the default disabled action button opacity from `0.4` to `0.55` in card styles.
-2. Add top-level `disabled_opacity` configuration support (number between `0.0` and `1.0`) setting `--xvc-disabled-opacity`.
-3. Add a slider control for `disabled_opacity` under the **Visibility** panel in the visual card editor (`XiaomiVacuumCardEditor`).
-4. Support explicit `show: true` on individual buttons to force 100% visibility while retaining runtime state guards.
-5. Document `disabled_opacity` in `README.md`.
+1. Adopt Material Design 3 disabled button opacity `0.38` on `ha-icon-button[disabled]` with SVG-level drop-shadows for high icon contrast across light and dark backgrounds.
+2. Implement non-linear bottom scrim gradient overlay (`scrim: auto | true | false`) protecting button contrast over background images.
+3. Provide three-way `buttons_mode` selector (`adaptive`, `compact`, `always_active`) with backward compatibility for `buttons_state_aware` / `state_aware_buttons`.
+4. Add `buttons_disabled_opacity` configuration support (number clamped between `0.0` and `1.0`) setting `--xvc-disabled-opacity`, with backward compatibility for `disabled_opacity`.
+5. Expose `scrim`, `buttons_mode`, and `buttons_disabled_opacity` under the **Visibility** panel in the visual card editor (`XiaomiVacuumCardEditor`).
+6. Document `buttons_mode`, `scrim`, `buttons_disabled_opacity`, and `disabled_opacity` in `README.md` and specifications.
 
 ## Non-goals
 
 - Altering the underlying state or capability evaluation matrix defined in #33.
-- Removing native disabled semantics (`?disabled`, `aria-disabled="true"`, `tabindex="-1"`).
+- Removing native disabled semantics (`disabled`, `aria-disabled="true"`, `tabindex="-1"`).
 
 ## Proposed behavior
 
-Disabled action buttons render with a default opacity of `0.55`, ensuring clear icon silhouettes across light and dark themes. Users can configure `disabled_opacity: <number>` in YAML (clamped to `0.0`–`1.0`) or adjust the slider in the visual editor's Visibility section to tune opacity to their preferred theme.
+Disabled action buttons render with a Material Design 3 default opacity of `0.38` with SVG glyph drop-shadows and an automatic bottom scrim gradient over background images, ensuring clear icon silhouettes across all background photos. Users can select between `adaptive` (disable invalid actions), `compact` (dynamically hide invalid actions), or `always_active` (legacy mode), and configure `buttons_disabled_opacity: <number>` in YAML or the visual editor.
 
 ## Acceptance criteria
 
-- [ ] Default disabled action button opacity is `0.55`.
-- [ ] `disabled_opacity` in card YAML config overrides the default opacity via `--xvc-disabled-opacity`.
-- [ ] Visual editor Visibility tab provides a slider for `disabled_opacity` (`min: 0, max: 1, step: 0.05`).
-- [ ] `README.md` documents `disabled_opacity`.
+- [ ] Default disabled action button opacity is `0.38` with SVG glyph drop-shadows and bottom scrim overlay.
+- [ ] `buttons_mode` selector supports `adaptive`, `compact`, and `always_active`.
+- [ ] `buttons_disabled_opacity` in card YAML config overrides default opacity via `--xvc-disabled-opacity`.
+- [ ] Visual editor Visibility tab provides controls for `scrim`, `buttons_mode`, and `buttons_disabled_opacity`.
+- [ ] `README.md` documents `buttons_mode`, `scrim`, and `buttons_disabled_opacity`.
 - [ ] Unit and browser component tests verify styling, configuration parsing, and editor round-trips.
 
 ## Test plan
@@ -52,7 +54,7 @@ Unit tests verify configuration parsing and clamping of `disabled_opacity`. Play
 ## Compatibility and migration
 
 - Minimum or targeted Home Assistant version: 2024.x+
-- Existing configuration impact: Fully backward-compatible; existing configurations get improved default contrast (0.55).
+- Existing configuration impact: Fully backward-compatible; existing configurations get improved default contrast (0.38).
 - Deprecations: None.
 - Breaking change: No
 
@@ -60,7 +62,7 @@ Unit tests verify configuration parsing and clamping of `disabled_opacity`. Play
 
 - Blocked by: None
 - Blocks: None
-- Related epic: #38 (`epic: layered testing architecture and quality gates`)
+- Related epic: {{issue:epic-entity-aware-rows}}
 
 ## Release impact
 

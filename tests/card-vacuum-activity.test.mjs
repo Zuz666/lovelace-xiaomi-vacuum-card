@@ -300,6 +300,159 @@ test("action presentation: custom buttons default to visible even with recognize
   assert.equal(customAutoSpotEval.visible, false);
 });
 
+test("action presentation: buttons_mode: compact hides state-blocked buttons from DOM", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+
+  const hass = createHass({
+    states: {
+      "vacuum.compact_test": {
+        attributes: {
+          supported_features:
+            VACUUM_FEATURES.START |
+            VACUUM_FEATURES.PAUSE |
+            VACUUM_FEATURES.STOP |
+            VACUUM_FEATURES.RETURN_HOME,
+        },
+        entity_id: "vacuum.compact_test",
+        state: "docked",
+      },
+    },
+  });
+
+  card.setConfig({
+    entity: "vacuum.compact_test",
+    buttons_mode: "compact",
+  });
+  card.hass = hass;
+
+  // When docked: start is visible and enabled; pause and stop are hidden (blocked)
+  const startEval = card.evaluateButton(card.config.buttons.start);
+  assert.equal(startEval.visible, true);
+  assert.equal(startEval.disabled, false);
+  assert.equal(startEval.callable, true);
+
+  const pauseEval = card.evaluateButton(card.config.buttons.pause);
+  assert.equal(pauseEval.visible, false);
+  assert.equal(pauseEval.disabled, true);
+  assert.equal(pauseEval.callable, false);
+
+  const stopEval = card.evaluateButton(card.config.buttons.stop);
+  assert.equal(stopEval.visible, false);
+  assert.equal(stopEval.disabled, true);
+  assert.equal(stopEval.callable, false);
+
+  // When state changes to cleaning: start is hidden; pause and stop become visible and enabled
+  hass.states["vacuum.compact_test"].state = "cleaning";
+  const startCleaning = card.evaluateButton(card.config.buttons.start);
+  assert.equal(startCleaning.visible, false);
+  assert.equal(startCleaning.disabled, true);
+
+  const pauseCleaning = card.evaluateButton(card.config.buttons.pause);
+  assert.equal(pauseCleaning.visible, true);
+  assert.equal(pauseCleaning.disabled, false);
+
+  const stopCleaning = card.evaluateButton(card.config.buttons.stop);
+  assert.equal(stopCleaning.visible, true);
+  assert.equal(stopCleaning.disabled, false);
+});
+
+test("action presentation: button-level show: true in compact mode obeys compact rules (hidden when blocked)", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+
+  const hass = createHass({
+    states: {
+      "vacuum.override_test": {
+        attributes: {
+          supported_features: VACUUM_FEATURES.START | VACUUM_FEATURES.PAUSE,
+        },
+        entity_id: "vacuum.override_test",
+        state: "docked",
+      },
+    },
+  });
+
+  card.setConfig({
+    entity: "vacuum.override_test",
+    buttons_mode: "compact",
+    buttons: {
+      pause: { show: true },
+    },
+  });
+  card.hass = hass;
+
+  // Pause button has show: true, but vacuum is docked and mode is compact -> hidden from DOM
+  const pauseEval = card.evaluateButton(card.config.buttons.pause);
+  assert.equal(pauseEval.visible, false);
+  assert.equal(pauseEval.disabled, true);
+  assert.equal(pauseEval.callable, false);
+});
+
+test("action presentation: buttons_mode: always_active (and legacy buttons_state_aware: false) renders all buttons enabled and callable", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+
+  const hass = createHass({
+    states: {
+      "vacuum.legacy_test": {
+        attributes: { supported_features: 0 },
+        entity_id: "vacuum.legacy_test",
+        state: "cleaning",
+      },
+    },
+  });
+
+  card.setConfig({
+    entity: "vacuum.legacy_test",
+    buttons_mode: "always_active",
+  });
+  card.hass = hass;
+
+  // In cleaning state with 0 features, all buttons are visible, enabled, and callable
+  const startEval = card.evaluateButton(card.config.buttons.start);
+  assert.equal(startEval.visible, true);
+  assert.equal(startEval.disabled, false);
+  assert.equal(startEval.callable, true);
+
+  const pauseEval = card.evaluateButton(card.config.buttons.pause);
+  assert.equal(pauseEval.visible, true);
+  assert.equal(pauseEval.disabled, false);
+  assert.equal(pauseEval.callable, true);
+
+  const stopEval = card.evaluateButton(card.config.buttons.stop);
+  assert.equal(stopEval.visible, true);
+  assert.equal(stopEval.disabled, false);
+  assert.equal(stopEval.callable, true);
+
+  await card.callActionButton(card.config.buttons.start);
+  assert.deepEqual(hass.calls.services, [
+    {
+      domain: "vacuum",
+      service: "start",
+      data: { entity_id: "vacuum.legacy_test" },
+    },
+  ]);
+
+  // When entity is unavailable, legacy mode still allows service dispatch
+  hass.states["vacuum.legacy_test"].state = "unavailable";
+  await card.callActionButton(card.config.buttons.start);
+  assert.deepEqual(hass.calls.services[hass.calls.services.length - 1], {
+    domain: "vacuum",
+    service: "start",
+    data: { entity_id: "vacuum.legacy_test" },
+  });
+
+  // When entity is unknown, legacy mode still allows service dispatch
+  hass.states["vacuum.legacy_test"].state = "unknown";
+  await card.callActionButton(card.config.buttons.pause);
+  assert.deepEqual(hass.calls.services[hass.calls.services.length - 1], {
+    domain: "vacuum",
+    service: "pause",
+    data: { entity_id: "vacuum.legacy_test" },
+  });
+});
+
 test("action presentation: user-supplied id or custom in button config cannot override computed keys", async () => {
   const { Card } = await loadCard();
   const card = new Card();

@@ -77,6 +77,13 @@
     "milestone": "entity-aware-rows-controls"
   },
   {
+    "key": "p1-editor-helper-descriptions",
+    "title": "feat: provide descriptive helper text across all visual editor sections",
+    "body_file": ".github/backlog/p1-editor-helper-descriptions.md",
+    "labels": ["priority:P1", "type:feature", "area:editor"],
+    "milestone": "entity-aware-rows-controls"
+  },
+  {
     "key": "epic-testing-architecture",
     "title": "epic: layered testing architecture and quality gates",
     "body_file": ".github/backlog/epic-testing-architecture.md",

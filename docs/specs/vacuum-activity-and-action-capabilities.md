@@ -48,20 +48,33 @@ Automatic capability inference derives the required feature flag directly from t
 - Deprecated toggle services (`vacuum.turn_on`, `vacuum.turn_off`) do not map to modern automatic features and are never auto-inferred from `TURN_ON` (1) or `TURN_OFF` (2).
 - Custom services without a recognized mapping do not infer undocumented feature requirements.
 
-### 3. Presentation Modes
+### 3. Presentation Modes (`buttons_mode`)
 
-Each action button evaluates visibility and interactive state based on its `show` configuration:
+The card provides three presentation modes for action buttons via `buttons_mode`:
 
-- **`show: false`**: The button is unconditionally hidden (absent from DOM and accessibility tree).
-- **`show: true`**: Explicit visibility. The button is forced visible (feature check is bypassed to support legacy integrations with incomplete feature flags), but runtime state and availability guards still apply.
-- **`show: 'auto'` or omitted `show`**: Automatic evaluation based on feature flags and current activity:
-  - **Unsupported feature**: The button is hidden (absent from DOM and focus order).
-  - **Supported feature but temporarily blocked by entity state**: The button is rendered in the DOM with disabled semantics (`?disabled`, `aria-disabled="true"`, not focusable, non-interactive).
-  - **Supported feature and valid state**: The button is rendered enabled and interactive.
-- **Legacy Toggle Services (`vacuum.turn_on`, `vacuum.turn_off`)**: Normalized to explicit visibility (`show: true`), preserving existing legacy vendor presets while enforcing runtime availability guards.
-- **Custom Buttons**: Default to visible (`show: true`) unless explicitly configured with `show: 'auto'` (for recognized services) or `show: false`.
+1. **`adaptive` (Default)**:
+   - Unsupported capabilities are hidden from DOM and focus order.
+   - Temporarily invalid capabilities (blocked by current activity state) are rendered disabled with `disabled`, `aria-disabled="true"`, `tabindex="-1"`, and opacity `0.38` (customizable via `buttons_disabled_opacity`).
+   - Valid capabilities are enabled and clickable.
+2. **`compact`**:
+   - Unsupported capabilities AND temporarily state-blocked capabilities are completely hidden from DOM.
+   - Only actionable buttons for the current activity are rendered.
+3. **`always_active` (Legacy Compatibility)**:
+   - Disables all capability filtering and state-based blocking. All configured buttons remain unconditionally visible, enabled at 100% opacity, and interactive (also activated by legacy `buttons_state_aware: false`).
 
-### 4. Per-Action State & Dispatch Guard Matrix
+### 4. Bottom Scrim Overlay & SVG Drop-Shadows
+
+To guarantee readability on complex or light background photos:
+
+- **Scrim Overlay (`scrim: auto | true | false`)**:
+  - `auto` (default): activates when a background image is present and buttons are visible.
+  - `true`: forces scrim overlay on even without a background image (rendering icons white for contrast).
+  - `false`: disables scrim overlay unconditionally.
+  - Uses a non-linear 4-stop ease-out gradient (`rgba(0, 0, 0, 0.85)` at 0% to `transparent` at 100%) to preserve central image art.
+- **SVG Drop-Shadows**:
+  - Applied directly to SVG glyphs via `filter: drop-shadow(0 1px 2px rgba(0,0,0,0.9)) drop-shadow(0 0 1px rgba(0,0,0,0.6))` to maintain icon silhouette contrast regardless of background luminance.
+
+### 5. Per-Action State & Dispatch Guard Matrix
 
 | Action         | Recognized Effective Service         | Temporarily Blocked States                                            | Presentation in `show: auto`                                                | Pre-Dispatch Guard                                       |
 | -------------- | ------------------------------------ | --------------------------------------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------- |
@@ -72,9 +85,7 @@ Each action button evaluates visibility and interactive state based on its `show
 | Locate         | `vacuum.locate`                      | `unavailable`, `unknown`                                              | Hidden if `LOCATE` absent; disabled in blocked states; else enabled         | Re-evaluate `LOCATE` capability, state, and availability |
 | Spot Clean     | `vacuum.clean_spot`                  | `unavailable`, `unknown`                                              | Hidden if `CLEAN_SPOT` absent; disabled in blocked states; else enabled     | Re-evaluate `CLEAN_SPOT`, state, and availability        |
 
-### 5. Independent Dispatch Guards
-
-Before any service call is dispatched:
+### 6. Independent Dispatch Guards
 
 1. Re-verify that `this.stateObj` exists and its state is not `unavailable` or `unknown`.
 2. For automatic actions, re-evaluate that `supported_features` still contains the required feature bit.

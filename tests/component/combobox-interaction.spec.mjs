@@ -176,4 +176,57 @@ test.describe("ARIA Combobox & Keyboard Interaction", () => {
     const calls = await getRecordedServiceCalls(page);
     expect(calls.filter((c) => c.service === "set_fan_speed")).toHaveLength(0);
   });
+
+  test("opens combobox and selects option on card with background image and scrim overlay", async ({
+    page,
+  }) => {
+    const vacuumState = createDefaultVacuumState({
+      entityId: "vacuum.scrim_combobox_vacuum",
+      fanSpeed: "Standard",
+      fanSpeedList: ["Silent", "Standard", "Turbo", "Max"],
+    });
+
+    const { cardLocator } = await mountCard(page, {
+      config: {
+        type: "custom:xiaomi-vacuum-card",
+        entity: "vacuum.scrim_combobox_vacuum",
+        image: "/local/vacuum_card_bg.png",
+        scrim: true,
+      },
+      hass: {
+        states: {
+          "vacuum.scrim_combobox_vacuum": vacuumState,
+        },
+      },
+    });
+
+    // Ensure scrim overlay exists
+    await expect(cardLocator.locator(".scrim")).toBeVisible();
+
+    const comboboxBtn = cardLocator.locator('button[role="combobox"]');
+    await comboboxBtn.click();
+
+    // Verify options listbox is visible and rendered with z-index above buttons
+    const listbox = cardLocator.locator('[role="listbox"]');
+    await expect(listbox).toBeVisible();
+
+    const maxOption = cardLocator.locator('[role="option"]').filter({ hasText: "Max" });
+    await expect(maxOption).toBeVisible();
+    await maxOption.click();
+
+    await expect(comboboxBtn).toHaveAttribute("aria-expanded", "false");
+    await expect(cardLocator.locator('[role="listbox"]')).toHaveCount(0);
+
+    const calls = await getRecordedServiceCalls(page);
+    expect(calls).toContainEqual(
+      expect.objectContaining({
+        domain: "vacuum",
+        service: "set_fan_speed",
+        data: {
+          entity_id: "vacuum.scrim_combobox_vacuum",
+          fan_speed: "Max",
+        },
+      }),
+    );
+  });
 });

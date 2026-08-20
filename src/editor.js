@@ -1,7 +1,20 @@
 import { LitElement, html } from "./lit.js";
-import { state, attributes, buttons, vendors } from "./constants.js";
+import {
+  state,
+  attributes,
+  buttons,
+  vendors,
+  DEFAULT_BUTTONS_DISABLED_OPACITY,
+  DEFAULT_BUTTONS_MODE,
+  DEFAULT_SCRIM,
+} from "./constants.js";
 import { editorStyles } from "./styles.js";
-
+import {
+  parseOpacity,
+  resolveButtonsDisabledOpacity,
+  resolveScrim,
+  resolveButtonsMode,
+} from "./utils.js";
 export class XiaomiVacuumCardEditor extends LitElement {
   static get properties() {
     return {
@@ -50,23 +63,22 @@ export class XiaomiVacuumCardEditor extends LitElement {
   }
 
   configToEditorModel(config) {
+    const scrim = resolveScrim(config);
+    const buttonsMode = resolveButtonsMode(config);
+
+    const resolvedOpacity = resolveButtonsDisabledOpacity(config);
+    const disabledOpacity =
+      resolvedOpacity !== undefined ? resolvedOpacity : DEFAULT_BUTTONS_DISABLED_OPACITY;
     return {
       type: config.type,
       entity: config.entity,
       vendor: config.vendor,
       name: config.name === false ? "" : config.name,
       image: this.processData(config).image,
-      disabled_opacity: (() => {
-        if (
-          config.disabled_opacity === undefined ||
-          config.disabled_opacity === null ||
-          config.disabled_opacity === ""
-        ) {
-          return undefined;
-        }
-        const num = Number(config.disabled_opacity);
-        return Number.isFinite(num) ? Math.max(0, Math.min(1, num)) : undefined;
-      })(),
+      scrim,
+      buttons_mode: buttonsMode,
+      buttons_state_aware: buttonsMode !== "always_active",
+      buttons_disabled_opacity: disabledOpacity,
       show_name: config.name !== false,
       show_state: config.state !== false,
       show_attributes: config.attributes !== false,
@@ -80,6 +92,11 @@ export class XiaomiVacuumCardEditor extends LitElement {
         "vendor",
         "name",
         "image",
+        "scrim",
+        "buttons_mode",
+        "buttons_state_aware",
+        "state_aware_buttons",
+        "buttons_disabled_opacity",
         "disabled_opacity",
         "state",
         "attributes",
@@ -97,17 +114,20 @@ export class XiaomiVacuumCardEditor extends LitElement {
     const image = this.cleanImageConfig(model.image);
     if (image) config.image = image;
 
-    if (
-      model.disabled_opacity !== undefined &&
-      model.disabled_opacity !== null &&
-      model.disabled_opacity !== ""
-    ) {
-      const num = Number(model.disabled_opacity);
-      if (Number.isFinite(num)) {
-        config.disabled_opacity = Math.max(0, Math.min(1, num));
-      }
+    if (model.scrim === "true" || model.scrim === true) {
+      config.scrim = true;
+    } else if (model.scrim === "false" || model.scrim === false) {
+      config.scrim = false;
     }
 
+    if (model.buttons_mode && model.buttons_mode !== DEFAULT_BUTTONS_MODE) {
+      config.buttons_mode = model.buttons_mode;
+    }
+
+    const parsedOpacity = parseOpacity(model.buttons_disabled_opacity);
+    if (parsedOpacity !== undefined && parsedOpacity !== DEFAULT_BUTTONS_DISABLED_OPACITY) {
+      config.buttons_disabled_opacity = parsedOpacity;
+    }
     if (model.show_name === false) {
       config.name = false;
     } else if (model.name) {
@@ -318,6 +338,70 @@ export class XiaomiVacuumCardEditor extends LitElement {
   }
 
   renderVisibilitySection() {
+    const showButtons = this._model.show_buttons !== false;
+    const buttonsMode = this._model.buttons_mode || DEFAULT_BUTTONS_MODE;
+    const isAdaptiveMode = buttonsMode === "adaptive";
+
+    const schema = [
+      { name: "show_name", selector: { boolean: {} } },
+      { name: "show_state", selector: { boolean: {} } },
+      { name: "show_attributes", selector: { boolean: {} } },
+      { name: "show_buttons", selector: { boolean: {} } },
+      ...(showButtons
+        ? [
+            {
+              name: "scrim",
+              helper:
+                "Bottom gradient overlay for button contrast (auto: enabled with background image)",
+              selector: {
+                select: {
+                  mode: "dropdown",
+                  options: [
+                    { value: "auto", label: "auto (default)" },
+                    { value: "true", label: "true (always on)" },
+                    { value: "false", label: "false (always off)" },
+                  ],
+                },
+              },
+            },
+            {
+              name: "buttons_mode",
+              helper:
+                "Button behavior: adaptive (disable invalid), compact (hide invalid), or always_active (legacy)",
+              selector: {
+                select: {
+                  mode: "dropdown",
+                  options: [
+                    { value: "adaptive", label: "adaptive (disable invalid)" },
+                    { value: "compact", label: "compact (hide invalid)" },
+                    { value: "always_active", label: "always_active (legacy all active)" },
+                  ],
+                },
+              },
+            },
+          ]
+        : []),
+      ...(showButtons && isAdaptiveMode
+        ? [
+            {
+              name: "buttons_disabled_opacity",
+              helper: `Opacity for disabled buttons in adaptive mode (0.0 to 1.0, default: ${DEFAULT_BUTTONS_DISABLED_OPACITY})`,
+              selector: { number: { min: 0, max: 1, step: 0.05, mode: "slider" } },
+            },
+          ]
+        : []),
+    ];
+
+    const data = {
+      show_name: this._model.show_name,
+      show_state: this._model.show_state,
+      show_attributes: this._model.show_attributes,
+      show_buttons: this._model.show_buttons,
+      scrim: this._model.scrim || "auto",
+      buttons_mode: buttonsMode,
+      buttons_disabled_opacity: this._model.buttons_disabled_opacity,
+    };
+
     return html`
       <ha-expansion-panel
         outlined
@@ -326,27 +410,7 @@ export class XiaomiVacuumCardEditor extends LitElement {
       >
         <ha-icon slot="leading-icon" icon="mdi:eye-outline"></ha-icon>
         <h3 slot="header">Visibility</h3>
-        ${this.renderForm(
-          [
-            { name: "show_name", selector: { boolean: {} } },
-            { name: "show_state", selector: { boolean: {} } },
-            { name: "show_attributes", selector: { boolean: {} } },
-            { name: "show_buttons", selector: { boolean: {} } },
-            {
-              name: "disabled_opacity",
-              label: "Disabled buttons opacity",
-              selector: { number: { min: 0, max: 1, step: 0.05, mode: "slider" } },
-            },
-          ],
-          {
-            show_name: this._model.show_name,
-            show_state: this._model.show_state,
-            show_attributes: this._model.show_attributes,
-            show_buttons: this._model.show_buttons,
-            disabled_opacity: this._model.disabled_opacity,
-          },
-          (ev) => this.updateVisibility(ev),
-        )}
+        ${this.renderForm(schema, data, (ev) => this.updateVisibility(ev))}
       </ha-expansion-panel>
     `;
   }
@@ -531,6 +595,7 @@ export class XiaomiVacuumCardEditor extends LitElement {
         .data=${data}
         .schema=${schema}
         .computeLabel=${this.computeLabel}
+        .computeHelper=${this.computeHelper}
         @value-changed=${handler}
       ></ha-form>
     `;
@@ -538,6 +603,10 @@ export class XiaomiVacuumCardEditor extends LitElement {
 
   computeLabel(schema) {
     return "label" in schema ? schema.label : schema.name;
+  }
+
+  computeHelper(schema) {
+    return "helper" in schema ? schema.helper : undefined;
   }
 
   updateBasic(ev) {
