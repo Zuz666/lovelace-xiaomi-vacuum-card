@@ -11,11 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Top-level `disabled_opacity` configuration option (slider in Visual Editor Visibility panel, YAML support from `0.0` to `1.0`) controlling disabled action button opacity via `--xvc-disabled-opacity` ([#61](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/issues/61)).
+- Three-way action button presentation modes via `buttons_mode` (`adaptive`, `compact`, `always_active`) with full backward compatibility for `buttons_state_aware` ([#65](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/pull/65), [#66](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/pull/66)).
+- Bottom scrim overlay (`scrim: auto | true | false`) with non-linear 4-stop ease-out gradient preserving image art and protecting button contrast ([#65](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/pull/65), [#66](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/pull/66)).
+- SVG glyph-level drop-shadows on action icons when rendered over background images or scrim overlays ([#65](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/pull/65), [#66](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/pull/66)).
+- Custom `buttons_disabled_opacity` setting (`0.0` to `1.0`) with slider and helper descriptions in Visual Editor, defaulting to Material Design 3 disabled opacity `0.38` ([#61](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/issues/61), [#62](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/pull/62), [#64](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/pull/64), [#65](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/pull/65), [#66](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/pull/66)).
+- Comprehensive test suite expansion with 106 Node unit tests and 37 Playwright browser component tests covering all presentation modes, scrim overlay, combobox stacking, and editor lifecycle ([#65](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/pull/65), [#66](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/pull/66)).
 
-### Changed
+### Fixed
 
-- Increased default disabled action button opacity from `0.40` to `0.55`, preserving clear icon contrast and silhouette on light and dark themes for state-blocked buttons ([#61](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/issues/61)).
+- Prevented fan-speed combobox dropdown clipping and stacking underneath action buttons by adjusting grid z-index layering (`z-index: 4` on `.grid`, `z-index: 5` on `.xvc-options` over `z-index: 2` on `.flex`) ([#65](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/pull/65), [#66](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/pull/66)).
+- Enforced high-contrast white icon foreground when `scrim: true` is configured on cards without background images ([#65](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/pull/65), [#66](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/pull/66)).
+- Normalized disabled opacity fallback so invalid or infinite values fall back to valid legacy `disabled_opacity` before applying default `0.38` ([#64](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/pull/64), [#65](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/pull/65), [#66](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/pull/66)).
+- Automatically hid scrim, button mode, and disabled opacity selectors in Visual Editor when action buttons are toggled off ([#66](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/pull/66)).
 
 ## [4.6.3] - 2026-08-20
 
