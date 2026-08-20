@@ -344,6 +344,16 @@ test("action presentation: buttons_state_aware: false renders all buttons enable
       data: { entity_id: "vacuum.legacy_test" },
     },
   ]);
+
+  // When entity is unavailable, legacy mode still allows service dispatch
+  hass.states["vacuum.legacy_test"].state = "unavailable";
+  await card.callActionButton(card.config.buttons.start);
+  assert.equal(hass.calls.services.length, 2);
+
+  // When entity is unknown, legacy mode still allows service dispatch
+  hass.states["vacuum.legacy_test"].state = "unknown";
+  await card.callActionButton(card.config.buttons.pause);
+  assert.equal(hass.calls.services.length, 3);
 });
 
 test("action presentation: user-supplied id or custom in button config cannot override computed keys", async () => {

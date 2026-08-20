@@ -1198,9 +1198,18 @@ export class XiaomiVacuumCard extends LitElement {
     });
   }
 
-  async callService(service, data) {
+  async callService(
+    service,
+    data,
+    allowUnavailable = Boolean(this.config && this.config.buttons_state_aware === false),
+  ) {
     if (!this.stateObj || !service) return;
-    if (this.stateObj.state === "unavailable" || this.stateObj.state === "unknown") return;
+    if (
+      !allowUnavailable &&
+      (this.stateObj.state === "unavailable" || this.stateObj.state === "unknown")
+    ) {
+      return;
+    }
     const [domain, name] = service.split(".");
     if (!domain || !name) {
       console.error("[xiaomi-vacuum-card] Invalid service, expected 'domain.service':", service);
