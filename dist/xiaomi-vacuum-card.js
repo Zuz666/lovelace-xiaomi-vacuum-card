@@ -1940,7 +1940,7 @@ var XiaomiVacuumCardEditor = class extends LitElement {
 
 // src/xiaomi-vacuum-card.js
 console.info(
-  "%c XIAOMI-VACUUM-CARD-REBORN %c 4.6.3 ",
+  "%c XIAOMI-VACUUM-CARD-REBORN %c 4.6.4 ",
   "color: cyan; background: black; font-weight: bold;",
   "color: darkblue; background: white; font-weight: bold;"
 );
