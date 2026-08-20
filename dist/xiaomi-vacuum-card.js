@@ -248,6 +248,8 @@ var cardStyles = css`
     justify-content: space-evenly;
   }
   .flex ha-icon-button {
+    color: inherit;
+    --mdc-icon-button-color: inherit;
     filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.9));
   }
   .grid {
@@ -339,7 +341,9 @@ var cardStyles = css`
   }
   ha-icon-button[disabled] {
     opacity: var(--xvc-disabled-opacity, var(--disabled-opacity, 0.55));
-    filter: grayscale(100%) drop-shadow(0 0 3px rgba(0, 0, 0, 0.9));
+    color: inherit !important;
+    --mdc-icon-button-color: inherit !important;
+    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.9));
     cursor: not-allowed;
     pointer-events: none;
   }
