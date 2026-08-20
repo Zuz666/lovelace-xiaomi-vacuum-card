@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.6.4] - 2026-08-20
+
+### Added
+
+- Top-level `disabled_opacity` configuration option (slider in Visual Editor Visibility panel, YAML support from `0.0` to `1.0`) controlling disabled action button opacity via `--xvc-disabled-opacity` ([#61](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/issues/61)).
+
+### Changed
+
+- Increased default disabled action button opacity from `0.40` to `0.55`, preserving clear icon contrast and silhouette on light and dark themes for state-blocked buttons ([#61](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/issues/61)).
+
 ## [4.6.3] - 2026-08-20
 
 ### Added
@@ -276,7 +286,8 @@ See [README](https://github.com/benct/lovelace-xiaomi-vacuum-card) for more info
 
 - Initial release
 
-[Unreleased]: https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/compare/v4.6.3...HEAD
+[Unreleased]: https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/compare/v4.6.4...HEAD
+[4.6.4]: https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/compare/v4.6.3...v4.6.4
 [4.6.3]: https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/compare/v4.6.2...v4.6.3
 [4.6.2]: https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/compare/v4.6.1...v4.6.2
 [4.6.1]: https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/compare/v4.6.0...v4.6.1
