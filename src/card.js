@@ -9,7 +9,12 @@ import {
   DEFAULT_SCRIM,
 } from "./constants.js";
 import { cardStyles } from "./styles.js";
-import { sanitizeStyleUrl, resolveButtonsDisabledOpacity } from "./utils.js";
+import {
+  sanitizeStyleUrl,
+  resolveButtonsDisabledOpacity,
+  resolveScrim,
+  resolveButtonsMode,
+} from "./utils.js";
 export class XiaomiVacuumCard extends LitElement {
   static get properties() {
     return {
@@ -27,7 +32,7 @@ export class XiaomiVacuumCard extends LitElement {
   }
 
   hasImage() {
-    return Boolean(this.config && (this.config.image || this._resolvedImage));
+    return Boolean(this.config && this.getImageStyleUrl(this.config.image));
   }
 
   isScrimActive() {
@@ -983,26 +988,8 @@ export class XiaomiVacuumCard extends LitElement {
       });
     }
 
-    let scrim = DEFAULT_SCRIM;
-    if (config.scrim === true || config.scrim === "true") {
-      scrim = "true";
-    } else if (config.scrim === false || config.scrim === "false") {
-      scrim = "false";
-    } else if (config.scrim === "auto") {
-      scrim = DEFAULT_SCRIM;
-    }
-
-    let buttonsMode = DEFAULT_BUTTONS_MODE;
-    if (
-      config.buttons_mode === "adaptive" ||
-      config.buttons_mode === "compact" ||
-      config.buttons_mode === "always_active"
-    ) {
-      buttonsMode = config.buttons_mode;
-    } else if (config.buttons_state_aware === false || config.state_aware_buttons === false) {
-      buttonsMode = "always_active";
-    }
-
+    const scrim = resolveScrim(config);
+    const buttonsMode = resolveButtonsMode(config);
     const buttonsStateAware = buttonsMode !== "always_active";
     const buttonsDisabledOpacity = resolveButtonsDisabledOpacity(config);
 

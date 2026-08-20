@@ -100,6 +100,11 @@ test("scrim: defaults to auto and evaluates correctly with or without image", as
   // If buttons are hidden, scrim is not active
   card.setConfig({ entity: "vacuum.xiaomi", image: "/local/vacuum.png", buttons: false });
   assert.equal(card.isScrimActive(), false);
+
+  // Unsafe image URL does not activate auto scrim
+  card.setConfig({ entity: "vacuum.xiaomi", image: "javascript:alert(1)" });
+  assert.equal(card.hasImage(), false);
+  assert.equal(card.isScrimActive(), false);
 });
 
 test("scrim: true without image sets icon style to white for contrast", async () => {

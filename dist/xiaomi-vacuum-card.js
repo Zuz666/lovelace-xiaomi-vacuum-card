@@ -483,6 +483,22 @@ var resolveButtonsDisabledOpacity = (config) => {
   if (legacy !== void 0) return legacy;
   return void 0;
 };
+var resolveScrim = (config) => {
+  if (!config || typeof config !== "object") return DEFAULT_SCRIM;
+  if (config.scrim === true || config.scrim === "true") return "true";
+  if (config.scrim === false || config.scrim === "false") return "false";
+  return DEFAULT_SCRIM;
+};
+var resolveButtonsMode = (config) => {
+  if (!config || typeof config !== "object") return DEFAULT_BUTTONS_MODE;
+  if (config.buttons_mode === "adaptive" || config.buttons_mode === "compact" || config.buttons_mode === "always_active") {
+    return config.buttons_mode;
+  }
+  if (config.buttons_state_aware === false || config.state_aware_buttons === false) {
+    return "always_active";
+  }
+  return DEFAULT_BUTTONS_MODE;
+};
 
 // src/card.js
 var XiaomiVacuumCard = class extends LitElement {
@@ -500,7 +516,7 @@ var XiaomiVacuumCard = class extends LitElement {
     return cardStyles;
   }
   hasImage() {
-    return Boolean(this.config && (this.config.image || this._resolvedImage));
+    return Boolean(this.config && this.getImageStyleUrl(this.config.image));
   }
   isScrimActive() {
     if (!this.config || !this.config.show || this.config.show.buttons === false) return false;
@@ -1213,20 +1229,8 @@ var XiaomiVacuumCard = class extends LitElement {
         }
       });
     }
-    let scrim = DEFAULT_SCRIM;
-    if (config.scrim === true || config.scrim === "true") {
-      scrim = "true";
-    } else if (config.scrim === false || config.scrim === "false") {
-      scrim = "false";
-    } else if (config.scrim === "auto") {
-      scrim = DEFAULT_SCRIM;
-    }
-    let buttonsMode = DEFAULT_BUTTONS_MODE;
-    if (config.buttons_mode === "adaptive" || config.buttons_mode === "compact" || config.buttons_mode === "always_active") {
-      buttonsMode = config.buttons_mode;
-    } else if (config.buttons_state_aware === false || config.state_aware_buttons === false) {
-      buttonsMode = "always_active";
-    }
+    const scrim = resolveScrim(config);
+    const buttonsMode = resolveButtonsMode(config);
     const buttonsStateAware = buttonsMode !== "always_active";
     const buttonsDisabledOpacity = resolveButtonsDisabledOpacity(config);
     this.config = {
@@ -1534,20 +1538,8 @@ var XiaomiVacuumCardEditor = class extends LitElement {
     return data;
   }
   configToEditorModel(config) {
-    let scrim = DEFAULT_SCRIM;
-    if (config.scrim === true || config.scrim === "true") {
-      scrim = "true";
-    } else if (config.scrim === false || config.scrim === "false") {
-      scrim = "false";
-    } else if (config.scrim === "auto") {
-      scrim = DEFAULT_SCRIM;
-    }
-    let buttonsMode = DEFAULT_BUTTONS_MODE;
-    if (config.buttons_mode === "adaptive" || config.buttons_mode === "compact" || config.buttons_mode === "always_active") {
-      buttonsMode = config.buttons_mode;
-    } else if (config.buttons_state_aware === false || config.state_aware_buttons === false) {
-      buttonsMode = "always_active";
-    }
+    const scrim = resolveScrim(config);
+    const buttonsMode = resolveButtonsMode(config);
     const resolvedOpacity = resolveButtonsDisabledOpacity(config);
     const disabledOpacity = resolvedOpacity !== void 0 ? resolvedOpacity : DEFAULT_BUTTONS_DISABLED_OPACITY;
     return {

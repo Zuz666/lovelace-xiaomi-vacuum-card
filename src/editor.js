@@ -9,7 +9,12 @@ import {
   DEFAULT_SCRIM,
 } from "./constants.js";
 import { editorStyles } from "./styles.js";
-import { parseOpacity, resolveButtonsDisabledOpacity } from "./utils.js";
+import {
+  parseOpacity,
+  resolveButtonsDisabledOpacity,
+  resolveScrim,
+  resolveButtonsMode,
+} from "./utils.js";
 export class XiaomiVacuumCardEditor extends LitElement {
   static get properties() {
     return {
@@ -58,25 +63,8 @@ export class XiaomiVacuumCardEditor extends LitElement {
   }
 
   configToEditorModel(config) {
-    let scrim = DEFAULT_SCRIM;
-    if (config.scrim === true || config.scrim === "true") {
-      scrim = "true";
-    } else if (config.scrim === false || config.scrim === "false") {
-      scrim = "false";
-    } else if (config.scrim === "auto") {
-      scrim = DEFAULT_SCRIM;
-    }
-
-    let buttonsMode = DEFAULT_BUTTONS_MODE;
-    if (
-      config.buttons_mode === "adaptive" ||
-      config.buttons_mode === "compact" ||
-      config.buttons_mode === "always_active"
-    ) {
-      buttonsMode = config.buttons_mode;
-    } else if (config.buttons_state_aware === false || config.state_aware_buttons === false) {
-      buttonsMode = "always_active";
-    }
+    const scrim = resolveScrim(config);
+    const buttonsMode = resolveButtonsMode(config);
 
     const resolvedOpacity = resolveButtonsDisabledOpacity(config);
     const disabledOpacity =

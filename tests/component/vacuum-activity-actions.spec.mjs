@@ -459,11 +459,23 @@ test.describe("Vacuum Activity and Action Capabilities", () => {
     await expect(stopBtn).not.toHaveAttribute("disabled", "");
 
     await startBtn.click();
+    await pauseBtn.click();
+    await stopBtn.click();
     const calls = await getRecordedServiceCalls(page);
     expect(calls).toEqual([
       expect.objectContaining({
         domain: "vacuum",
         service: "start",
+        data: { entity_id: "vacuum.legacy_mode_vacuum" },
+      }),
+      expect.objectContaining({
+        domain: "vacuum",
+        service: "pause",
+        data: { entity_id: "vacuum.legacy_mode_vacuum" },
+      }),
+      expect.objectContaining({
+        domain: "vacuum",
+        service: "stop",
         data: { entity_id: "vacuum.legacy_mode_vacuum" },
       }),
     ]);

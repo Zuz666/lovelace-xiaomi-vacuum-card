@@ -54,7 +54,7 @@ Unit tests verify configuration parsing and clamping of `disabled_opacity`. Play
 ## Compatibility and migration
 
 - Minimum or targeted Home Assistant version: 2024.x+
-- Existing configuration impact: Fully backward-compatible; existing configurations get improved default contrast (0.55).
+- Existing configuration impact: Fully backward-compatible; existing configurations get improved default contrast (0.38).
 - Deprecations: None.
 - Breaking change: No
 
@@ -62,7 +62,7 @@ Unit tests verify configuration parsing and clamping of `disabled_opacity`. Play
 
 - Blocked by: None
 - Blocks: None
-- Related epic: #38 (`epic: layered testing architecture and quality gates`)
+- Related epic: {{issue:epic-entity-aware-rows-controls}}
 
 ## Release impact
 

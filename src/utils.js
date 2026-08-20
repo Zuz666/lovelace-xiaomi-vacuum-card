@@ -1,3 +1,4 @@
+import { DEFAULT_BUTTONS_MODE, DEFAULT_SCRIM } from "./constants.js";
 export const sanitizeStyleUrl = (value) => {
   if (typeof value !== "string") return "";
   const trimmed = value.trim();
@@ -37,4 +38,26 @@ export const resolveButtonsDisabledOpacity = (config) => {
   const legacy = parseOpacity(config.disabled_opacity);
   if (legacy !== undefined) return legacy;
   return undefined;
+};
+
+export const resolveScrim = (config) => {
+  if (!config || typeof config !== "object") return DEFAULT_SCRIM;
+  if (config.scrim === true || config.scrim === "true") return "true";
+  if (config.scrim === false || config.scrim === "false") return "false";
+  return DEFAULT_SCRIM;
+};
+
+export const resolveButtonsMode = (config) => {
+  if (!config || typeof config !== "object") return DEFAULT_BUTTONS_MODE;
+  if (
+    config.buttons_mode === "adaptive" ||
+    config.buttons_mode === "compact" ||
+    config.buttons_mode === "always_active"
+  ) {
+    return config.buttons_mode;
+  }
+  if (config.buttons_state_aware === false || config.state_aware_buttons === false) {
+    return "always_active";
+  }
+  return DEFAULT_BUTTONS_MODE;
 };
