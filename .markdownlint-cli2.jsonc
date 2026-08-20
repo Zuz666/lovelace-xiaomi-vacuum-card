@@ -16,6 +16,6 @@
     ".ha-smoke/**",
     "tmp/**",
     "playwright-report/**",
-    "test-results/**"
+    "test-results/**",
   ],
 }
