@@ -306,15 +306,22 @@ export class XiaomiVacuumCardEditor extends LitElement {
             {
               name: "entity",
               required: true,
+              helper: "Vacuum entity (domain: vacuum) to display and control",
               selector: { entity: { filter: { domain: "vacuum" } } },
             },
-            { name: "name", selector: { text: {} } },
+            {
+              name: "name",
+              helper: "Custom card title (overrides vacuum entity friendly name)",
+              selector: { text: {} },
+            },
             {
               name: "vendor",
+              helper: "Vendor preset for default attributes, sensors, and action service mappings",
               selector: { select: { mode: "dropdown", options: Object.keys(vendors) } },
             },
             {
               name: "image",
+              helper: "Background image path (e.g. /local/vacuum.png) or media-source URI",
               selector: {
                 media: {
                   accept: ["image/*"],
@@ -343,10 +350,26 @@ export class XiaomiVacuumCardEditor extends LitElement {
     const isAdaptiveMode = buttonsMode === "adaptive";
 
     const schema = [
-      { name: "show_name", selector: { boolean: {} } },
-      { name: "show_state", selector: { boolean: {} } },
-      { name: "show_attributes", selector: { boolean: {} } },
-      { name: "show_buttons", selector: { boolean: {} } },
+      {
+        name: "show_name",
+        helper: "Show or hide the card header title",
+        selector: { boolean: {} },
+      },
+      {
+        name: "show_state",
+        helper: "Show or hide the left-hand state column (status, battery, mode)",
+        selector: { boolean: {} },
+      },
+      {
+        name: "show_attributes",
+        helper: "Show or hide the right-hand attribute column (brushes, filters, sensors)",
+        selector: { boolean: {} },
+      },
+      {
+        name: "show_buttons",
+        helper: "Show or hide the bottom action buttons row",
+        selector: { boolean: {} },
+      },
       ...(showButtons
         ? [
             {
@@ -502,17 +525,47 @@ export class XiaomiVacuumCardEditor extends LitElement {
       ? { entity: { filter: { domain: "sensor", device_class: "battery" } } }
       : { entity: {} };
     return [
-      ...(row.custom ? [{ name: "id", selector: { text: {} } }] : []),
-      { name: "show", selector: { boolean: {} } },
-      { name: "key", selector: { text: {} } },
-      { name: "entity", selector: entitySelector },
-      { name: "icon", selector: { icon: {} } },
+      ...(row.custom
+        ? [
+            {
+              name: "id",
+              helper: "Unique identifier for this custom row in YAML configuration",
+              selector: { text: {} },
+            },
+          ]
+        : []),
+      {
+        name: "show",
+        helper: "Show or hide this row in the card",
+        selector: { boolean: {} },
+      },
+      {
+        name: "key",
+        helper:
+          "Attribute or state property key (e.g. status, battery_level, fan_speed, filter_left)",
+        selector: { text: {} },
+      },
+      {
+        name: "entity",
+        helper: "Optional external sensor entity binding (overrides vacuum attributes)",
+        selector: entitySelector,
+      },
+      {
+        name: "icon",
+        helper: "Custom Material Design icon displayed beside this row value",
+        selector: { icon: {} },
+      },
       {
         name: "label",
         label: row.label_kind === "accessible" ? "Accessible label" : "Visible label",
+        helper: "Text label displayed beside or as accessible tooltip for this row",
         selector: { text: {} },
       },
-      { name: "unit", selector: { text: {} } },
+      {
+        name: "unit",
+        helper: "Unit suffix appended to the displayed numeric value (e.g. %, h, m²)",
+        selector: { text: {} },
+      },
     ];
   }
 
@@ -520,8 +573,22 @@ export class XiaomiVacuumCardEditor extends LitElement {
     const serviceDataMode = row.service_data_mode || "static";
     const dataSchema =
       serviceDataMode !== "dynamic"
-        ? [{ name: "service_data", label: "", selector: { object: {} } }]
-        : [{ name: "service_data_template", label: "", selector: { template: {} } }];
+        ? [
+            {
+              name: "service_data",
+              label: "",
+              helper: "Static JSON payload object passed directly to the service call",
+              selector: { object: {} },
+            },
+          ]
+        : [
+            {
+              name: "service_data_template",
+              label: "",
+              helper: "Jinja2 template evaluated on click producing a JSON payload object",
+              selector: { template: {} },
+            },
+          ];
     const dataModel =
       serviceDataMode !== "dynamic"
         ? { service_data: row.service_data }
@@ -580,11 +647,36 @@ export class XiaomiVacuumCardEditor extends LitElement {
 
   buttonRowSchema(row) {
     return [
-      ...(row.custom ? [{ name: "id", selector: { text: {} } }] : []),
-      { name: "show", selector: { boolean: {} } },
-      { name: "icon", selector: { icon: {} } },
-      { name: "label", label: "Tooltip", selector: { text: {} } },
-      { name: "service", selector: { text: {} } },
+      ...(row.custom
+        ? [
+            {
+              name: "id",
+              helper: "Unique identifier for this custom action button in YAML configuration",
+              selector: { text: {} },
+            },
+          ]
+        : []),
+      {
+        name: "show",
+        helper: "Show or hide this button (subject to active buttons_mode rules)",
+        selector: { boolean: {} },
+      },
+      {
+        name: "icon",
+        helper: "Material Design icon for the button (e.g. mdi:play, mdi:pause, mdi:home)",
+        selector: { icon: {} },
+      },
+      {
+        name: "label",
+        label: "Tooltip",
+        helper: "Accessible tooltip and aria-label announced by screen readers",
+        selector: { text: {} },
+      },
+      {
+        name: "service",
+        helper: "Home Assistant service called when clicked (e.g. vacuum.start, vacuum.pause)",
+        selector: { text: {} },
+      },
     ];
   }
 

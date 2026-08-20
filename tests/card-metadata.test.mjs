@@ -68,3 +68,33 @@ test("getGridOptions returns default grid options", async () => {
     min_rows: 2,
   });
 });
+
+test("editor computeHelper extracts helper text from schema", async () => {
+  const { Editor } = await loadCard();
+  const editor = new Editor();
+
+  assert.equal(
+    editor.computeHelper({ name: "entity", helper: "Vacuum entity helper" }),
+    "Vacuum entity helper",
+  );
+  assert.equal(editor.computeHelper({ name: "entity" }), undefined);
+});
+
+test("editor entityDataRowSchema and buttonRowSchema include helper descriptions on all fields", async () => {
+  const { Editor } = await loadCard();
+  const editor = new Editor();
+
+  const rowSchema = toHost(editor.entityDataRowSchema({ id: "status", custom: true }));
+  for (const field of rowSchema) {
+    assert.ok(field.helper, `Field '${field.name}' in entityDataRowSchema is missing helper text`);
+    assert.equal(typeof field.helper, "string");
+    assert.ok(field.helper.length > 5);
+  }
+
+  const btnSchema = toHost(editor.buttonRowSchema({ id: "custom_btn", custom: true }));
+  for (const field of btnSchema) {
+    assert.ok(field.helper, `Field '${field.name}' in buttonRowSchema is missing helper text`);
+    assert.equal(typeof field.helper, "string");
+    assert.ok(field.helper.length > 5);
+  }
+});

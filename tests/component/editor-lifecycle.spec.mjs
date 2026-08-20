@@ -257,4 +257,49 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
     expect(schemaFieldNames).not.toContain("buttons_mode");
     expect(schemaFieldNames).not.toContain("buttons_disabled_opacity");
   });
+
+  test("provides contextual helper descriptions across all form sections", async ({ page }) => {
+    const vacuumState = createDefaultVacuumState({ entityId: "vacuum.helpers_test" });
+    await mountEditor(page, {
+      config: {
+        type: "custom:xiaomi-vacuum-card",
+        entity: "vacuum.helpers_test",
+      },
+      hass: {
+        states: {
+          "vacuum.helpers_test": vacuumState,
+        },
+      },
+    });
+
+    const helpers = await page.evaluate(() => {
+      const editor = window.__activeEditor;
+      const basicHelpers = {
+        entity: editor.computeHelper({
+          name: "entity",
+          helper: "Vacuum entity (domain: vacuum) to display and control",
+        }),
+        name: editor.computeHelper({
+          name: "name",
+          helper: "Custom card title (overrides vacuum entity friendly name)",
+        }),
+      };
+      const rowSchema = editor.entityDataRowSchema({ id: "status" });
+      const rowHelpers = rowSchema.map((s) => ({ name: s.name, helper: editor.computeHelper(s) }));
+
+      const btnSchema = editor.buttonRowSchema({ id: "start" });
+      const btnHelpers = btnSchema.map((s) => ({ name: s.name, helper: editor.computeHelper(s) }));
+
+      return { basicHelpers, rowHelpers, btnHelpers };
+    });
+
+    expect(helpers.basicHelpers.entity).toContain("Vacuum entity");
+    expect(helpers.basicHelpers.name).toContain("Custom card title");
+    expect(
+      helpers.rowHelpers.every((h) => typeof h.helper === "string" && h.helper.length > 5),
+    ).toBe(true);
+    expect(
+      helpers.btnHelpers.every((h) => typeof h.helper === "string" && h.helper.length > 5),
+    ).toBe(true);
+  });
 });
