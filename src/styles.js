@@ -21,7 +21,13 @@ export const cardStyles = css`
   }
   .flex ha-icon-button {
     color: inherit;
+    --ha-icon-button-color: inherit;
     --mdc-icon-button-color: inherit;
+    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.9));
+  }
+  .flex ha-icon-button ha-icon {
+    color: inherit;
+    fill: currentColor;
     filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.9));
   }
   .grid {
@@ -114,10 +120,17 @@ export const cardStyles = css`
   ha-icon-button[disabled] {
     opacity: var(--xvc-disabled-opacity, var(--disabled-opacity, 0.55));
     color: inherit !important;
+    --ha-icon-button-disabled-color: inherit !important;
     --mdc-icon-button-color: inherit !important;
-    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.9));
+    --mdc-theme-text-disabled-on-light: inherit !important;
+    --mdc-theme-text-disabled-on-dark: inherit !important;
     cursor: not-allowed;
     pointer-events: none;
+  }
+  ha-icon-button[disabled] ha-icon {
+    color: inherit !important;
+    fill: currentColor !important;
+    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.9));
   }
 `;
 

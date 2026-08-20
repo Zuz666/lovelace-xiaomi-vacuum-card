@@ -565,7 +565,7 @@ export class XiaomiVacuumCard extends LitElement {
       title="${data.label || ""}"
       style="${this.config.styles.icon}"
     >
-      <ha-icon style="display:flex;" icon="${data.icon}"></ha-icon>
+      <ha-icon style="display:flex; ${this.config.styles.icon}" icon="${data.icon}"></ha-icon>
     </ha-icon-button>`;
   }
 
