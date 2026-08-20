@@ -791,6 +791,10 @@ export class XiaomiVacuumCard extends LitElement {
             },
           },
         },
+        {
+          name: "disabled_opacity",
+          selector: { number: { min: 0, max: 1, step: 0.05, mode: "slider" } },
+        },
       ],
     };
   }
@@ -925,10 +929,23 @@ export class XiaomiVacuumCard extends LitElement {
       });
     }
 
+    let disabledOpacity;
+    if (
+      config.disabled_opacity !== undefined &&
+      config.disabled_opacity !== null &&
+      config.disabled_opacity !== ""
+    ) {
+      const num = Number(config.disabled_opacity);
+      if (!Number.isNaN(num)) {
+        disabledOpacity = Math.max(0, Math.min(1, num));
+      }
+    }
+
     this.config = {
       name: config.name,
       entity: config.entity,
       image,
+      disabled_opacity: disabledOpacity,
       sensorEntity: `sensor.${entityName}`,
       show: {
         name: showName,
@@ -939,7 +956,7 @@ export class XiaomiVacuumCard extends LitElement {
       buttons: mergedButtons,
       state: this.deepMerge(state, vendor.state, config.state),
       attributes: this.deepMerge(attributes, vendor.attributes, config.attributes),
-      styles: this.getCardStyles(image, showName, showButtons),
+      styles: this.getCardStyles(image, showName, showButtons, disabledOpacity),
     };
     this.resolveCardImage();
   }
@@ -955,12 +972,16 @@ export class XiaomiVacuumCard extends LitElement {
     return sanitizeStyleUrl(image);
   }
 
-  getCardStyles(image, showName, showButtons) {
+  getCardStyles(image, showName, showButtons, disabledOpacity) {
     const styleImage = this.getImageStyleUrl(image);
+    const opacityStyle =
+      disabledOpacity !== undefined ? `--xvc-disabled-opacity: ${disabledOpacity}; ` : "";
     return {
-      background: styleImage
-        ? `background-image: url("${styleImage}"); color: white; text-shadow: 0 0 10px black;`
-        : "",
+      background: `${opacityStyle}${
+        styleImage
+          ? `background-image: url("${styleImage}"); color: white; text-shadow: 0 0 10px black;`
+          : ""
+      }`,
       icon: `color: ${styleImage ? "white" : "var(--state-icon-color, var(--secondary-text-color, #727272))"};`,
       content: `padding: ${showName ? "8px" : "16px"} 16px ${showButtons ? "8px" : "16px"};`,
     };
@@ -973,6 +994,7 @@ export class XiaomiVacuumCard extends LitElement {
         this.config.image,
         this.config.show.name,
         this.config.show.buttons,
+        this.config.disabled_opacity,
       ),
     });
   }

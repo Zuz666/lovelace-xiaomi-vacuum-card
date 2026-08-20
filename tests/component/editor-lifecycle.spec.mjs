@@ -71,4 +71,38 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
     });
     expect(latestConfig.attributes).toHaveProperty("custom_attribute");
   });
+
+  test("preserves and updates disabled_opacity in editor", async ({ page }) => {
+    const vacuumState = createDefaultVacuumState({
+      entityId: "vacuum.test_vacuum",
+    });
+
+    await mountEditor(page, {
+      config: {
+        type: "custom:xiaomi-vacuum-card",
+        entity: "vacuum.test_vacuum",
+        disabled_opacity: 0.65,
+      },
+      hass: {
+        states: {
+          "vacuum.test_vacuum": vacuumState,
+        },
+      },
+    });
+
+    // Verify editor reads disabled_opacity into model
+    const modelOpacity = await page.evaluate(() => window.__activeEditor._model.disabled_opacity);
+    expect(modelOpacity).toBe(0.65);
+
+    // Trigger visibility update
+    await page.evaluate(() => {
+      window.__activeEditor.updateVisibility({
+        detail: { value: { disabled_opacity: 0.7 } },
+      });
+    });
+
+    const configChanges = await getRecordedConfigChanges(page);
+    const latestConfig = configChanges[configChanges.length - 1];
+    expect(latestConfig.disabled_opacity).toBe(0.7);
+  });
 });
