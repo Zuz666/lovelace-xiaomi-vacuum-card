@@ -63,6 +63,13 @@
     "milestone": "entity-aware-rows-controls"
   },
   {
+    "key": "p1-modularize-src",
+    "title": "refactor: modularize src directory into domain modules",
+    "body_file": ".github/backlog/p1-modularize-src.md",
+    "labels": ["priority:P1", "type:refactor", "area:runtime", "area:editor"],
+    "milestone": "entity-aware-rows-controls"
+  },
+  {
     "key": "epic-testing-architecture",
     "title": "epic: layered testing architecture and quality gates",
     "body_file": ".github/backlog/epic-testing-architecture.md",

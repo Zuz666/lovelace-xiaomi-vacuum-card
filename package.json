@@ -8,7 +8,7 @@
     "build": "node scripts/build.mjs",
     "check": "npm run check:build && npm run check:syntax && npm run check:version && npm run lint && npm run format:check && npm test",
     "check:build": "npm run build && git diff --exit-code dist/",
-    "check:syntax": "node --check src/xiaomi-vacuum-card.js && node --check dist/xiaomi-vacuum-card.js",
+    "check:syntax": "node --check src/lit.js src/constants.js src/styles.js src/utils.js src/card.js src/editor.js src/xiaomi-vacuum-card.js dist/xiaomi-vacuum-card.js",
     "check:version": "node tests/check-version.mjs",
     "test": "node --test \"tests/**/*.test.mjs\"",
     "test:component": "playwright test --config playwright.component.config.mjs",

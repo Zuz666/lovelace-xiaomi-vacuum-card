@@ -31,6 +31,7 @@ The implementation also needs reusable entity fixtures and real browser componen
 
 ## Child issues
 
+- [ ] {{issue:p1-modularize-src}} — modularize src directory into domain modules
 - [ ] {{issue:p1-entity-aware-row-design}} — define the entity-aware row model and migration strategy
 - [ ] {{issue:p1-entity-fixture-matrix}} — introduce reusable entity fixtures and a scenario matrix
 
