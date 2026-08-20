@@ -1,0 +1,22 @@
+# Auto-detect text files and normalize line endings to LF across all platforms
+* text=auto eol=lf
+
+# Code, configuration, documentation, and schema files
+*.js text eol=lf
+*.mjs text eol=lf
+*.json text eol=lf
+*.jsonc text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Distribution artifacts
+dist/xiaomi-vacuum-card.js text eol=lf
+
+# Binary and media assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg text eol=lf
