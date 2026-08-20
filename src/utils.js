@@ -18,3 +18,23 @@ export const sanitizeStyleUrl = (value) => {
     ? trimmed
     : "";
 };
+
+export const parseOpacity = (value) => {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return undefined;
+  }
+  return Math.min(Math.max(parsed, 0), 1);
+};
+
+export const resolveButtonsDisabledOpacity = (config) => {
+  if (!config || typeof config !== "object") return undefined;
+  const modern = parseOpacity(config.buttons_disabled_opacity);
+  if (modern !== undefined) return modern;
+  const legacy = parseOpacity(config.disabled_opacity);
+  if (legacy !== undefined) return legacy;
+  return undefined;
+};

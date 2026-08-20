@@ -468,4 +468,68 @@ test.describe("Vacuum Activity and Action Capabilities", () => {
       }),
     ]);
   });
+
+  test("scrim: true without image renders scrim overlay and applies white icon style", async ({
+    page,
+  }) => {
+    const vacuumState = {
+      entity_id: "vacuum.scrim_no_image",
+      state: "docked",
+      attributes: {
+        friendly_name: "Scrim No Image Vacuum",
+        supported_features: VACUUM_FEATURES.START,
+      },
+    };
+
+    const { cardLocator } = await mountCard(page, {
+      config: {
+        type: "custom:xiaomi-vacuum-card",
+        entity: "vacuum.scrim_no_image",
+        scrim: true,
+      },
+      hass: {
+        states: {
+          "vacuum.scrim_no_image": vacuumState,
+        },
+      },
+    });
+
+    const scrim = cardLocator.locator(".scrim");
+    await expect(scrim).toBeVisible();
+
+    const startBtn = cardLocator.locator("ha-icon-button[label='Start']");
+    await expect(startBtn).toHaveCSS("color", "rgb(255, 255, 255)");
+  });
+
+  test("buttons_mode: compact with buttons.pause.show: true hides pause from DOM when docked", async ({
+    page,
+  }) => {
+    const vacuumState = {
+      entity_id: "vacuum.compact_show_true",
+      state: "docked",
+      attributes: {
+        friendly_name: "Compact Show True Vacuum",
+        supported_features: VACUUM_FEATURES.START | VACUUM_FEATURES.PAUSE,
+      },
+    };
+
+    const { cardLocator } = await mountCard(page, {
+      config: {
+        type: "custom:xiaomi-vacuum-card",
+        entity: "vacuum.compact_show_true",
+        buttons_mode: "compact",
+        buttons: {
+          pause: { show: true },
+        },
+      },
+      hass: {
+        states: {
+          "vacuum.compact_show_true": vacuumState,
+        },
+      },
+    });
+
+    await expect(cardLocator.locator("ha-icon-button[label='Start']")).toBeVisible();
+    await expect(cardLocator.locator("ha-icon-button[label='Pause']")).toHaveCount(0);
+  });
 });

@@ -177,19 +177,20 @@ For technical details on modern battery and charging entity resolution, see the 
 
 Buttons represent the action controls displayed along the bottom of the card.
 
-Built-in buttons automatically adapt to your vacuum's supported capabilities (`VacuumEntityFeature` bitmasks) and live activity state:
+Built-in buttons automatically adapt to your vacuum's supported capabilities (`VacuumEntityFeature` bitmasks) and live activity state based on the configured `buttons_mode`:
 
-- **Adaptive State-Aware Presentation (`buttons_state_aware: true`, default)**:
+- **Adaptive Presentation (`buttons_mode: "adaptive"`, default)**:
   - Unsupported capabilities (e.g. Spot Clean or Locate if not supported by the vacuum) are automatically **hidden** (absent from DOM and focus order).
-  - Supported capabilities that are temporarily invalid in the current activity (e.g. Start while cleaning, Pause while docked, or any action while unavailable) are rendered with native **disabled** semantics (`ha-icon-button[disabled]`, `aria-disabled="true"`, non-interactive) at default `0.55` opacity with grayscale styling (customizable via `buttons_disabled_opacity` or the Visibility slider).
+  - Supported capabilities that are temporarily invalid in the current activity (e.g. Start while cleaning, Pause while docked, or any action while unavailable) are rendered with native **disabled** semantics (`ha-icon-button[disabled]`, `aria-disabled="true"`, non-interactive) at default `0.38` opacity with Material Design 3 disabled styling (customizable via `buttons_disabled_opacity` or the Visual Editor slider).
   - Supported and valid capabilities are rendered enabled and clickable.
-- **Legacy Static Mode (`buttons_state_aware: false`)**:
+- **Compact Dynamic Presentation (`buttons_mode: "compact"`)**:
+  - Unsupported capabilities and temporarily invalid/blocked capabilities are **hidden from the DOM completely**, dynamically keeping the bottom action row tight and showing only actionable buttons.
+- **Legacy Static Mode (`buttons_mode: "always_active"` or `buttons_state_aware: false`)**:
   - Disables all capability filtering and state-based blocking. All configured buttons remain unconditionally visible, enabled at 100% opacity, and interactive, replicating pre-v4.6.3 behavior.
 - **Custom Buttons**: Omitted `show` defaults to `true`. Custom buttons with unrecognized services remain unconditionally visible, while custom buttons targeting recognized vacuum services participate in capability filtering when configured with `show: "auto"`.
-- **Explicit Visibility (`show: true`)**: Forces the button visible even if the integration's feature flags are incomplete, while preserving capability, activity-state, disabled, and entity-availability pre-dispatch guards.
+- **Explicit Visibility (`show: true`)**: Enables the button and subjects it to the active `buttons_mode` rules (visible disabled in `adaptive`, hidden when blocked in `compact`, enabled in `always_active`).
 - **Explicit Hidden (`show: false`)**: Unconditionally hides the action button.
-
-Capability mapping follows the effective service (including valid remappings such as mapping Pause to `vacuum.stop`), and unrecognized services have no inferred feature requirements.
+  Capability mapping follows the effective service (including valid remappings such as mapping Pause to `vacuum.stop`), and unrecognized services have no inferred feature requirements.
 
 Default buttons: `start` (Start / Resume), `pause` (Pause), `stop` (Stop), `spot` (Clean Spot), `locate` (Locate), `return` (Return to Base).
 

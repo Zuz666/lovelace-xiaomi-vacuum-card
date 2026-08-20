@@ -9,6 +9,7 @@ import {
   DEFAULT_SCRIM,
 } from "./constants.js";
 import { editorStyles } from "./styles.js";
+import { parseOpacity, resolveButtonsDisabledOpacity } from "./utils.js";
 export class XiaomiVacuumCardEditor extends LitElement {
   static get properties() {
     return {
@@ -77,20 +78,9 @@ export class XiaomiVacuumCardEditor extends LitElement {
       buttonsMode = "always_active";
     }
 
-    const rawOpacity =
-      config.buttons_disabled_opacity !== undefined
-        ? config.buttons_disabled_opacity
-        : config.disabled_opacity;
-    const disabledOpacity = (() => {
-      if (rawOpacity === undefined || rawOpacity === null || rawOpacity === "") {
-        return DEFAULT_BUTTONS_DISABLED_OPACITY;
-      }
-      const num = Number(rawOpacity);
-      return Number.isFinite(num)
-        ? Math.max(0, Math.min(1, num))
-        : DEFAULT_BUTTONS_DISABLED_OPACITY;
-    })();
-
+    const resolvedOpacity = resolveButtonsDisabledOpacity(config);
+    const disabledOpacity =
+      resolvedOpacity !== undefined ? resolvedOpacity : DEFAULT_BUTTONS_DISABLED_OPACITY;
     return {
       type: config.type,
       entity: config.entity,
@@ -146,15 +136,9 @@ export class XiaomiVacuumCardEditor extends LitElement {
       config.buttons_mode = model.buttons_mode;
     }
 
-    if (
-      model.buttons_disabled_opacity !== undefined &&
-      model.buttons_disabled_opacity !== null &&
-      model.buttons_disabled_opacity !== ""
-    ) {
-      const num = Number(model.buttons_disabled_opacity);
-      if (Number.isFinite(num) && num !== DEFAULT_BUTTONS_DISABLED_OPACITY) {
-        config.buttons_disabled_opacity = Math.max(0, Math.min(1, num));
-      }
+    const parsedOpacity = parseOpacity(model.buttons_disabled_opacity);
+    if (parsedOpacity !== undefined && parsedOpacity !== DEFAULT_BUTTONS_DISABLED_OPACITY) {
+      config.buttons_disabled_opacity = parsedOpacity;
     }
     if (model.show_name === false) {
       config.name = false;

@@ -185,52 +185,35 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
     configChanges = await getRecordedConfigChanges(page);
     expect(configChanges.length).toBe(countBefore + 1);
     latestConfig = configChanges[configChanges.length - 1];
-     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
-         detail: { value: { buttons_disabled_opacity: "Infinity" } },
-     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
-         detail: { value: { buttons_disabled_opacity: "-Infinity" } },
-     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
+    expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
+    expect(latestConfig).not.toHaveProperty("disabled_opacity");
 
     // Trigger visibility update with "Infinity"
     countBefore = configChanges.length;
     await page.evaluate(() => {
       window.__activeEditor.updateVisibility({
-     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
-         detail: { value: { buttons_disabled_opacity: "Infinity" } },
-     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
-         detail: { value: { buttons_disabled_opacity: "-Infinity" } },
-     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
+        detail: { value: { buttons_disabled_opacity: "Infinity" } },
       });
     });
 
     configChanges = await getRecordedConfigChanges(page);
     expect(configChanges.length).toBe(countBefore + 1);
     latestConfig = configChanges[configChanges.length - 1];
-     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
-         detail: { value: { buttons_disabled_opacity: "Infinity" } },
-     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
-         detail: { value: { buttons_disabled_opacity: "-Infinity" } },
-     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
+    expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
+    expect(latestConfig).not.toHaveProperty("disabled_opacity");
 
     // Trigger visibility update with "-Infinity"
     countBefore = configChanges.length;
     await page.evaluate(() => {
       window.__activeEditor.updateVisibility({
-     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
-         detail: { value: { buttons_disabled_opacity: "Infinity" } },
-     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
-         detail: { value: { buttons_disabled_opacity: "-Infinity" } },
-     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
+        detail: { value: { buttons_disabled_opacity: "-Infinity" } },
       });
     });
 
     configChanges = await getRecordedConfigChanges(page);
     expect(configChanges.length).toBe(countBefore + 1);
     latestConfig = configChanges[configChanges.length - 1];
-     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
-         detail: { value: { buttons_disabled_opacity: "Infinity" } },
-     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
-         detail: { value: { buttons_disabled_opacity: "-Infinity" } },
-     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
+    expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
+    expect(latestConfig).not.toHaveProperty("disabled_opacity");
   });
 });

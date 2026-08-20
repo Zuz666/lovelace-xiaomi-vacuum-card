@@ -102,6 +102,17 @@ test("scrim: defaults to auto and evaluates correctly with or without image", as
   assert.equal(card.isScrimActive(), false);
 });
 
+test("scrim: true without image sets icon style to white for contrast", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+
+  card.setConfig({ entity: "vacuum.xiaomi", scrim: true });
+  assert.equal(card.config.styles.icon, "color: white;");
+
+  card.setConfig({ entity: "vacuum.xiaomi", scrim: false });
+  assert.match(card.config.styles.icon, /--state-icon-color/);
+});
+
 test("buttons_disabled_opacity: sets custom CSS variable in background style", async () => {
   const { Card } = await loadCard();
   const card = new Card();
@@ -189,4 +200,17 @@ test("updateImageStyles preserves buttons_disabled_opacity CSS variable", async 
     card.config.styles.background,
     /background-image: url\("\/local\/vacuum_new\.png"\)/,
   );
+});
+
+test("buttons_disabled_opacity: falls back to legacy disabled_opacity when buttons_disabled_opacity is invalid", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+
+  card.setConfig({
+    entity: "vacuum.xiaomi",
+    buttons_disabled_opacity: "invalid",
+    disabled_opacity: 0.7,
+  });
+  assert.equal(card.config.buttons_disabled_opacity, 0.7);
+  assert.match(card.config.styles.background, /--xvc-disabled-opacity:\s*0\.7;/);
 });

@@ -3,7 +3,6 @@ import { DEFAULT_BUTTONS_DISABLED_OPACITY } from "./constants.js";
 export const cardStyles = css`
   .background {
     position: relative;
-    overflow: hidden;
     background-repeat: no-repeat;
     background-position: center center;
     background-size: cover;
@@ -60,7 +59,7 @@ export const cardStyles = css`
   }
   .grid {
     position: relative;
-    z-index: 2;
+    z-index: 4;
     display: grid;
     grid-template-columns: repeat(2, auto);
     cursor: pointer;
@@ -119,9 +118,8 @@ export const cardStyles = css`
     position: absolute;
     top: 100%;
     left: 0;
-    z-index: 3;
+    z-index: 5;
     width: max-content;
-    min-width: 100%;
     max-width: 200px;
     box-sizing: border-box;
     max-height: 200px;

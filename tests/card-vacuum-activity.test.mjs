@@ -357,7 +357,7 @@ test("action presentation: buttons_mode: compact hides state-blocked buttons fro
   assert.equal(stopCleaning.disabled, false);
 });
 
-test("action presentation: button-level show: true forces button visible in compact mode even when blocked", async () => {
+test("action presentation: button-level show: true in compact mode obeys compact rules (hidden when blocked)", async () => {
   const { Card } = await loadCard();
   const card = new Card();
 
@@ -382,9 +382,9 @@ test("action presentation: button-level show: true forces button visible in comp
   });
   card.hass = hass;
 
-  // Pause button has show: true override -> visible even though vacuum is docked and mode is compact (but disabled by state)
+  // Pause button has show: true, but vacuum is docked and mode is compact -> hidden from DOM
   const pauseEval = card.evaluateButton(card.config.buttons.pause);
-  assert.equal(pauseEval.visible, true);
+  assert.equal(pauseEval.visible, false);
   assert.equal(pauseEval.disabled, true);
   assert.equal(pauseEval.callable, false);
 });
