@@ -20,13 +20,7 @@ export const cardStyles = css`
     justify-content: space-evenly;
   }
   .flex ha-icon-button {
-    background: var(--ha-card-button-background, rgba(0, 0, 0, 0.2));
-    border-radius: 50%;
-    margin: 0 4px;
-    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.4));
-    transition:
-      background-color 0.2s ease,
-      opacity 0.2s ease;
+    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.9));
   }
   .grid {
     display: grid;
@@ -117,7 +111,7 @@ export const cardStyles = css`
   }
   ha-icon-button[disabled] {
     opacity: var(--xvc-disabled-opacity, var(--disabled-opacity, 0.55));
-    filter: grayscale(100%) drop-shadow(0 0 2px rgba(0, 0, 0, 0.4));
+    filter: grayscale(100%) drop-shadow(0 0 3px rgba(0, 0, 0, 0.9));
     cursor: not-allowed;
     pointer-events: none;
   }
