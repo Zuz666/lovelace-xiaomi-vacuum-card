@@ -105,4 +105,49 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
     const latestConfig = configChanges[configChanges.length - 1];
     expect(latestConfig.disabled_opacity).toBe(0.7);
   });
+
+  test("sanitizes out-of-range or invalid disabled_opacity in editor", async ({ page }) => {
+    const vacuumState = createDefaultVacuumState({
+      entityId: "vacuum.test_vacuum",
+    });
+
+    await mountEditor(page, {
+      config: {
+        type: "custom:xiaomi-vacuum-card",
+        entity: "vacuum.test_vacuum",
+        disabled_opacity: 1.5,
+      },
+      hass: {
+        states: {
+          "vacuum.test_vacuum": vacuumState,
+        },
+      },
+    });
+
+    // Verify editor clamped 1.5 to 1.0 when loading model
+    const modelOpacity = await page.evaluate(() => window.__activeEditor._model.disabled_opacity);
+    expect(modelOpacity).toBe(1);
+
+    // Trigger visibility update with negative value
+    await page.evaluate(() => {
+      window.__activeEditor.updateVisibility({
+        detail: { value: { disabled_opacity: -0.5 } },
+      });
+    });
+
+    let configChanges = await getRecordedConfigChanges(page);
+    let latestConfig = configChanges[configChanges.length - 1];
+    expect(latestConfig.disabled_opacity).toBe(0);
+
+    // Trigger visibility update with invalid string
+    await page.evaluate(() => {
+      window.__activeEditor.updateVisibility({
+        detail: { value: { disabled_opacity: "invalid" } },
+      });
+    });
+
+    configChanges = await getRecordedConfigChanges(page);
+    latestConfig = configChanges[configChanges.length - 1];
+    expect(latestConfig.disabled_opacity).toBeUndefined();
+  });
 });

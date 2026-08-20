@@ -137,16 +137,17 @@ test.describe("Vacuum Activity and Action Capabilities", () => {
     await expect(startBtn).toHaveAttribute("aria-disabled", "false");
     await expect(startBtn).toHaveAttribute("tabindex", "0");
 
-    // Pause -> disabled (can only pause when cleaning)
+    // Pause -> disabled (can only pause when cleaning, default opacity 0.55)
     await expect(pauseBtn).toHaveAttribute("disabled", "");
     await expect(pauseBtn).toHaveAttribute("aria-disabled", "true");
     await expect(pauseBtn).toHaveAttribute("tabindex", "-1");
+    await expect(pauseBtn).toHaveCSS("opacity", "0.55");
 
-    // Stop -> disabled (docked)
+    // Stop -> disabled (docked, default opacity 0.55)
     await expect(stopBtn).toHaveAttribute("disabled", "");
     await expect(stopBtn).toHaveAttribute("aria-disabled", "true");
     await expect(stopBtn).toHaveAttribute("tabindex", "-1");
-
+    await expect(stopBtn).toHaveCSS("opacity", "0.55");
     // Return to Base -> enabled
     await expect(returnBtn).not.toHaveAttribute("disabled", "");
     await expect(returnBtn).toHaveAttribute("tabindex", "0");

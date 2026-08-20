@@ -27,7 +27,7 @@ On certain themes and background images, `opacity: 0.4` on solid glyphs (such as
 
 ## Proposed behavior
 
-Disabled action buttons render with a default opacity of `0.55`, ensuring clear icon silhouettes across light and dark themes. Users can configure `disabled_opacity: <number>` in YAML or adjust the slider in the visual editor's Visibility section to tune opacity to their preferred theme.
+Disabled action buttons render with a default opacity of `0.55`, ensuring clear icon silhouettes across light and dark themes. Users can configure `disabled_opacity: <number>` in YAML (clamped to `0.0`–`1.0`) or adjust the slider in the visual editor's Visibility section to tune opacity to their preferred theme.
 
 ## Acceptance criteria
 

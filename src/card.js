@@ -936,7 +936,7 @@ export class XiaomiVacuumCard extends LitElement {
       config.disabled_opacity !== ""
     ) {
       const num = Number(config.disabled_opacity);
-      if (!Number.isNaN(num)) {
+      if (Number.isFinite(num)) {
         disabledOpacity = Math.max(0, Math.min(1, num));
       }
     }

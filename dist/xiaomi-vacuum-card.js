@@ -1102,7 +1102,7 @@ var XiaomiVacuumCard = class extends LitElement {
     let disabledOpacity;
     if (config.disabled_opacity !== void 0 && config.disabled_opacity !== null && config.disabled_opacity !== "") {
       const num = Number(config.disabled_opacity);
-      if (!Number.isNaN(num)) {
+      if (Number.isFinite(num)) {
         disabledOpacity = Math.max(0, Math.min(1, num));
       }
     }
@@ -1409,7 +1409,13 @@ var XiaomiVacuumCardEditor = class extends LitElement {
       vendor: config.vendor,
       name: config.name === false ? "" : config.name,
       image: this.processData(config).image,
-      disabled_opacity: config.disabled_opacity !== void 0 && config.disabled_opacity !== null ? config.disabled_opacity : void 0,
+      disabled_opacity: (() => {
+        if (config.disabled_opacity === void 0 || config.disabled_opacity === null || config.disabled_opacity === "") {
+          return void 0;
+        }
+        const num = Number(config.disabled_opacity);
+        return Number.isFinite(num) ? Math.max(0, Math.min(1, num)) : void 0;
+      })(),
       show_name: config.name !== false,
       show_state: config.state !== false,
       show_attributes: config.attributes !== false,
@@ -1438,7 +1444,10 @@ var XiaomiVacuumCardEditor = class extends LitElement {
     const image = this.cleanImageConfig(model.image);
     if (image) config.image = image;
     if (model.disabled_opacity !== void 0 && model.disabled_opacity !== null && model.disabled_opacity !== "") {
-      config.disabled_opacity = Number(model.disabled_opacity);
+      const num = Number(model.disabled_opacity);
+      if (Number.isFinite(num)) {
+        config.disabled_opacity = Math.max(0, Math.min(1, num));
+      }
     }
     if (model.show_name === false) {
       config.name = false;
