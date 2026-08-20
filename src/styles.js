@@ -23,12 +23,10 @@ export const cardStyles = css`
     color: inherit;
     --ha-icon-button-color: inherit;
     --mdc-icon-button-color: inherit;
-    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.9));
   }
   .flex ha-icon-button ha-icon {
     color: inherit;
     fill: currentColor;
-    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.9));
   }
   .grid {
     display: grid;
@@ -130,7 +128,6 @@ export const cardStyles = css`
   ha-icon-button[disabled] ha-icon {
     color: inherit !important;
     fill: currentColor !important;
-    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.9));
   }
 `;
 
