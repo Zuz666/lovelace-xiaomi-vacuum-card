@@ -1,6 +1,6 @@
 ((LitElement) => {
   console.info(
-    "%c XIAOMI-VACUUM-CARD-REBORN %c 4.6.2 ",
+    "%c XIAOMI-VACUUM-CARD-REBORN %c 4.6.3 ",
     "color: cyan; background: black; font-weight: bold;",
     "color: darkblue; background: white; font-weight: bold;",
   );
