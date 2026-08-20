@@ -822,7 +822,7 @@ var XiaomiVacuumCard = class extends LitElement {
     if (!data) return;
     if (this.config && this.config.buttons_state_aware === false) {
       const payload2 = data.service_data_mode === "dynamic" ? data.service_data_template : data.service_data;
-      await this.callService(data.service, payload2);
+      await this.callService(data.service, payload2, true);
       return;
     }
     const buttonState = this.evaluateButton(data);
@@ -1333,7 +1333,7 @@ var XiaomiVacuumCard = class extends LitElement {
       }
     });
   }
-  async callService(service, data, allowUnavailable = Boolean(this.config && this.config.buttons_state_aware === false)) {
+  async callService(service, data, allowUnavailable = false) {
     if (!this.stateObj || !service) return;
     if (!allowUnavailable && (this.stateObj.state === "unavailable" || this.stateObj.state === "unknown")) {
       return;
