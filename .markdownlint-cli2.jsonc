@@ -10,5 +10,12 @@
     },
     "MD041": false,
   },
-  "ignores": ["node_modules/**", ".local/**", ".ha-smoke/**", "tmp/**"],
+  "ignores": [
+    "node_modules/**",
+    ".local/**",
+    ".ha-smoke/**",
+    "tmp/**",
+    "playwright-report/**",
+    "test-results/**"
+  ],
 }
