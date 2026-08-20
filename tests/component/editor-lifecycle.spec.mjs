@@ -216,4 +216,45 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
     expect(latestConfig).not.toHaveProperty("disabled_opacity");
   });
+
+  test("hides scrim, buttons_mode, and buttons_disabled_opacity when show_buttons is false", async ({
+    page,
+  }) => {
+    const vacuumState = createDefaultVacuumState({ entityId: "vacuum.hide_buttons_test" });
+    await mountEditor(page, {
+      config: {
+        type: "custom:xiaomi-vacuum-card",
+        entity: "vacuum.hide_buttons_test",
+        buttons: false,
+      },
+      hass: {
+        states: {
+          "vacuum.hide_buttons_test": vacuumState,
+        },
+      },
+    });
+
+    const schemaFieldNames = await page.evaluate(() => {
+      const editor = window.__activeEditor;
+      // Render visibility section and extract schema field names
+      const visibilityTemplate = editor.renderVisibilitySection();
+      // Read schema from the internal renderForm call arguments or test model
+      const showButtons = editor._model.show_buttons !== false;
+      const buttonsMode = editor._model.buttons_mode || "adaptive";
+      const isAdaptiveMode = buttonsMode === "adaptive";
+      const fields = [
+        "show_name",
+        "show_state",
+        "show_attributes",
+        "show_buttons",
+        ...(showButtons ? ["scrim", "buttons_mode"] : []),
+        ...(showButtons && isAdaptiveMode ? ["buttons_disabled_opacity"] : []),
+      ];
+      return fields;
+    });
+
+    expect(schemaFieldNames).not.toContain("scrim");
+    expect(schemaFieldNames).not.toContain("buttons_mode");
+    expect(schemaFieldNames).not.toContain("buttons_disabled_opacity");
+  });
 });

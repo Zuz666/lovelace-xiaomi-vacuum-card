@@ -1790,21 +1790,21 @@ var XiaomiVacuumCardEditor = class extends LitElement {
       { name: "show_state", selector: { boolean: {} } },
       { name: "show_attributes", selector: { boolean: {} } },
       { name: "show_buttons", selector: { boolean: {} } },
-      {
-        name: "scrim",
-        helper: "Bottom gradient overlay for button contrast (auto: enabled with background image)",
-        selector: {
-          select: {
-            mode: "dropdown",
-            options: [
-              { value: "auto", label: "auto (default)" },
-              { value: "true", label: "true (always on)" },
-              { value: "false", label: "false (always off)" }
-            ]
-          }
-        }
-      },
       ...showButtons ? [
+        {
+          name: "scrim",
+          helper: "Bottom gradient overlay for button contrast (auto: enabled with background image)",
+          selector: {
+            select: {
+              mode: "dropdown",
+              options: [
+                { value: "auto", label: "auto (default)" },
+                { value: "true", label: "true (always on)" },
+                { value: "false", label: "false (always off)" }
+              ]
+            }
+          }
+        },
         {
           name: "buttons_mode",
           helper: "Button behavior: adaptive (disable invalid), compact (hide invalid), or always_active (legacy)",
