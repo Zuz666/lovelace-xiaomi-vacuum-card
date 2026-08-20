@@ -56,10 +56,17 @@ export class XiaomiVacuumCardEditor extends LitElement {
       vendor: config.vendor,
       name: config.name === false ? "" : config.name,
       image: this.processData(config).image,
-      disabled_opacity:
-        config.disabled_opacity !== undefined && config.disabled_opacity !== null
-          ? config.disabled_opacity
-          : undefined,
+      disabled_opacity: (() => {
+        if (
+          config.disabled_opacity === undefined ||
+          config.disabled_opacity === null ||
+          config.disabled_opacity === ""
+        ) {
+          return undefined;
+        }
+        const num = Number(config.disabled_opacity);
+        return Number.isFinite(num) ? Math.max(0, Math.min(1, num)) : undefined;
+      })(),
       show_name: config.name !== false,
       show_state: config.state !== false,
       show_attributes: config.attributes !== false,
@@ -95,7 +102,10 @@ export class XiaomiVacuumCardEditor extends LitElement {
       model.disabled_opacity !== null &&
       model.disabled_opacity !== ""
     ) {
-      config.disabled_opacity = Number(model.disabled_opacity);
+      const num = Number(model.disabled_opacity);
+      if (Number.isFinite(num)) {
+        config.disabled_opacity = Math.max(0, Math.min(1, num));
+      }
     }
 
     if (model.show_name === false) {

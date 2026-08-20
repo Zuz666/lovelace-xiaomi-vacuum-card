@@ -72,3 +72,19 @@ test("disabled_opacity: clamps values between 0 and 1", async () => {
   assert.equal(card.config.disabled_opacity, 0);
   assert.match(card.config.styles.background, /--xvc-disabled-opacity:\s*0;/);
 });
+
+test("updateImageStyles preserves disabled_opacity CSS variable", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+
+  card.setConfig({ entity: "vacuum.xiaomi", disabled_opacity: 0.6 });
+  assert.match(card.config.styles.background, /--xvc-disabled-opacity:\s*0\.6;/);
+
+  card.config.image = "/local/vacuum_new.png";
+  card.updateImageStyles();
+  assert.match(card.config.styles.background, /--xvc-disabled-opacity:\s*0\.6;/);
+  assert.match(
+    card.config.styles.background,
+    /background-image: url\("\/local\/vacuum_new\.png"\)/,
+  );
+});

@@ -106,17 +106,17 @@ entity: vacuum.my_vacuum
 
 ### Top-Level Options
 
-| Option             | Type                | Default            | Description                                                                |
-| :----------------- | :------------------ | :----------------- | :------------------------------------------------------------------------- |
-| `type`             | `string`            | **Required**       | Must be `custom:xiaomi-vacuum-card`.                                       |
-| `entity`           | `string`            | **Required**       | The entity ID of your vacuum cleaner (must start with `vacuum.`).          |
-| `vendor`           | `string`            | `xiaomi`           | Vacuum vendor preset for default attribute and service mappings.           |
-| `name`             | `string` \| `false` | Friendly name      | Card header title. Set to `false` to hide the title area.                  |
-| `image`            | `string`            | `undefined`        | Card background image path, media URI, or external URL.                    |
-| `disabled_opacity` | `number`            | `0.55`             | Opacity for action buttons disabled by current vacuum state (`0.0`–`1.0`). |
-| `state`            | `object` \| `false` | See State Rows     | Custom configuration for state rows, or `false` to hide the state section. |
-| `attributes`       | `object` \| `false` | See Attribute Rows | Custom configuration for attribute rows, or `false` to hide attributes.    |
-| `buttons`          | `object` \| `false` | See Buttons        | Custom configuration for action buttons, or `false` to hide buttons.       |
+| Option             | Type                | Default            | Description                                                                           |
+| :----------------- | :------------------ | :----------------- | :------------------------------------------------------------------------------------ |
+| `type`             | `string`            | **Required**       | Must be `custom:xiaomi-vacuum-card`.                                                  |
+| `entity`           | `string`            | **Required**       | The entity ID of your vacuum cleaner (must start with `vacuum.`).                     |
+| `vendor`           | `string`            | `xiaomi`           | Vacuum vendor preset for default attribute and service mappings.                      |
+| `name`             | `string` \| `false` | Friendly name      | Card header title. Set to `false` to hide the title area.                             |
+| `image`            | `string`            | `undefined`        | Card background image path, media URI, or external URL.                               |
+| `disabled_opacity` | `number`            | `0.55`             | Opacity for action buttons disabled by current vacuum state (clamped to `0.0`–`1.0`). |
+| `state`            | `object` \| `false` | See State Rows     | Custom configuration for state rows, or `false` to hide the state section.            |
+| `attributes`       | `object` \| `false` | See Attribute Rows | Custom configuration for attribute rows, or `false` to hide attributes.               |
+| `buttons`          | `object` \| `false` | See Buttons        | Custom configuration for action buttons, or `false` to hide buttons.                  |
 
 ---
 
