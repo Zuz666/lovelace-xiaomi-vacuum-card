@@ -56,6 +56,10 @@ export class XiaomiVacuumCardEditor extends LitElement {
       vendor: config.vendor,
       name: config.name === false ? "" : config.name,
       image: this.processData(config).image,
+      disabled_opacity:
+        config.disabled_opacity !== undefined && config.disabled_opacity !== null
+          ? config.disabled_opacity
+          : undefined,
       show_name: config.name !== false,
       show_state: config.state !== false,
       show_attributes: config.attributes !== false,
@@ -69,6 +73,7 @@ export class XiaomiVacuumCardEditor extends LitElement {
         "vendor",
         "name",
         "image",
+        "disabled_opacity",
         "state",
         "attributes",
         "buttons",
@@ -85,12 +90,19 @@ export class XiaomiVacuumCardEditor extends LitElement {
     const image = this.cleanImageConfig(model.image);
     if (image) config.image = image;
 
+    if (
+      model.disabled_opacity !== undefined &&
+      model.disabled_opacity !== null &&
+      model.disabled_opacity !== ""
+    ) {
+      config.disabled_opacity = Number(model.disabled_opacity);
+    }
+
     if (model.show_name === false) {
       config.name = false;
     } else if (model.name) {
       config.name = model.name;
     }
-
     this.assignEntityDataConfig(config, "state", state, model.show_state, model.state);
     this.assignEntityDataConfig(
       config,
@@ -310,12 +322,18 @@ export class XiaomiVacuumCardEditor extends LitElement {
             { name: "show_state", selector: { boolean: {} } },
             { name: "show_attributes", selector: { boolean: {} } },
             { name: "show_buttons", selector: { boolean: {} } },
+            {
+              name: "disabled_opacity",
+              label: "Disabled buttons opacity",
+              selector: { number: { min: 0, max: 1, step: 0.05, mode: "slider" } },
+            },
           ],
           {
             show_name: this._model.show_name,
             show_state: this._model.show_state,
             show_attributes: this._model.show_attributes,
             show_buttons: this._model.show_buttons,
+            disabled_opacity: this._model.disabled_opacity,
           },
           (ev) => this.updateVisibility(ev),
         )}

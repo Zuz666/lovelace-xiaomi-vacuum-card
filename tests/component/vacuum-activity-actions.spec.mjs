@@ -283,4 +283,35 @@ test.describe("Vacuum Activity and Action Capabilities", () => {
       }),
     ]);
   });
+
+  test("disabled_opacity custom setting applies to disabled buttons in real DOM", async ({
+    page,
+  }) => {
+    const vacuumState = {
+      entity_id: "vacuum.opacity_vacuum",
+      state: "docked",
+      attributes: {
+        friendly_name: "Opacity Test Vacuum",
+        supported_features:
+          VACUUM_FEATURES.START | VACUUM_FEATURES.PAUSE | VACUUM_FEATURES.RETURN_HOME,
+      },
+    };
+
+    const { cardLocator } = await mountCard(page, {
+      config: {
+        type: "custom:xiaomi-vacuum-card",
+        entity: "vacuum.opacity_vacuum",
+        disabled_opacity: 0.8,
+      },
+      hass: {
+        states: {
+          "vacuum.opacity_vacuum": vacuumState,
+        },
+      },
+    });
+
+    const pauseBtn = cardLocator.locator("ha-icon-button[label='Pause']");
+    await expect(pauseBtn).toHaveAttribute("disabled", "");
+    await expect(pauseBtn).toHaveCSS("opacity", "0.8");
+  });
 });

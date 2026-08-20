@@ -42,6 +42,13 @@
     "milestone": "runtime-correctness"
   },
   {
+    "key": "p0-disabled-buttons-contrast",
+    "title": "fix: improve disabled action button contrast and allow custom opacity",
+    "body_file": ".github/backlog/p0-disabled-buttons-contrast.md",
+    "labels": ["priority:P0", "type:bug", "area:controls", "area:editor"],
+    "milestone": "action-controls-ux"
+  },
+  {
     "key": "p1-entity-fixture-matrix",
     "title": "test: introduce reusable entity fixtures and scenario matrix",
     "body_file": ".github/backlog/p1-entity-fixture-matrix.md",
