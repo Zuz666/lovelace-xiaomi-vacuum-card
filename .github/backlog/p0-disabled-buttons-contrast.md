@@ -24,7 +24,7 @@ On certain themes and background images, `opacity: 0.4` on solid glyphs (such as
 ## Non-goals
 
 - Altering the underlying state or capability evaluation matrix defined in #33.
-- Removing native disabled semantics (`?disabled`, `aria-disabled="true"`, `tabindex="-1"`).
+- Removing native disabled semantics (`disabled`, `aria-disabled="true"`, `tabindex="-1"`).
 
 ## Proposed behavior
 

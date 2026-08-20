@@ -54,7 +54,7 @@ The card provides three presentation modes for action buttons via `buttons_mode`
 
 1. **`adaptive` (Default)**:
    - Unsupported capabilities are hidden from DOM and focus order.
-   - Temporarily invalid capabilities (blocked by current activity state) are rendered disabled with `?disabled`, `aria-disabled="true"`, `tabindex="-1"`, and opacity `0.38` (customizable via `buttons_disabled_opacity`).
+   - Temporarily invalid capabilities (blocked by current activity state) are rendered disabled with `disabled`, `aria-disabled="true"`, `tabindex="-1"`, and opacity `0.38` (customizable via `buttons_disabled_opacity`).
    - Valid capabilities are enabled and clickable.
 2. **`compact`**:
    - Unsupported capabilities AND temporarily state-blocked capabilities are completely hidden from DOM.
