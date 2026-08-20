@@ -108,6 +108,7 @@ export const cardStyles = css`
   }
   ha-icon-button[disabled] {
     opacity: var(--xvc-disabled-opacity, var(--disabled-opacity, 0.55));
+    filter: grayscale(100%);
     cursor: not-allowed;
     pointer-events: none;
   }

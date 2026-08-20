@@ -494,6 +494,13 @@ export class XiaomiVacuumCard extends LitElement {
     if (!data) return { visible: false, disabled: true, callable: false };
     if (data.show === false) return { visible: false, disabled: true, callable: false };
 
+    if (this.config && this.config.buttons_state_aware === false) {
+      return {
+        visible: true,
+        disabled: false,
+        callable: true,
+      };
+    }
     const service = data.service || "";
     const isLegacyToggle = service === "vacuum.turn_on" || service === "vacuum.turn_off";
     const isCustom = data.custom === true || (data.id && !(data.id in buttons));
@@ -564,6 +571,12 @@ export class XiaomiVacuumCard extends LitElement {
 
   async callActionButton(data) {
     if (!data) return;
+    if (this.config && this.config.buttons_state_aware === false) {
+      const payload =
+        data.service_data_mode === "dynamic" ? data.service_data_template : data.service_data;
+      await this.callService(data.service, payload);
+      return;
+    }
     const buttonState = this.evaluateButton(data);
     if (!buttonState.callable) return;
 
@@ -792,7 +805,11 @@ export class XiaomiVacuumCard extends LitElement {
           },
         },
         {
-          name: "disabled_opacity",
+          name: "buttons_state_aware",
+          selector: { boolean: {} },
+        },
+        {
+          name: "buttons_disabled_opacity",
           selector: { number: { min: 0, max: 1, step: 0.05, mode: "slider" } },
         },
       ],
@@ -929,15 +946,16 @@ export class XiaomiVacuumCard extends LitElement {
       });
     }
 
-    let disabledOpacity;
-    if (
-      config.disabled_opacity !== undefined &&
-      config.disabled_opacity !== null &&
-      config.disabled_opacity !== ""
-    ) {
-      const num = Number(config.disabled_opacity);
+    const buttonsStateAware = config.buttons_state_aware !== false;
+    const rawOpacity =
+      config.buttons_disabled_opacity !== undefined
+        ? config.buttons_disabled_opacity
+        : config.disabled_opacity;
+    let buttonsDisabledOpacity;
+    if (rawOpacity !== undefined && rawOpacity !== null && rawOpacity !== "") {
+      const num = Number(rawOpacity);
       if (Number.isFinite(num)) {
-        disabledOpacity = Math.max(0, Math.min(1, num));
+        buttonsDisabledOpacity = Math.max(0, Math.min(1, num));
       }
     }
 
@@ -945,7 +963,9 @@ export class XiaomiVacuumCard extends LitElement {
       name: config.name,
       entity: config.entity,
       image,
-      disabled_opacity: disabledOpacity,
+      buttons_state_aware: buttonsStateAware,
+      buttons_disabled_opacity: buttonsDisabledOpacity,
+      disabled_opacity: buttonsDisabledOpacity,
       sensorEntity: `sensor.${entityName}`,
       show: {
         name: showName,
@@ -956,7 +976,7 @@ export class XiaomiVacuumCard extends LitElement {
       buttons: mergedButtons,
       state: this.deepMerge(state, vendor.state, config.state),
       attributes: this.deepMerge(attributes, vendor.attributes, config.attributes),
-      styles: this.getCardStyles(image, showName, showButtons, disabledOpacity),
+      styles: this.getCardStyles(image, showName, showButtons, buttonsDisabledOpacity),
     };
     this.resolveCardImage();
   }
@@ -972,10 +992,12 @@ export class XiaomiVacuumCard extends LitElement {
     return sanitizeStyleUrl(image);
   }
 
-  getCardStyles(image, showName, showButtons, disabledOpacity) {
+  getCardStyles(image, showName, showButtons, buttonsDisabledOpacity) {
     const styleImage = this.getImageStyleUrl(image);
     const opacityStyle =
-      disabledOpacity !== undefined ? `--xvc-disabled-opacity: ${disabledOpacity}; ` : "";
+      buttonsDisabledOpacity !== undefined
+        ? `--xvc-disabled-opacity: ${buttonsDisabledOpacity}; `
+        : "";
     return {
       background: `${opacityStyle}${
         styleImage
@@ -994,7 +1016,7 @@ export class XiaomiVacuumCard extends LitElement {
         this.config.image,
         this.config.show.name,
         this.config.show.buttons,
-        this.config.disabled_opacity,
+        this.config.buttons_disabled_opacity,
       ),
     });
   }

@@ -315,4 +315,53 @@ test.describe("Vacuum Activity and Action Capabilities", () => {
     await expect(pauseBtn).toHaveAttribute("disabled", "");
     await expect(pauseBtn).toHaveCSS("opacity", "0.8");
   });
+
+  test("buttons_state_aware: false renders all configured buttons enabled in real DOM (legacy mode)", async ({
+    page,
+  }) => {
+    const vacuumState = {
+      entity_id: "vacuum.legacy_mode_vacuum",
+      state: "cleaning",
+      attributes: {
+        friendly_name: "Legacy Mode Vacuum",
+        supported_features: 0,
+      },
+    };
+
+    const { cardLocator } = await mountCard(page, {
+      config: {
+        type: "custom:xiaomi-vacuum-card",
+        entity: "vacuum.legacy_mode_vacuum",
+        buttons_state_aware: false,
+      },
+      hass: {
+        states: {
+          "vacuum.legacy_mode_vacuum": vacuumState,
+        },
+      },
+    });
+
+    const startBtn = cardLocator.locator("ha-icon-button[label='Start']");
+    const pauseBtn = cardLocator.locator("ha-icon-button[label='Pause']");
+    const stopBtn = cardLocator.locator("ha-icon-button[label='Stop']");
+
+    await expect(startBtn).toBeVisible();
+    await expect(startBtn).not.toHaveAttribute("disabled", "");
+
+    await expect(pauseBtn).toBeVisible();
+    await expect(pauseBtn).not.toHaveAttribute("disabled", "");
+
+    await expect(stopBtn).toBeVisible();
+    await expect(stopBtn).not.toHaveAttribute("disabled", "");
+
+    await startBtn.click();
+    const calls = await getRecordedServiceCalls(page);
+    expect(calls).toEqual([
+      expect.objectContaining({
+        domain: "vacuum",
+        service: "start",
+        data: { entity_id: "vacuum.legacy_mode_vacuum" },
+      }),
+    ]);
+  });
 });

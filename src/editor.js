@@ -50,23 +50,26 @@ export class XiaomiVacuumCardEditor extends LitElement {
   }
 
   configToEditorModel(config) {
+    const rawOpacity =
+      config.buttons_disabled_opacity !== undefined
+        ? config.buttons_disabled_opacity
+        : config.disabled_opacity;
+    const disabledOpacity = (() => {
+      if (rawOpacity === undefined || rawOpacity === null || rawOpacity === "") {
+        return 0.55;
+      }
+      const num = Number(rawOpacity);
+      return Number.isFinite(num) ? Math.max(0, Math.min(1, num)) : 0.55;
+    })();
+
     return {
       type: config.type,
       entity: config.entity,
       vendor: config.vendor,
       name: config.name === false ? "" : config.name,
       image: this.processData(config).image,
-      disabled_opacity: (() => {
-        if (
-          config.disabled_opacity === undefined ||
-          config.disabled_opacity === null ||
-          config.disabled_opacity === ""
-        ) {
-          return undefined;
-        }
-        const num = Number(config.disabled_opacity);
-        return Number.isFinite(num) ? Math.max(0, Math.min(1, num)) : undefined;
-      })(),
+      buttons_state_aware: config.buttons_state_aware !== false,
+      buttons_disabled_opacity: disabledOpacity,
       show_name: config.name !== false,
       show_state: config.state !== false,
       show_attributes: config.attributes !== false,
@@ -80,6 +83,8 @@ export class XiaomiVacuumCardEditor extends LitElement {
         "vendor",
         "name",
         "image",
+        "buttons_state_aware",
+        "buttons_disabled_opacity",
         "disabled_opacity",
         "state",
         "attributes",
@@ -97,17 +102,20 @@ export class XiaomiVacuumCardEditor extends LitElement {
     const image = this.cleanImageConfig(model.image);
     if (image) config.image = image;
 
-    if (
-      model.disabled_opacity !== undefined &&
-      model.disabled_opacity !== null &&
-      model.disabled_opacity !== ""
-    ) {
-      const num = Number(model.disabled_opacity);
-      if (Number.isFinite(num)) {
-        config.disabled_opacity = Math.max(0, Math.min(1, num));
-      }
+    if (model.buttons_state_aware === false) {
+      config.buttons_state_aware = false;
     }
 
+    if (
+      model.buttons_disabled_opacity !== undefined &&
+      model.buttons_disabled_opacity !== null &&
+      model.buttons_disabled_opacity !== ""
+    ) {
+      const num = Number(model.buttons_disabled_opacity);
+      if (Number.isFinite(num)) {
+        config.buttons_disabled_opacity = Math.max(0, Math.min(1, num));
+      }
+    }
     if (model.show_name === false) {
       config.name = false;
     } else if (model.name) {
@@ -318,6 +326,43 @@ export class XiaomiVacuumCardEditor extends LitElement {
   }
 
   renderVisibilitySection() {
+    const showButtons = this._model.show_buttons !== false;
+    const buttonsStateAware = this._model.buttons_state_aware !== false;
+
+    const schema = [
+      { name: "show_name", selector: { boolean: {} } },
+      { name: "show_state", selector: { boolean: {} } },
+      { name: "show_attributes", selector: { boolean: {} } },
+      { name: "show_buttons", selector: { boolean: {} } },
+      ...(showButtons
+        ? [
+            {
+              name: "buttons_state_aware",
+              label: "Buttons state-aware behavior",
+              selector: { boolean: {} },
+            },
+          ]
+        : []),
+      ...(showButtons && buttonsStateAware
+        ? [
+            {
+              name: "buttons_disabled_opacity",
+              label: "Buttons disabled opacity",
+              selector: { number: { min: 0, max: 1, step: 0.05, mode: "slider" } },
+            },
+          ]
+        : []),
+    ];
+
+    const data = {
+      show_name: this._model.show_name,
+      show_state: this._model.show_state,
+      show_attributes: this._model.show_attributes,
+      show_buttons: this._model.show_buttons,
+      buttons_state_aware: this._model.buttons_state_aware,
+      buttons_disabled_opacity: this._model.buttons_disabled_opacity,
+    };
+
     return html`
       <ha-expansion-panel
         outlined
@@ -326,27 +371,7 @@ export class XiaomiVacuumCardEditor extends LitElement {
       >
         <ha-icon slot="leading-icon" icon="mdi:eye-outline"></ha-icon>
         <h3 slot="header">Visibility</h3>
-        ${this.renderForm(
-          [
-            { name: "show_name", selector: { boolean: {} } },
-            { name: "show_state", selector: { boolean: {} } },
-            { name: "show_attributes", selector: { boolean: {} } },
-            { name: "show_buttons", selector: { boolean: {} } },
-            {
-              name: "disabled_opacity",
-              label: "Disabled buttons opacity",
-              selector: { number: { min: 0, max: 1, step: 0.05, mode: "slider" } },
-            },
-          ],
-          {
-            show_name: this._model.show_name,
-            show_state: this._model.show_state,
-            show_attributes: this._model.show_attributes,
-            show_buttons: this._model.show_buttons,
-            disabled_opacity: this._model.disabled_opacity,
-          },
-          (ev) => this.updateVisibility(ev),
-        )}
+        ${this.renderForm(schema, data, (ev) => this.updateVisibility(ev))}
       </ha-expansion-panel>
     `;
   }

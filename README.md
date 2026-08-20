@@ -86,7 +86,7 @@ When updating manually, replace `xiaomi-vacuum-card.js` and append a cache-busti
 3. Select your vacuum entity from the vacuum-only entity selector.
 4. Customize settings across the organized configuration sections:
    - **Basic**: Entity, card title, vendor preset, and background image.
-   - **Visibility**: Toggle card title, state row, attribute rows, action buttons, or adjust disabled button opacity.
+   - **Visibility**: Toggle card title, state row, attribute rows, action buttons, toggle state-aware adaptive button behavior, or adjust disabled button opacity.
    - **State**: Configure or reorder status, battery, and mode rows.
    - **Attributes**: Configure consumables, brushes, filters, sensors, or custom rows.
    - **Buttons**: Customize action buttons, add custom buttons, and configure static or dynamic service calls.
@@ -106,17 +106,18 @@ entity: vacuum.my_vacuum
 
 ### Top-Level Options
 
-| Option             | Type                | Default            | Description                                                                           |
-| :----------------- | :------------------ | :----------------- | :------------------------------------------------------------------------------------ |
-| `type`             | `string`            | **Required**       | Must be `custom:xiaomi-vacuum-card`.                                                  |
-| `entity`           | `string`            | **Required**       | The entity ID of your vacuum cleaner (must start with `vacuum.`).                     |
-| `vendor`           | `string`            | `xiaomi`           | Vacuum vendor preset for default attribute and service mappings.                      |
-| `name`             | `string` \| `false` | Friendly name      | Card header title. Set to `false` to hide the title area.                             |
-| `image`            | `string`            | `undefined`        | Card background image path, media URI, or external URL.                               |
-| `disabled_opacity` | `number`            | `0.55`             | Opacity for action buttons disabled by current vacuum state (clamped to `0.0`–`1.0`). |
-| `state`            | `object` \| `false` | See State Rows     | Custom configuration for state rows, or `false` to hide the state section.            |
-| `attributes`       | `object` \| `false` | See Attribute Rows | Custom configuration for attribute rows, or `false` to hide attributes.               |
-| `buttons`          | `object` \| `false` | See Buttons        | Custom configuration for action buttons, or `false` to hide buttons.                  |
+| Option                     | Type                | Default            | Description                                                                                                                                                |
+| :------------------------- | :------------------ | :----------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type`                     | `string`            | **Required**       | Must be `custom:xiaomi-vacuum-card`.                                                                                                                       |
+| `entity`                   | `string`            | **Required**       | The entity ID of your vacuum cleaner (must start with `vacuum.`).                                                                                          |
+| `vendor`                   | `string`            | `xiaomi`           | Vacuum vendor preset for default attribute and service mappings.                                                                                           |
+| `name`                     | `string` \| `false` | Friendly name      | Card header title. Set to `false` to hide the title area.                                                                                                  |
+| `image`                    | `string`            | `undefined`        | Card background image path, media URI, or external URL.                                                                                                    |
+| `buttons_state_aware`      | `boolean`           | `true`             | Enables state-aware button adaptation (`VacuumEntityFeature` and activity state). Set to `false` for legacy mode (all buttons always visible and enabled). |
+| `buttons_disabled_opacity` | `number`            | `0.55`             | Opacity for action buttons disabled by current vacuum state (clamped to `0.0`–`1.0`). Backward-compatible with `disabled_opacity`.                         |
+| `state`                    | `object` \| `false` | See State Rows     | Custom configuration for state rows, or `false` to hide the state section.                                                                                 |
+| `attributes`               | `object` \| `false` | See Attribute Rows | Custom configuration for attribute rows, or `false` to hide attributes.                                                                                    |
+| `buttons`                  | `object` \| `false` | See Buttons        | Custom configuration for action buttons, or `false` to hide buttons.                                                                                       |
 
 ---
 
@@ -178,10 +179,12 @@ Buttons represent the action controls displayed along the bottom of the card.
 
 Built-in buttons automatically adapt to your vacuum's supported capabilities (`VacuumEntityFeature` bitmasks) and live activity state:
 
-- **Automatic Presentation (`show: auto` or omitted `show` for built-in buttons)**:
+- **Adaptive State-Aware Presentation (`buttons_state_aware: true`, default)**:
   - Unsupported capabilities (e.g. Spot Clean or Locate if not supported by the vacuum) are automatically **hidden** (absent from DOM and focus order).
-  - Supported capabilities that are temporarily invalid in the current activity (e.g. Start while cleaning, Pause while docked, or any action while unavailable) are rendered with native **disabled** semantics (`ha-icon-button[disabled]`, `aria-disabled="true"`, non-interactive) at default `0.55` opacity (customizable via `disabled_opacity` or the Visibility slider).
+  - Supported capabilities that are temporarily invalid in the current activity (e.g. Start while cleaning, Pause while docked, or any action while unavailable) are rendered with native **disabled** semantics (`ha-icon-button[disabled]`, `aria-disabled="true"`, non-interactive) at default `0.55` opacity with grayscale styling (customizable via `buttons_disabled_opacity` or the Visibility slider).
   - Supported and valid capabilities are rendered enabled and clickable.
+- **Legacy Static Mode (`buttons_state_aware: false`)**:
+  - Disables all capability filtering and state-based blocking. All configured buttons remain unconditionally visible, enabled at 100% opacity, and interactive, replicating pre-v4.6.3 behavior.
 - **Custom Buttons**: Omitted `show` defaults to `true`. Custom buttons with unrecognized services remain unconditionally visible, while custom buttons targeting recognized vacuum services participate in capability filtering when configured with `show: "auto"`.
 - **Explicit Visibility (`show: true`)**: Forces the button visible even if the integration's feature flags are incomplete, while preserving capability, activity-state, disabled, and entity-availability pre-dispatch guards.
 - **Explicit Hidden (`show: false`)**: Unconditionally hides the action button.

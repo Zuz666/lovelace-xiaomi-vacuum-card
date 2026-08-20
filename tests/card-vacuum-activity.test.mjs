@@ -300,6 +300,52 @@ test("action presentation: custom buttons default to visible even with recognize
   assert.equal(customAutoSpotEval.visible, false);
 });
 
+test("action presentation: buttons_state_aware: false renders all buttons enabled and callable in legacy mode", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+
+  const hass = createHass({
+    states: {
+      "vacuum.legacy_test": {
+        attributes: { supported_features: 0 },
+        entity_id: "vacuum.legacy_test",
+        state: "cleaning",
+      },
+    },
+  });
+
+  card.setConfig({
+    entity: "vacuum.legacy_test",
+    buttons_state_aware: false,
+  });
+  card.hass = hass;
+
+  // In cleaning state with 0 features, all buttons are visible, enabled, and callable
+  const startEval = card.evaluateButton(card.config.buttons.start);
+  assert.equal(startEval.visible, true);
+  assert.equal(startEval.disabled, false);
+  assert.equal(startEval.callable, true);
+
+  const pauseEval = card.evaluateButton(card.config.buttons.pause);
+  assert.equal(pauseEval.visible, true);
+  assert.equal(pauseEval.disabled, false);
+  assert.equal(pauseEval.callable, true);
+
+  const stopEval = card.evaluateButton(card.config.buttons.stop);
+  assert.equal(stopEval.visible, true);
+  assert.equal(stopEval.disabled, false);
+  assert.equal(stopEval.callable, true);
+
+  await card.callActionButton(card.config.buttons.start);
+  assert.deepEqual(hass.calls.services, [
+    {
+      domain: "vacuum",
+      service: "start",
+      data: { entity_id: "vacuum.legacy_test" },
+    },
+  ]);
+});
+
 test("action presentation: user-supplied id or custom in button config cannot override computed keys", async () => {
   const { Card } = await loadCard();
   const card = new Card();

@@ -72,7 +72,9 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
     expect(latestConfig.attributes).toHaveProperty("custom_attribute");
   });
 
-  test("preserves and updates disabled_opacity in editor", async ({ page }) => {
+  test("initializes editor model with 0.55 default opacity and preserves buttons_state_aware", async ({
+    page,
+  }) => {
     const vacuumState = createDefaultVacuumState({
       entityId: "vacuum.test_vacuum",
     });
@@ -81,7 +83,6 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
       config: {
         type: "custom:xiaomi-vacuum-card",
         entity: "vacuum.test_vacuum",
-        disabled_opacity: 0.65,
       },
       hass: {
         states: {
@@ -90,23 +91,41 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
       },
     });
 
-    // Verify editor reads disabled_opacity into model
-    const modelOpacity = await page.evaluate(() => window.__activeEditor._model.disabled_opacity);
-    expect(modelOpacity).toBe(0.65);
+    // Default model opacity must be 0.55 so the slider does not open at 0
+    const modelOpacity = await page.evaluate(
+      () => window.__activeEditor._model.buttons_disabled_opacity,
+    );
+    expect(modelOpacity).toBe(0.55);
 
-    // Trigger visibility update
+    const modelStateAware = await page.evaluate(
+      () => window.__activeEditor._model.buttons_state_aware,
+    );
+    expect(modelStateAware).toBe(true);
+
+    // Toggle buttons_state_aware to false
     await page.evaluate(() => {
       window.__activeEditor.updateVisibility({
-        detail: { value: { disabled_opacity: 0.7 } },
+        detail: { value: { buttons_state_aware: false } },
       });
     });
 
-    const configChanges = await getRecordedConfigChanges(page);
-    const latestConfig = configChanges[configChanges.length - 1];
-    expect(latestConfig.disabled_opacity).toBe(0.7);
+    let configChanges = await getRecordedConfigChanges(page);
+    let latestConfig = configChanges[configChanges.length - 1];
+    expect(latestConfig.buttons_state_aware).toBe(false);
+
+    // Update buttons_disabled_opacity to 0.7
+    await page.evaluate(() => {
+      window.__activeEditor.updateVisibility({
+        detail: { value: { buttons_disabled_opacity: 0.7 } },
+      });
+    });
+
+    configChanges = await getRecordedConfigChanges(page);
+    latestConfig = configChanges[configChanges.length - 1];
+    expect(latestConfig.buttons_disabled_opacity).toBe(0.7);
   });
 
-  test("sanitizes out-of-range or invalid disabled_opacity in editor", async ({ page }) => {
+  test("sanitizes out-of-range or invalid buttons_disabled_opacity in editor", async ({ page }) => {
     const vacuumState = createDefaultVacuumState({
       entityId: "vacuum.test_vacuum",
     });
@@ -115,7 +134,7 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
       config: {
         type: "custom:xiaomi-vacuum-card",
         entity: "vacuum.test_vacuum",
-        disabled_opacity: 1.5,
+        buttons_disabled_opacity: 1.5,
       },
       hass: {
         states: {
@@ -125,59 +144,81 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
     });
 
     // Verify editor clamped 1.5 to 1.0 when loading model
-    const modelOpacity = await page.evaluate(() => window.__activeEditor._model.disabled_opacity);
+    const modelOpacity = await page.evaluate(
+      () => window.__activeEditor._model.buttons_disabled_opacity,
+    );
     expect(modelOpacity).toBe(1);
 
     // Trigger visibility update with negative value
     let countBefore = (await getRecordedConfigChanges(page)).length;
     await page.evaluate(() => {
       window.__activeEditor.updateVisibility({
-        detail: { value: { disabled_opacity: -0.5 } },
+        detail: { value: { buttons_disabled_opacity: -0.5 } },
       });
     });
 
     let configChanges = await getRecordedConfigChanges(page);
     expect(configChanges.length).toBe(countBefore + 1);
     let latestConfig = configChanges[configChanges.length - 1];
-    expect(latestConfig.disabled_opacity).toBe(0);
+    expect(latestConfig.buttons_disabled_opacity).toBe(0);
 
     // Trigger visibility update with invalid string
     countBefore = configChanges.length;
     await page.evaluate(() => {
       window.__activeEditor.updateVisibility({
-        detail: { value: { disabled_opacity: "invalid" } },
+        detail: { value: { buttons_disabled_opacity: "invalid" } },
       });
     });
 
     configChanges = await getRecordedConfigChanges(page);
     expect(configChanges.length).toBe(countBefore + 1);
     latestConfig = configChanges[configChanges.length - 1];
-    expect(latestConfig).not.toHaveProperty("disabled_opacity");
+     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
+         detail: { value: { buttons_disabled_opacity: "Infinity" } },
+     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
+         detail: { value: { buttons_disabled_opacity: "-Infinity" } },
+     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
 
     // Trigger visibility update with "Infinity"
     countBefore = configChanges.length;
     await page.evaluate(() => {
       window.__activeEditor.updateVisibility({
-        detail: { value: { disabled_opacity: "Infinity" } },
+     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
+         detail: { value: { buttons_disabled_opacity: "Infinity" } },
+     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
+         detail: { value: { buttons_disabled_opacity: "-Infinity" } },
+     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
       });
     });
 
     configChanges = await getRecordedConfigChanges(page);
     expect(configChanges.length).toBe(countBefore + 1);
     latestConfig = configChanges[configChanges.length - 1];
-    expect(latestConfig).not.toHaveProperty("disabled_opacity");
+     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
+         detail: { value: { buttons_disabled_opacity: "Infinity" } },
+     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
+         detail: { value: { buttons_disabled_opacity: "-Infinity" } },
+     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
 
     // Trigger visibility update with "-Infinity"
     countBefore = configChanges.length;
     await page.evaluate(() => {
       window.__activeEditor.updateVisibility({
-        detail: { value: { disabled_opacity: "-Infinity" } },
+     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
+         detail: { value: { buttons_disabled_opacity: "Infinity" } },
+     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
+         detail: { value: { buttons_disabled_opacity: "-Infinity" } },
+     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
       });
     });
 
     configChanges = await getRecordedConfigChanges(page);
     expect(configChanges.length).toBe(countBefore + 1);
     latestConfig = configChanges[configChanges.length - 1];
-    expect(latestConfig).not.toHaveProperty("disabled_opacity");
+     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
+         detail: { value: { buttons_disabled_opacity: "Infinity" } },
+     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
+         detail: { value: { buttons_disabled_opacity: "-Infinity" } },
+     expect(latestConfig).not.toHaveProperty("buttons_disabled_opacity");
   });
 });

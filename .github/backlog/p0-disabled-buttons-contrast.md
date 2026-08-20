@@ -14,11 +14,12 @@ On certain themes and background images, `opacity: 0.4` on solid glyphs (such as
 
 ## Scope
 
-1. Adjust the default disabled action button opacity from `0.4` to `0.55` in card styles.
-2. Add top-level `disabled_opacity` configuration support (number between `0.0` and `1.0`) setting `--xvc-disabled-opacity`.
-3. Add a slider control for `disabled_opacity` under the **Visibility** panel in the visual card editor (`XiaomiVacuumCardEditor`).
-4. Support explicit `show: true` on individual buttons to force 100% visibility while retaining runtime state guards.
-5. Document `disabled_opacity` in `README.md`.
+1. Adjust the default disabled action button opacity from `0.4` to `0.55` in card styles with grayscale styling for clear icon silhouettes.
+2. Add top-level `buttons_disabled_opacity` configuration support (number clamped between `0.0` and `1.0`) setting `--xvc-disabled-opacity`, with backward-compatible support for `disabled_opacity`.
+3. Add top-level `buttons_state_aware` configuration support (boolean, default: `true`) to allow completely toggling off capability- and state-based button presentation for full legacy card compatibility.
+4. Add a `buttons_state_aware` toggle and `buttons_disabled_opacity` slider under the **Visibility** panel in the visual card editor (`XiaomiVacuumCardEditor`), initializing the slider to `0.55` by default.
+5. Support explicit `show: true` on individual buttons to force 100% visibility while retaining runtime state guards.
+6. Document `buttons_state_aware` and `buttons_disabled_opacity` in `README.md`.
 
 ## Non-goals
 
@@ -27,14 +28,15 @@ On certain themes and background images, `opacity: 0.4` on solid glyphs (such as
 
 ## Proposed behavior
 
-Disabled action buttons render with a default opacity of `0.55`, ensuring clear icon silhouettes across light and dark themes. Users can configure `disabled_opacity: <number>` in YAML (clamped to `0.0`–`1.0`) or adjust the slider in the visual editor's Visibility section to tune opacity to their preferred theme.
+Disabled action buttons render with a default opacity of `0.55` and grayscale styling, ensuring clear icon silhouettes across light and dark themes. Users can configure `buttons_disabled_opacity: <number>` in YAML (clamped to `0.0`–`1.0`) or adjust the slider in the visual editor's Visibility section to tune opacity to their preferred theme. Setting `buttons_state_aware: false` restores legacy mode where all buttons remain permanently active at 100% opacity.
 
 ## Acceptance criteria
 
-- [ ] Default disabled action button opacity is `0.55`.
-- [ ] `disabled_opacity` in card YAML config overrides the default opacity via `--xvc-disabled-opacity`.
-- [ ] Visual editor Visibility tab provides a slider for `disabled_opacity` (`min: 0, max: 1, step: 0.05`).
-- [ ] `README.md` documents `disabled_opacity`.
+- [ ] Default disabled action button opacity is `0.55` with grayscale filter styling.
+- [ ] `buttons_disabled_opacity` in card YAML config overrides the default opacity via `--xvc-disabled-opacity`.
+- [ ] `buttons_state_aware: false` disables all state-based button blocking and renders all configured buttons active and callable.
+- [ ] Visual editor Visibility tab provides a toggle for `buttons_state_aware` and a slider for `buttons_disabled_opacity` initializing to `0.55`.
+- [ ] `README.md` documents `buttons_state_aware` and `buttons_disabled_opacity`.
 - [ ] Unit and browser component tests verify styling, configuration parsing, and editor round-trips.
 
 ## Test plan
