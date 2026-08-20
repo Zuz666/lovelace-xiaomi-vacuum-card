@@ -32,12 +32,12 @@ Disabled action buttons render with a Material Design 3 default opacity of `0.38
 
 ## Acceptance criteria
 
-- [ ] Default disabled action button opacity is `0.38` with SVG glyph drop-shadows and bottom scrim overlay.
-- [ ] `buttons_mode` selector supports `adaptive`, `compact`, and `always_active`.
-- [ ] `buttons_disabled_opacity` in card YAML config overrides default opacity via `--xvc-disabled-opacity`.
-- [ ] Visual editor Visibility tab provides controls for `scrim`, `buttons_mode`, and `buttons_disabled_opacity`.
-- [ ] `README.md` documents `buttons_mode`, `scrim`, and `buttons_disabled_opacity`.
-- [ ] Unit and browser component tests verify styling, configuration parsing, and editor round-trips.
+- [x] Default disabled action button opacity is `0.38` with SVG glyph drop-shadows and bottom scrim overlay.
+- [x] `buttons_mode` selector supports `adaptive`, `compact`, and `always_active`.
+- [x] `buttons_disabled_opacity` in card YAML config overrides default opacity via `--xvc-disabled-opacity`.
+- [x] Visual editor Visibility tab provides controls for `scrim`, `buttons_mode`, and `buttons_disabled_opacity`.
+- [x] `README.md` documents `buttons_mode`, `scrim`, and `buttons_disabled_opacity`.
+- [x] Unit and browser component tests verify styling, configuration parsing, and editor round-trips.
 
 ## Test plan
 
@@ -45,7 +45,7 @@ Disabled action buttons render with a Material Design 3 default opacity of `0.38
 - [x] Real browser component tests for Lit lifecycle, visible DOM, focus, keyboard, availability, accessibility, or interaction behavior
 - [ ] Pinned Home Assistant smoke test: N/A (tested via component layer)
 - [ ] Shared sanitized fixtures: N/A
-- [ ] Manual verification: Verified in component test suite
+- [x] Manual verification: Verified in component test suite
 
 Test-layer rationale:
 
