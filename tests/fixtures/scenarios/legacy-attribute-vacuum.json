@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "id": "legacy-attribute-vacuum",
+  "kind": "synthetic",
+  "description": "Legacy vacuum integration exposing supported_features: 0, status attribute, and battery_level attribute",
+  "vacuum_entity_id": "vacuum.legacy_cleaner",
+  "states": {
+    "vacuum.legacy_cleaner": {
+      "entity_id": "vacuum.legacy_cleaner",
+      "state": "docked",
+      "attributes": {
+        "friendly_name": "Legacy Attribute Cleaner",
+        "supported_features": 0,
+        "status": "Charging",
+        "battery_level": 65
+      }
+    }
+  },
+  "expected": {
+    "status": "Charging",
+    "battery": "65 %",
+    "actions": {
+      "start": { "visible": false, "disabled": true },
+      "pause": { "visible": false, "disabled": true },
+      "stop": { "visible": false, "disabled": true }
+    }
+  }
+}

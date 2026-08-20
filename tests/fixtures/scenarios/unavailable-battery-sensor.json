@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "unavailable-battery-sensor",
+  "kind": "synthetic",
+  "description": "Vacuum with discovered battery sensor that is in unavailable state",
+  "vacuum_entity_id": "vacuum.unavail_test_cleaner",
+  "states": {
+    "vacuum.unavail_test_cleaner": {
+      "entity_id": "vacuum.unavail_test_cleaner",
+      "state": "cleaning",
+      "attributes": {
+        "friendly_name": "Unavailable Test Cleaner",
+        "supported_features": 8220
+      }
+    },
+    "sensor.unavail_test_cleaner_battery": {
+      "entity_id": "sensor.unavail_test_cleaner_battery",
+      "state": "unavailable",
+      "attributes": {
+        "friendly_name": "Unavailable Cleaner Battery",
+        "device_class": "battery",
+        "unit_of_measurement": "%"
+      }
+    }
+  },
+  "expected": {
+    "status": "Cleaning",
+    "battery": "Unavailable"
+  }
+}

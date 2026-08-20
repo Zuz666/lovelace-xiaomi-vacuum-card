@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "id": "modern-separated-battery",
+  "kind": "synthetic",
+  "description": "Modern StateVacuumEntity with STATE (4096), START (8192), PAUSE (4), STOP (8), RETURN_HOME (16) and separate sensor battery",
+  "vacuum_entity_id": "vacuum.modern_cleaner",
+  "states": {
+    "vacuum.modern_cleaner": {
+      "entity_id": "vacuum.modern_cleaner",
+      "state": "docked",
+      "attributes": {
+        "friendly_name": "Modern Robotic Cleaner",
+        "supported_features": 12316,
+        "fan_speed": "Standard",
+        "fan_speed_list": ["Silent", "Standard", "Turbo", "Max"]
+      }
+    },
+    "sensor.modern_cleaner_battery": {
+      "entity_id": "sensor.modern_cleaner_battery",
+      "state": "88",
+      "attributes": {
+        "friendly_name": "Modern Robotic Cleaner Battery",
+        "device_class": "battery",
+        "unit_of_measurement": "%"
+      }
+    },
+    "binary_sensor.modern_cleaner_battery_charging": {
+      "entity_id": "binary_sensor.modern_cleaner_battery_charging",
+      "state": "off",
+      "attributes": {
+        "friendly_name": "Modern Robotic Cleaner Charging",
+        "device_class": "battery_charging"
+      }
+    }
+  },
+  "expected": {
+    "status": "Docked",
+    "battery": "88 %",
+    "actions": {
+      "start": { "visible": true, "disabled": false },
+      "pause": { "visible": true, "disabled": true },
+      "stop": { "visible": true, "disabled": true },
+      "return": { "visible": true, "disabled": false }
+    }
+  }
+}

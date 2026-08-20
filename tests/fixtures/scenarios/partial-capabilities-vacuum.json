@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "id": "partial-capabilities-vacuum",
+  "kind": "synthetic",
+  "description": "Vacuum supporting only START (8192) and RETURN_HOME (16) without PAUSE, STOP, or CLEAN_SPOT",
+  "vacuum_entity_id": "vacuum.partial_cleaner",
+  "states": {
+    "vacuum.partial_cleaner": {
+      "entity_id": "vacuum.partial_cleaner",
+      "state": "cleaning",
+      "attributes": {
+        "friendly_name": "Partial Capabilities Cleaner",
+        "supported_features": 8208
+      }
+    }
+  },
+  "expected": {
+    "status": "Cleaning",
+    "actions": {
+      "start": { "visible": true, "disabled": true },
+      "return": { "visible": true, "disabled": false },
+      "pause": { "visible": false, "disabled": true },
+      "stop": { "visible": false, "disabled": true }
+    }
+  }
+}
