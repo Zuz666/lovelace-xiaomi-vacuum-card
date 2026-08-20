@@ -149,5 +149,27 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
     configChanges = await getRecordedConfigChanges(page);
     latestConfig = configChanges[configChanges.length - 1];
     expect(latestConfig.disabled_opacity).toBeUndefined();
+
+    // Trigger visibility update with "Infinity"
+    await page.evaluate(() => {
+      window.__activeEditor.updateVisibility({
+        detail: { value: { disabled_opacity: "Infinity" } },
+      });
+    });
+
+    configChanges = await getRecordedConfigChanges(page);
+    latestConfig = configChanges[configChanges.length - 1];
+    expect(latestConfig.disabled_opacity).toBeUndefined();
+
+    // Trigger visibility update with "-Infinity"
+    await page.evaluate(() => {
+      window.__activeEditor.updateVisibility({
+        detail: { value: { disabled_opacity: "-Infinity" } },
+      });
+    });
+
+    configChanges = await getRecordedConfigChanges(page);
+    latestConfig = configChanges[configChanges.length - 1];
+    expect(latestConfig.disabled_opacity).toBeUndefined();
   });
 });
