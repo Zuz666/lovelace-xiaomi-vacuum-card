@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.6.3] - 2026-08-20
+
 ### Added
 
 - Native vacuum capability evaluation based on `VacuumEntityFeature` bitmasks (`START`, `PAUSE`, `STOP`, `RETURN_HOME`, `LOCATE`, `CLEAN_SPOT`) with presentation modes (`show: auto`, `show: true`, `show: false`), native disabled button semantics, and independent runtime service dispatch guards ([#33](https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/issues/33)).
@@ -274,7 +276,8 @@ See [README](https://github.com/benct/lovelace-xiaomi-vacuum-card) for more info
 
 - Initial release
 
-[Unreleased]: https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/compare/v4.6.2...HEAD
+[Unreleased]: https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/compare/v4.6.3...HEAD
+[4.6.3]: https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/compare/v4.6.2...v4.6.3
 [4.6.2]: https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/compare/v4.6.1...v4.6.2
 [4.6.1]: https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/compare/v4.6.0...v4.6.1
 [4.6.0]: https://github.com/Zuz666/lovelace-xiaomi-vacuum-card/compare/v4.5.0...v4.6.0
