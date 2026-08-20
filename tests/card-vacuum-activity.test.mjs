@@ -300,7 +300,96 @@ test("action presentation: custom buttons default to visible even with recognize
   assert.equal(customAutoSpotEval.visible, false);
 });
 
-test("action presentation: buttons_state_aware: false renders all buttons enabled and callable in legacy mode", async () => {
+test("action presentation: buttons_mode: compact hides state-blocked buttons from DOM", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+
+  const hass = createHass({
+    states: {
+      "vacuum.compact_test": {
+        attributes: {
+          supported_features:
+            VACUUM_FEATURES.START |
+            VACUUM_FEATURES.PAUSE |
+            VACUUM_FEATURES.STOP |
+            VACUUM_FEATURES.RETURN_HOME,
+        },
+        entity_id: "vacuum.compact_test",
+        state: "docked",
+      },
+    },
+  });
+
+  card.setConfig({
+    entity: "vacuum.compact_test",
+    buttons_mode: "compact",
+  });
+  card.hass = hass;
+
+  // When docked: start is visible and enabled; pause and stop are hidden (blocked)
+  const startEval = card.evaluateButton(card.config.buttons.start);
+  assert.equal(startEval.visible, true);
+  assert.equal(startEval.disabled, false);
+  assert.equal(startEval.callable, true);
+
+  const pauseEval = card.evaluateButton(card.config.buttons.pause);
+  assert.equal(pauseEval.visible, false);
+  assert.equal(pauseEval.disabled, true);
+  assert.equal(pauseEval.callable, false);
+
+  const stopEval = card.evaluateButton(card.config.buttons.stop);
+  assert.equal(stopEval.visible, false);
+  assert.equal(stopEval.disabled, true);
+  assert.equal(stopEval.callable, false);
+
+  // When state changes to cleaning: start is hidden; pause and stop become visible and enabled
+  hass.states["vacuum.compact_test"].state = "cleaning";
+  const startCleaning = card.evaluateButton(card.config.buttons.start);
+  assert.equal(startCleaning.visible, false);
+  assert.equal(startCleaning.disabled, true);
+
+  const pauseCleaning = card.evaluateButton(card.config.buttons.pause);
+  assert.equal(pauseCleaning.visible, true);
+  assert.equal(pauseCleaning.disabled, false);
+
+  const stopCleaning = card.evaluateButton(card.config.buttons.stop);
+  assert.equal(stopCleaning.visible, true);
+  assert.equal(stopCleaning.disabled, false);
+});
+
+test("action presentation: button-level show: true forces button visible in compact mode even when blocked", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+
+  const hass = createHass({
+    states: {
+      "vacuum.override_test": {
+        attributes: {
+          supported_features: VACUUM_FEATURES.START | VACUUM_FEATURES.PAUSE,
+        },
+        entity_id: "vacuum.override_test",
+        state: "docked",
+      },
+    },
+  });
+
+  card.setConfig({
+    entity: "vacuum.override_test",
+    buttons_mode: "compact",
+    buttons: {
+      pause: { show: true },
+    },
+  });
+  card.hass = hass;
+
+  // Pause button has show: true override -> visible even though vacuum is docked and mode is compact (but disabled by state)
+  const pauseEval = card.evaluateButton(card.config.buttons.pause);
+  assert.equal(pauseEval.visible, true);
+  assert.equal(pauseEval.disabled, true);
+  assert.equal(pauseEval.callable, false);
+});
+
+test("action presentation: buttons_mode: always_active (and legacy buttons_state_aware: false) renders all buttons enabled and callable", async () => {
   const { Card } = await loadCard();
   const card = new Card();
 
@@ -316,7 +405,7 @@ test("action presentation: buttons_state_aware: false renders all buttons enable
 
   card.setConfig({
     entity: "vacuum.legacy_test",
-    buttons_state_aware: false,
+    buttons_mode: "always_active",
   });
   card.hass = hass;
 

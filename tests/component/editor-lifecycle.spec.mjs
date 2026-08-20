@@ -72,7 +72,7 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
     expect(latestConfig.attributes).toHaveProperty("custom_attribute");
   });
 
-  test("initializes editor model with 0.55 default opacity and preserves buttons_state_aware", async ({
+  test("initializes editor model with 0.38 default opacity, adaptive mode, and auto scrim", async ({
     page,
   }) => {
     const vacuumState = createDefaultVacuumState({
@@ -91,27 +91,39 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
       },
     });
 
-    // Default model opacity must be 0.55 so the slider does not open at 0
+    // Default model opacity must be 0.38 (Material Design standard)
     const modelOpacity = await page.evaluate(
       () => window.__activeEditor._model.buttons_disabled_opacity,
     );
-    expect(modelOpacity).toBe(0.55);
+    expect(modelOpacity).toBe(0.38);
 
-    const modelStateAware = await page.evaluate(
-      () => window.__activeEditor._model.buttons_state_aware,
-    );
-    expect(modelStateAware).toBe(true);
+    const modelButtonsMode = await page.evaluate(() => window.__activeEditor._model.buttons_mode);
+    expect(modelButtonsMode).toBe("adaptive");
 
-    // Toggle buttons_state_aware to false
+    const modelScrim = await page.evaluate(() => window.__activeEditor._model.scrim);
+    expect(modelScrim).toBe("auto");
+
+    // Update buttons_mode to compact
     await page.evaluate(() => {
       window.__activeEditor.updateVisibility({
-        detail: { value: { buttons_state_aware: false } },
+        detail: { value: { buttons_mode: "compact" } },
       });
     });
 
     let configChanges = await getRecordedConfigChanges(page);
     let latestConfig = configChanges[configChanges.length - 1];
-    expect(latestConfig.buttons_state_aware).toBe(false);
+    expect(latestConfig.buttons_mode).toBe("compact");
+
+    // Update scrim to true
+    await page.evaluate(() => {
+      window.__activeEditor.updateVisibility({
+        detail: { value: { scrim: "true" } },
+      });
+    });
+
+    configChanges = await getRecordedConfigChanges(page);
+    latestConfig = configChanges[configChanges.length - 1];
+    expect(latestConfig.scrim).toBe(true);
 
     // Update buttons_disabled_opacity to 0.7
     await page.evaluate(() => {

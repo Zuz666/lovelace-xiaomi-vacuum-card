@@ -1,5 +1,7 @@
 export const VERSION = "4.6.4";
-
+export const DEFAULT_BUTTONS_DISABLED_OPACITY = 0.38;
+export const DEFAULT_BUTTONS_MODE = "adaptive";
+export const DEFAULT_SCRIM = "auto";
 export const state = {
   status: {
     key: "status",

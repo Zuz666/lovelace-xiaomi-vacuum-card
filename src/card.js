@@ -1,8 +1,15 @@
 import { LitElement, html } from "./lit.js";
-import { state, attributes, buttons, vendors, SERVICE_TO_FEATURE } from "./constants.js";
+import {
+  state,
+  attributes,
+  buttons,
+  vendors,
+  SERVICE_TO_FEATURE,
+  DEFAULT_BUTTONS_MODE,
+  DEFAULT_SCRIM,
+} from "./constants.js";
 import { cardStyles } from "./styles.js";
 import { sanitizeStyleUrl } from "./utils.js";
-
 export class XiaomiVacuumCard extends LitElement {
   static get properties() {
     return {
@@ -19,9 +26,24 @@ export class XiaomiVacuumCard extends LitElement {
     return cardStyles;
   }
 
+  hasImage() {
+    return Boolean(this.config && (this.config.image || this._resolvedImage));
+  }
+
+  isScrimActive() {
+    if (!this.config || !this.config.show || this.config.show.buttons === false) return false;
+    const scrim = this.config.scrim;
+    if (scrim === "true" || scrim === true) return true;
+    if (scrim === "false" || scrim === false) return false;
+    return this.hasImage();
+  }
+
   render() {
     return this.stateObj
-      ? html` <ha-card class="background" style="${this.config.styles.background}">
+      ? html` <ha-card
+          class="background ${this.hasImage() ? "has-image" : ""} ${this.isScrimActive() ? "has-scrim" : ""}"
+          style="${this.config.styles.background}"
+        >
           ${
             this.config.show.name
               ? html`<div class="title">
@@ -57,6 +79,7 @@ export class XiaomiVacuumCard extends LitElement {
                 </div>`
               : null
           }
+          ${this.isScrimActive() ? html`<div class="scrim"></div>` : null}
           ${
             this.config.show.buttons
               ? html` <div class="flex">
@@ -494,7 +517,13 @@ export class XiaomiVacuumCard extends LitElement {
     if (!data) return { visible: false, disabled: true, callable: false };
     if (data.show === false) return { visible: false, disabled: true, callable: false };
 
-    if (this.config && this.config.buttons_state_aware === false) {
+    const buttonsMode = this.config
+      ? this.config.buttons_mode || DEFAULT_BUTTONS_MODE
+      : DEFAULT_BUTTONS_MODE;
+    if (
+      buttonsMode === "always_active" ||
+      (this.config && this.config.buttons_state_aware === false)
+    ) {
       return {
         visible: true,
         disabled: false,
@@ -527,9 +556,12 @@ export class XiaomiVacuumCard extends LitElement {
     }
 
     if (isStateUnavailable) {
-      return { visible: true, disabled: true, callable: false };
+      return {
+        visible: buttonsMode === "compact" && !explicitShow ? false : true,
+        disabled: true,
+        callable: false,
+      };
     }
-
     let isBlocked = false;
     if (service === "vacuum.start") {
       isBlocked = ["cleaning", "on"].includes(currentState);
@@ -540,9 +572,8 @@ export class XiaomiVacuumCard extends LitElement {
     } else if (service === "vacuum.return_to_base") {
       isBlocked = currentState === "returning";
     }
-
     return {
-      visible: true,
+      visible: buttonsMode === "compact" && !explicitShow ? !isBlocked : true,
       disabled: isBlocked,
       callable: !isBlocked,
     };
@@ -571,7 +602,13 @@ export class XiaomiVacuumCard extends LitElement {
 
   async callActionButton(data) {
     if (!data) return;
-    if (this.config && this.config.buttons_state_aware === false) {
+    const buttonsMode = this.config
+      ? this.config.buttons_mode || DEFAULT_BUTTONS_MODE
+      : DEFAULT_BUTTONS_MODE;
+    if (
+      buttonsMode === "always_active" ||
+      (this.config && this.config.buttons_state_aware === false)
+    ) {
       const payload =
         data.service_data_mode === "dynamic" ? data.service_data_template : data.service_data;
       await this.callService(data.service, payload, true);
@@ -946,7 +983,27 @@ export class XiaomiVacuumCard extends LitElement {
       });
     }
 
-    const buttonsStateAware = config.buttons_state_aware !== false;
+    let scrim = DEFAULT_SCRIM;
+    if (config.scrim === true || config.scrim === "true") {
+      scrim = "true";
+    } else if (config.scrim === false || config.scrim === "false") {
+      scrim = "false";
+    } else if (config.scrim === "auto") {
+      scrim = DEFAULT_SCRIM;
+    }
+
+    let buttonsMode = DEFAULT_BUTTONS_MODE;
+    if (
+      config.buttons_mode === "adaptive" ||
+      config.buttons_mode === "compact" ||
+      config.buttons_mode === "always_active"
+    ) {
+      buttonsMode = config.buttons_mode;
+    } else if (config.buttons_state_aware === false || config.state_aware_buttons === false) {
+      buttonsMode = "always_active";
+    }
+
+    const buttonsStateAware = buttonsMode !== "always_active";
     const rawOpacity =
       config.buttons_disabled_opacity !== undefined
         ? config.buttons_disabled_opacity
@@ -963,6 +1020,8 @@ export class XiaomiVacuumCard extends LitElement {
       name: config.name,
       entity: config.entity,
       image,
+      scrim,
+      buttons_mode: buttonsMode,
       buttons_state_aware: buttonsStateAware,
       buttons_disabled_opacity: buttonsDisabledOpacity,
       disabled_opacity: buttonsDisabledOpacity,
