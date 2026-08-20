@@ -62,7 +62,7 @@ Unit tests verify configuration parsing and clamping of `disabled_opacity`. Play
 
 - Blocked by: None
 - Blocks: None
-- Related epic: {{issue:epic-entity-aware-rows-controls}}
+- Related epic: {{issue:epic-entity-aware-rows}}
 
 ## Release impact
 
