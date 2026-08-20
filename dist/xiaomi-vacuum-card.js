@@ -247,6 +247,15 @@ var cardStyles = css`
     align-items: center;
     justify-content: space-evenly;
   }
+  .flex ha-icon-button {
+    background: var(--ha-card-button-background, rgba(0, 0, 0, 0.2));
+    border-radius: 50%;
+    margin: 0 4px;
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.4));
+    transition:
+      background-color 0.2s ease,
+      opacity 0.2s ease;
+  }
   .grid {
     display: grid;
     grid-template-columns: repeat(2, auto);
@@ -336,7 +345,7 @@ var cardStyles = css`
   }
   ha-icon-button[disabled] {
     opacity: var(--xvc-disabled-opacity, var(--disabled-opacity, 0.55));
-    filter: grayscale(100%);
+    filter: grayscale(100%) drop-shadow(0 0 2px rgba(0, 0, 0, 0.4));
     cursor: not-allowed;
     pointer-events: none;
   }
@@ -1676,14 +1685,14 @@ var XiaomiVacuumCardEditor = class extends LitElement {
       ...showButtons ? [
         {
           name: "buttons_state_aware",
-          label: "Buttons state-aware behavior",
+          helper: "Adapt button visibility and disabled states to vacuum activity",
           selector: { boolean: {} }
         }
       ] : [],
       ...showButtons && buttonsStateAware ? [
         {
           name: "buttons_disabled_opacity",
-          label: "Buttons disabled opacity",
+          helper: "Opacity for disabled buttons (0.0 to 1.0, default: 0.55)",
           selector: { number: { min: 0, max: 1, step: 0.05, mode: "slider" } }
         }
       ] : []
@@ -1864,12 +1873,16 @@ var XiaomiVacuumCardEditor = class extends LitElement {
         .data=${data}
         .schema=${schema}
         .computeLabel=${this.computeLabel}
+        .computeHelper=${this.computeHelper}
         @value-changed=${handler}
       ></ha-form>
     `;
   }
   computeLabel(schema) {
     return "label" in schema ? schema.label : schema.name;
+  }
+  computeHelper(schema) {
+    return "helper" in schema ? schema.helper : void 0;
   }
   updateBasic(ev) {
     this._model = Object.assign({}, this._model, ev.detail.value);

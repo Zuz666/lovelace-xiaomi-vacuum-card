@@ -34,8 +34,8 @@ The implementation also needs reusable entity fixtures and real browser componen
 - [ ] {{issue:p1-modularize-src}} — modularize src directory into domain modules
 - [ ] {{issue:p1-entity-aware-row-design}} — define the entity-aware row model and migration strategy
 - [ ] {{issue:p1-entity-fixture-matrix}} — introduce reusable entity fixtures and a scenario matrix
-
-Shared testing prerequisite:
+- [ ] {{issue:p1-editor-helper-descriptions}} — provide descriptive helper text across all visual editor sections
+      Shared testing prerequisite:
 
 - [x] {{issue:p0-real-lit-component-tests}} — provide real Lit and DOM component coverage
 

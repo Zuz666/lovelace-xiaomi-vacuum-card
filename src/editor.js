@@ -338,7 +338,7 @@ export class XiaomiVacuumCardEditor extends LitElement {
         ? [
             {
               name: "buttons_state_aware",
-              label: "Buttons state-aware behavior",
+              helper: "Adapt button visibility and disabled states to vacuum activity",
               selector: { boolean: {} },
             },
           ]
@@ -347,7 +347,7 @@ export class XiaomiVacuumCardEditor extends LitElement {
         ? [
             {
               name: "buttons_disabled_opacity",
-              label: "Buttons disabled opacity",
+              helper: "Opacity for disabled buttons (0.0 to 1.0, default: 0.55)",
               selector: { number: { min: 0, max: 1, step: 0.05, mode: "slider" } },
             },
           ]
@@ -556,6 +556,7 @@ export class XiaomiVacuumCardEditor extends LitElement {
         .data=${data}
         .schema=${schema}
         .computeLabel=${this.computeLabel}
+        .computeHelper=${this.computeHelper}
         @value-changed=${handler}
       ></ha-form>
     `;
@@ -563,6 +564,10 @@ export class XiaomiVacuumCardEditor extends LitElement {
 
   computeLabel(schema) {
     return "label" in schema ? schema.label : schema.name;
+  }
+
+  computeHelper(schema) {
+    return "helper" in schema ? schema.helper : undefined;
   }
 
   updateBasic(ev) {
