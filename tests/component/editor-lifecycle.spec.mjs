@@ -129,6 +129,7 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
     expect(modelOpacity).toBe(1);
 
     // Trigger visibility update with negative value
+    let countBefore = (await getRecordedConfigChanges(page)).length;
     await page.evaluate(() => {
       window.__activeEditor.updateVisibility({
         detail: { value: { disabled_opacity: -0.5 } },
@@ -136,10 +137,12 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
     });
 
     let configChanges = await getRecordedConfigChanges(page);
+    expect(configChanges.length).toBe(countBefore + 1);
     let latestConfig = configChanges[configChanges.length - 1];
     expect(latestConfig.disabled_opacity).toBe(0);
 
     // Trigger visibility update with invalid string
+    countBefore = configChanges.length;
     await page.evaluate(() => {
       window.__activeEditor.updateVisibility({
         detail: { value: { disabled_opacity: "invalid" } },
@@ -147,7 +150,34 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
     });
 
     configChanges = await getRecordedConfigChanges(page);
+    expect(configChanges.length).toBe(countBefore + 1);
     latestConfig = configChanges[configChanges.length - 1];
-    expect(latestConfig.disabled_opacity).toBeUndefined();
+    expect(latestConfig).not.toHaveProperty("disabled_opacity");
+
+    // Trigger visibility update with "Infinity"
+    countBefore = configChanges.length;
+    await page.evaluate(() => {
+      window.__activeEditor.updateVisibility({
+        detail: { value: { disabled_opacity: "Infinity" } },
+      });
+    });
+
+    configChanges = await getRecordedConfigChanges(page);
+    expect(configChanges.length).toBe(countBefore + 1);
+    latestConfig = configChanges[configChanges.length - 1];
+    expect(latestConfig).not.toHaveProperty("disabled_opacity");
+
+    // Trigger visibility update with "-Infinity"
+    countBefore = configChanges.length;
+    await page.evaluate(() => {
+      window.__activeEditor.updateVisibility({
+        detail: { value: { disabled_opacity: "-Infinity" } },
+      });
+    });
+
+    configChanges = await getRecordedConfigChanges(page);
+    expect(configChanges.length).toBe(countBefore + 1);
+    latestConfig = configChanges[configChanges.length - 1];
+    expect(latestConfig).not.toHaveProperty("disabled_opacity");
   });
 });

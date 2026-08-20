@@ -73,6 +73,27 @@ test("disabled_opacity: clamps values between 0 and 1", async () => {
   assert.match(card.config.styles.background, /--xvc-disabled-opacity:\s*0;/);
 });
 
+test("disabled_opacity: ignores infinite or non-finite values", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+
+  card.setConfig({ entity: "vacuum.xiaomi", disabled_opacity: Infinity });
+  assert.equal(card.config.disabled_opacity, undefined);
+  assert.doesNotMatch(card.config.styles.background, /--xvc-disabled-opacity:/);
+
+  card.setConfig({ entity: "vacuum.xiaomi", disabled_opacity: -Infinity });
+  assert.equal(card.config.disabled_opacity, undefined);
+  assert.doesNotMatch(card.config.styles.background, /--xvc-disabled-opacity:/);
+
+  card.setConfig({ entity: "vacuum.xiaomi", disabled_opacity: "Infinity" });
+  assert.equal(card.config.disabled_opacity, undefined);
+  assert.doesNotMatch(card.config.styles.background, /--xvc-disabled-opacity:/);
+
+  card.setConfig({ entity: "vacuum.xiaomi", disabled_opacity: "-Infinity" });
+  assert.equal(card.config.disabled_opacity, undefined);
+  assert.doesNotMatch(card.config.styles.background, /--xvc-disabled-opacity:/);
+});
+
 test("updateImageStyles preserves disabled_opacity CSS variable", async () => {
   const { Card } = await loadCard();
   const card = new Card();
