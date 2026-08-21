@@ -80,6 +80,14 @@ export function createComponentServer() {
           this._shadow = this.attachShadow({ mode: "open" });
           this._shadow.innerHTML = \`<button type="button" style="width:100%;height:100%;background:none;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;"><slot></slot></button>\`;
           this._btn = this._shadow.querySelector("button");
+          this.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              if (!this.hasAttribute("disabled")) {
+                e.preventDefault();
+                this.click();
+              }
+            }
+          });
         }
         connectedCallback() {
           this.style.display = "inline-flex";

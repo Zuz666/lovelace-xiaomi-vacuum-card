@@ -15,6 +15,8 @@ const SENSITIVE_PATTERNS = [
   /api_key/i,
   /\bbearer\b/i,
   /private_key/i,
+  /\bserial_number\b/i,
+  /\bcloud_user_id\b/i,
   /\b(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}\b/,
   /\b192\.168\.\d{1,3}\.\d{1,3}\b/,
   /\b10\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/,
@@ -22,8 +24,7 @@ const SENSITIVE_PATTERNS = [
 ];
 
 const SENSITIVE_KEY_PATTERN =
-  /(?:^|[_\-.])(token|secret|password|auth_token|access_token|api_key|private_key|bearer|gps|latitude|longitude|coordinates?|polygon)(?:[_\-.]|$)/i;
-
+  /(?:^|[_\-.])(token|secret|password|auth_token|access_token|api_key|private_key|bearer|gps|latitude|longitude|coordinates?|polygon|serial(?:_number)?|cloud_user(?:_id)?)(?:[_\-.]|$)/i;
 /**
  * Recursively scans an object for prohibited credential or location keys.
  *

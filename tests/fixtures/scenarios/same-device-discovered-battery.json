@@ -21,6 +21,15 @@
         "device_class": "battery",
         "unit_of_measurement": "%"
       }
+    },
+    "sensor.unrelated_device_battery": {
+      "entity_id": "sensor.unrelated_device_battery",
+      "state": "42",
+      "attributes": {
+        "friendly_name": "Unrelated Device Battery",
+        "device_class": "battery",
+        "unit_of_measurement": "%"
+      }
     }
   },
   "entities": {
@@ -34,12 +43,22 @@
       "device_id": "device_vacuum_robot_101",
       "platform": "roborock",
       "device_class": "battery"
+    },
+    "sensor.unrelated_device_battery": {
+      "entity_id": "sensor.unrelated_device_battery",
+      "device_id": "device_unrelated_sensor_202",
+      "platform": "generic",
+      "device_class": "battery"
     }
   },
   "devices": {
     "device_vacuum_robot_101": {
       "id": "device_vacuum_robot_101",
       "name": "Roborock S7 MaxV"
+    },
+    "device_unrelated_sensor_202": {
+      "id": "device_unrelated_sensor_202",
+      "name": "Unrelated Sensor Hub"
     }
   },
   "expected": {

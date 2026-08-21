@@ -157,6 +157,26 @@ test("fixtures: rejects sensitive data, credentials, opaque tokens, MAC addresse
     () => validateFixture(createFixtureWithState("bearer", "opaque-bearer-value")),
     /Sanitization error/,
   );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("serial_number", "SN-123456789")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("serialNumber", "SN-123456789")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("serial", "123456789")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("cloud_user_id", "user-abc-123")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("cloudUserId", "user-abc-123")),
+    /Sanitization error/,
+  );
   // Location, GPS, and map coordinates
   assert.throws(
     () => validateFixture(createFixtureWithState("latitude", 37.7749)),
@@ -304,6 +324,17 @@ test("node contract: modern separated battery fixture resolves battery sensor an
         `Action '${actionId}' disabled mismatch`,
       );
     }
+
+    // Assert service target and payload evaluation for enabled start action
+    const startBtn = card.config.buttons.start;
+    await card.callActionButton(startBtn);
+    assert.deepEqual(hass.calls.services, [
+      {
+        domain: "vacuum",
+        service: "start",
+        data: { entity_id: fixture.vacuum_entity_id },
+      },
+    ]);
   }
 });
 
@@ -322,4 +353,5 @@ test("node contract: same-device discovered battery fixture resolves renamed bat
   const batteryRow = Object.assign({ id: "battery" }, card.config.state.battery);
   const resolved = card.resolveAttributeSource(batteryRow);
   assert.equal(resolved.rawValue, "94");
+  assert.equal(resolved.entityState?.entity_id, "sensor.living_room_power_level");
 });

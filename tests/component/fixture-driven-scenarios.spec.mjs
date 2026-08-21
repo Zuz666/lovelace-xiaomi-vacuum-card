@@ -18,7 +18,7 @@ test.describe("Fixture-Driven Scenarios Matrix", () => {
     });
 
     // Verify status and battery values rendered in the real DOM
-    await expect(cardLocator.locator(".grid-left > div").first()).toContainText("Docked");
+    await expect(cardLocator.locator(".grid-left")).toContainText("Docked");
     await expect(cardLocator.locator(".grid-left")).toContainText("88%");
     // Verify action button presentation and disabled states
     const startBtn = cardLocator.locator("ha-icon-button[label='Start']");
@@ -38,6 +38,17 @@ test.describe("Fixture-Driven Scenarios Matrix", () => {
 
     await expect(returnBtn).toBeVisible();
     await expect(returnBtn).not.toHaveAttribute("disabled", "");
+
+    // Verify keyboard interaction triggers service call
+    await startBtn.focus();
+    await page.keyboard.press("Enter");
+    const serviceCalls = await page.evaluate(() => window.__componentHarness.serviceCalls);
+    expect(serviceCalls.length).toBe(1);
+    expect(serviceCalls[0]).toMatchObject({
+      domain: "vacuum",
+      service: "start",
+      data: { entity_id: fixture.vacuum_entity_id },
+    });
   });
 
   test("scenario: legacy-attribute-vacuum renders status and battery from legacy attributes", async ({
@@ -53,7 +64,7 @@ test.describe("Fixture-Driven Scenarios Matrix", () => {
       },
       hass,
     });
-    await expect(cardLocator.locator(".grid-left > div").first()).toContainText("Docked");
+    await expect(cardLocator.locator(".grid-left")).toContainText("Docked");
     await expect(cardLocator.locator(".grid-left")).toContainText("65%");
     // With supported_features: 0, modern automatic actions are hidden
     await expect(cardLocator.locator("ha-icon-button[label='Start']")).toHaveCount(0);
@@ -75,7 +86,7 @@ test.describe("Fixture-Driven Scenarios Matrix", () => {
       hass,
     });
 
-    await expect(cardLocator.locator(".grid-left > div").first()).toContainText("Cleaning");
+    await expect(cardLocator.locator(".grid-left")).toContainText("Cleaning");
     await expect(cardLocator.locator(".grid-left")).toContainText("Unavailable");
   });
 
@@ -123,7 +134,7 @@ test.describe("Fixture-Driven Scenarios Matrix", () => {
       hass,
     });
 
-    await expect(cardLocator.locator(".grid-left > div").first()).toContainText("Docked");
+    await expect(cardLocator.locator(".grid-left")).toContainText("Docked");
     await expect(cardLocator.locator(".grid-left")).toContainText("94%");
   });
 });
