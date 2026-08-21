@@ -91,34 +91,34 @@ Additional fixtures should independently vary `STATE`, `START`, `PAUSE`, `STOP`,
 
 ## Acceptance criteria
 
-- [ ] A documented fixture schema distinguishes synthetic scenarios from verified integration or model evidence.
-- [ ] Every fixture declares `schema_version: 1` or another explicitly supported integer version.
-- [ ] Loaders reject missing and unknown future schema versions before passing data to Node, browser, or Home Assistant consumers.
-- [ ] Any supported older-version migration is explicit, one-way, documented, and covered by tests.
-- [ ] Fixtures include main vacuum state, related entity states, feature flags, and required registry metadata.
-- [ ] A modern `StateVacuumEntity` fixture includes the required `STATE` feature bit.
-- [ ] `supported_features: 0` appears only in a separately identified legacy or incomplete-feature scenario.
-- [ ] Expected behavior can describe displayed values, availability, controls, and service or action payloads.
-- [ ] A loader validates required fields, unique fixture IDs, schema versions, and privacy constraints.
-- [ ] Node contract tests consume at least two fixtures.
-- [ ] Real browser component tests consume the same fixture format.
-- [ ] At least one selected fixture can be represented in the HA smoke environment, or the limitation is documented with a deterministic adapter plan.
-- [ ] Initial fixtures cover modern separated entities, legacy attributes, unavailable related entities, and multiple supported-feature combinations.
-- [ ] Compatibility reports document how maintainers convert sanitized evidence into reviewed fixtures.
-- [ ] Future vendor profiles require fixture-backed regression tests.
+- [x] A documented fixture schema distinguishes synthetic scenarios from verified integration or model evidence.
+- [x] Every fixture declares `schema_version: 1` or another explicitly supported integer version.
+- [x] Loaders reject missing and unknown future schema versions before passing data to Node, browser, or Home Assistant consumers.
+- [x] Any supported older-version migration is explicit, one-way, documented, and covered by tests.
+- [x] Fixtures include main vacuum state, related entity states, feature flags, and required registry metadata.
+- [x] A modern `StateVacuumEntity` fixture includes the required `STATE` feature bit.
+- [x] `supported_features: 0` appears only in a separately identified legacy or incomplete-feature scenario.
+- [x] Expected behavior can describe displayed values, availability, controls, and service or action payloads.
+- [x] A loader validates required fields, unique fixture IDs, schema versions, and privacy constraints.
+- [x] Node contract tests consume at least two fixtures.
+- [x] Real browser component tests consume the same fixture format.
+- [x] At least one selected fixture can be represented in the HA smoke environment, or the limitation is documented with a deterministic adapter plan.
+- [x] Initial fixtures cover modern separated entities, legacy attributes, unavailable related entities, and multiple supported-feature combinations.
+- [x] Compatibility reports document how maintainers convert sanitized evidence into reviewed fixtures.
+- [x] Future vendor profiles require fixture-backed regression tests.
 
 ## Test plan
 
-- [ ] Fixture schema validation tests
-- [ ] Tests for missing, malformed, current, migrated, and unknown future `schema_version` values
-- [ ] Test proving unsupported versions are rejected before consumer builders run
-- [ ] Privacy and forbidden-field validation tests
-- [ ] Contract-test loader integration
-- [ ] Component-test loader integration
-- [ ] Expected-value and service-payload assertions from shared fixtures
-- [ ] Modern `STATE` feature fixture and separate `supported_features: 0` legacy fixture
-- [ ] Negative tests for malformed and ambiguous fixture data
-- [ ] Review fixtures for deterministic ordering and stable IDs
+- [x] Fixture schema validation tests
+- [x] Tests for missing, malformed, current, migrated, and unknown future `schema_version` values
+- [x] Test proving unsupported versions are rejected before consumer builders run
+- [x] Privacy and forbidden-field validation tests
+- [x] Contract-test loader integration
+- [x] Component-test loader integration
+- [x] Expected-value and service-payload assertions from shared fixtures
+- [x] Modern `STATE` feature fixture and separate `supported_features: 0` legacy fixture
+- [x] Negative tests for malformed and ambiguous fixture data
+- [x] Review fixtures for deterministic ordering and stable IDs
 
 ## Compatibility and migration
 
