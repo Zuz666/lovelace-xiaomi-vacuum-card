@@ -283,13 +283,12 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
     expect(basicHelpersInDom.some((text) => text.includes("Custom card title"))).toBe(true);
 
     // 2. Expand Visibility panel and verify rendered helper text in DOM
-    await page.evaluate(() => {
+    await page.evaluate(async () => {
       const editor = window.__activeEditor;
-      editor._expandedSections = { basic: true, visibility: true };
+      editor._expandedSections = Object.assign({}, editor._expandedSections, { visibility: true });
       editor.requestUpdate();
+      await editor.updateComplete;
     });
-    await page.waitForTimeout(50);
-
     const visibilityHelpersInDom = await page.evaluate(() => {
       const editor = window.__activeEditor;
       const visPanel = editor.shadowRoot.querySelectorAll("ha-expansion-panel")[1];

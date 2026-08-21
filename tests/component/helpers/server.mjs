@@ -180,8 +180,8 @@ export function createComponentServer() {
           if (!Array.isArray(this._schema)) return;
           this.innerHTML = this._schema
             .map((item) => {
-              const label = this._computeLabel ? this._computeLabel(item) : item.label || item.name;
-              const helper = this._computeHelper ? this._computeHelper(item) : item.helper;
+              const label = typeof this._computeLabel === "function" ? this._computeLabel(item) : item.label || item.name;
+              const helper = typeof this._computeHelper === "function" ? this._computeHelper(item) : undefined;
               return \`<div class="form-row" data-field="\${item.name}">\` +
                 \`<label class="form-label">\${label}</label>\` +
                 (helper ? \`<p class="ha-form-helper-text helper">\${helper}</p>\` : "") +
