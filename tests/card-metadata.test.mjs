@@ -68,3 +68,73 @@ test("getGridOptions returns default grid options", async () => {
     min_rows: 2,
   });
 });
+
+test("editor computeHelper extracts helper text from schema", async () => {
+  const { Editor } = await loadCard();
+  const editor = new Editor();
+
+  assert.equal(
+    editor.computeHelper({ name: "entity", helper: "Vacuum entity helper" }),
+    "Vacuum entity helper",
+  );
+  assert.equal(editor.computeHelper({ name: "entity" }), undefined);
+  assert.equal(editor.computeHelper({}), undefined);
+});
+
+test("editor Basic and Visibility section schemas include helper descriptions on all fields", async () => {
+  const { Editor } = await loadCard();
+  const editor = new Editor();
+
+  editor.setConfig({
+    type: "custom:xiaomi-vacuum-card",
+    entity: "vacuum.xiaomi",
+    buttons_mode: "adaptive",
+    buttons: {},
+  });
+
+  const basicTemplate = editor.renderBasicSection();
+  const basicForm = basicTemplate.values.find((val) => val && val.strings && val.strings.raw);
+  assert.ok(basicTemplate);
+
+  // Verify entityDataRowSchema and buttonRowSchema include helper descriptions
+  const rowSchema = toHost(editor.entityDataRowSchema({ id: "status", custom: true }));
+  for (const field of rowSchema) {
+    assert.ok(field.helper, `Field '${field.name}' in entityDataRowSchema is missing helper text`);
+    assert.equal(typeof field.helper, "string");
+    assert.ok(field.helper.length > 5);
+  }
+
+  const btnSchema = toHost(editor.buttonRowSchema({ id: "custom_btn", custom: true }));
+  for (const field of btnSchema) {
+    assert.ok(field.helper, `Field '${field.name}' in buttonRowSchema is missing helper text`);
+    assert.equal(typeof field.helper, "string");
+    assert.ok(field.helper.length > 5);
+  }
+});
+
+test("editor entityDataRowSchema and buttonRowSchema include helper descriptions across standard and custom modes", async () => {
+  const { Editor } = await loadCard();
+  const editor = new Editor();
+
+  // Standard status row schema
+  const standardRowSchema = toHost(editor.entityDataRowSchema({ id: "status", custom: false }));
+  for (const field of standardRowSchema) {
+    assert.ok(
+      field.helper,
+      `Field '${field.name}' in standard entityDataRowSchema is missing helper text`,
+    );
+    assert.equal(typeof field.helper, "string");
+    assert.ok(field.helper.length > 5);
+  }
+
+  // Standard button row schema
+  const standardBtnSchema = toHost(editor.buttonRowSchema({ id: "start", custom: false }));
+  for (const field of standardBtnSchema) {
+    assert.ok(
+      field.helper,
+      `Field '${field.name}' in standard buttonRowSchema is missing helper text`,
+    );
+    assert.equal(typeof field.helper, "string");
+    assert.ok(field.helper.length > 5);
+  }
+});
