@@ -13,7 +13,7 @@ const SENSITIVE_PATTERNS = [
   /access_token/i,
   /auth_token/i,
   /api_key/i,
-  /bearer\s+[a-z0-9_.-]+/i,
+  /\bbearer\b/i,
   /private_key/i,
   /\b(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}\b/,
   /\b192\.168\.\d{1,3}\.\d{1,3}\b/,
@@ -21,9 +21,17 @@ const SENSITIVE_PATTERNS = [
   /\b172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}\b/,
 ];
 
-const CREDENTIAL_KEY_PATTERN =
-  /(?:^|[_\-.])(token|secret|password|auth_token|access_token|api_key|private_key)(?:[_\-.]|$)/i;
+const SENSITIVE_KEY_PATTERN =
+  /(?:^|[_\-.])(token|secret|password|auth_token|access_token|api_key|private_key|bearer|gps|latitude|longitude|coordinates|polygon)(?:[_\-.]|$)/i;
 
+/**
+ * Recursively scans an object for prohibited credential or location keys.
+ *
+ * @param {unknown} obj - Target value or nested object to inspect.
+ * @param {string} [path=""] - Property path for diagnostic reporting.
+ * @param {string} [sourceName="fixture"] - Originating filename or identifier.
+ * @throws {Error} When a prohibited sensitive or location key with a non-empty value is found.
+ */
 function checkObjectPrivacy(obj, path = "", sourceName = "fixture") {
   if (obj === null || obj === undefined) return;
   if (typeof obj !== "object") return;
@@ -37,10 +45,10 @@ function checkObjectPrivacy(obj, path = "", sourceName = "fixture") {
 
   for (const [key, value] of Object.entries(obj)) {
     const currentPath = path ? `${path}.${key}` : key;
-    if (CREDENTIAL_KEY_PATTERN.test(key)) {
+    if (SENSITIVE_KEY_PATTERN.test(key)) {
       if (value !== null && value !== undefined && value !== "") {
         throw new Error(
-          `[fixtures] ${sourceName}: Sanitization error: fixture contains credential field '${currentPath}' with sensitive value.`,
+          `[fixtures] ${sourceName}: Sanitization error: fixture contains sensitive or prohibited field '${currentPath}' with value.`,
         );
       }
     }
@@ -48,6 +56,14 @@ function checkObjectPrivacy(obj, path = "", sourceName = "fixture") {
   }
 }
 
+/**
+ * Validates a parsed fixture object against schema version 1 and sanitization rules.
+ *
+ * @param {Record<string, unknown>} fixture - The parsed fixture object to validate.
+ * @param {string} [sourceName="fixture"] - Identifier or filename for error messages.
+ * @returns {Record<string, unknown>} The validated fixture object.
+ * @throws {Error} When fixture fails schema, metadata, state, or privacy validation.
+ */
 export function validateFixture(fixture, sourceName = "fixture") {
   if (!fixture || typeof fixture !== "object" || Array.isArray(fixture)) {
     throw new Error(`[fixtures] ${sourceName}: Fixture must be an object.`);
@@ -135,6 +151,13 @@ export function validateFixture(fixture, sourceName = "fixture") {
   return fixture;
 }
 
+/**
+ * Loads and validates a single scenario fixture by name or file path.
+ *
+ * @param {string} nameOrPath - Fixture name (kebab-case) or relative/absolute path.
+ * @returns {Record<string, unknown>} The validated fixture object.
+ * @throws {Error} When the file is missing, malformed, or fails validation.
+ */
 export function loadFixture(nameOrPath) {
   let filePath = nameOrPath;
   if (!filePath.endsWith(".json")) {
@@ -166,12 +189,23 @@ export function loadFixture(nameOrPath) {
   return validateFixture(parsed, path.basename(filePath));
 }
 
+/**
+ * Loads and validates all JSON scenario fixtures in the scenarios directory.
+ *
+ * @returns {Array<Record<string, unknown>>} Array of all validated fixture objects.
+ */
 export function loadAllFixtures() {
   if (!fs.existsSync(FIXTURES_DIR)) return [];
   const files = fs.readdirSync(FIXTURES_DIR).filter((f) => f.endsWith(".json"));
   return files.map((file) => loadFixture(path.join(FIXTURES_DIR, file)));
 }
 
+/**
+ * Converts a fixture object or fixture name into a mock Home Assistant state object.
+ *
+ * @param {string|Record<string, unknown>} fixture - Fixture name or object.
+ * @returns {{ states: Record<string, unknown>, entities: Record<string, unknown>|null, devices: Record<string, unknown>|null }} Mock hass data.
+ */
 export function fixtureToHass(fixture) {
   const validated = typeof fixture === "string" ? loadFixture(fixture) : validateFixture(fixture);
   return {

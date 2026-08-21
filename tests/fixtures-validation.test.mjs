@@ -129,7 +129,44 @@ test("fixtures: rejects sensitive data, credentials, opaque tokens, MAC addresse
     () => validateFixture(createFixtureWithState("password", "unencrypted_pwd")),
     /Sanitization error/,
   );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("bearer", "opaque-bearer-value")),
+    /Sanitization error/,
+  );
 
+  // Location, GPS, and map coordinates
+  assert.throws(
+    () => validateFixture(createFixtureWithState("latitude", 37.7749)),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("longitude", -122.4194)),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("gps", [37.7749, -122.4194])),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () =>
+      validateFixture(
+        createFixtureWithState("coordinates", [
+          [0, 0],
+          [10, 10],
+        ]),
+      ),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () =>
+      validateFixture(
+        createFixtureWithState("polygon", [
+          [0, 0],
+          [1, 1],
+        ]),
+      ),
+    /Sanitization error/,
+  );
   // MAC addresses
   assert.throws(
     () => validateFixture(createFixtureWithState("mac_address", "00:1A:2B:3C:4D:5E")),
@@ -203,6 +240,11 @@ test("node contract: modern separated battery fixture resolves battery sensor an
     entity: fixture.vacuum_entity_id,
   });
   card.hass = hass;
+  // Assert separate battery sensor is discovered and resolved
+  const batteryRow = Object.assign({ id: "battery" }, card.config.state.battery);
+  const resolvedBattery = card.resolveAttributeSource(batteryRow);
+  assert.equal(resolvedBattery.rawValue, "88");
+  assert.equal(resolvedBattery.entityState?.entity_id, "sensor.modern_cleaner_battery");
 
   // Expected actions
   if (fixture.expected && fixture.expected.actions) {
