@@ -113,6 +113,20 @@ export function createComponentServer() {
         connectedCallback() {
           this.style.display = "block";
         }
+        set expanded(val) {
+          this._expanded = Boolean(val);
+          if (this._expanded) {
+            this.setAttribute("expanded", "");
+          } else {
+            this.removeAttribute("expanded");
+          }
+        }
+        get expanded() {
+          return this._expanded !== undefined ? this._expanded : this.hasAttribute("expanded");
+        }
+        toggle() {
+          this.dispatchEvent(new CustomEvent("expanded-changed", { bubbles: false, composed: true, detail: { expanded: !this.expanded } }));
+        }
       });
     }
     if (!customElements.get("ha-button")) {
