@@ -1,0 +1,461 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import {
+  loadFixture,
+  loadAllFixtures,
+  validateFixture,
+  fixtureToHass,
+  CURRENT_SCHEMA_VERSION,
+  SUPPORTED_SCHEMA_VERSIONS,
+} from "./fixtures/loader.mjs";
+import { createHass, loadCard, toHost } from "./helpers/card-harness.mjs";
+
+test("fixtures: all committed scenario fixtures validate cleanly", () => {
+  const fixtures = loadAllFixtures();
+  assert.ok(fixtures.length >= 5, `Expected at least 5 fixtures, found ${fixtures.length}`);
+
+  const ids = new Set();
+  for (const fixture of fixtures) {
+    assert.equal(fixture.schema_version, CURRENT_SCHEMA_VERSION);
+    assert.ok(fixture.id);
+    assert.ok(!ids.has(fixture.id), `Duplicate fixture ID: ${fixture.id}`);
+    ids.add(fixture.id);
+  }
+});
+
+test("fixtures: rejects missing, non-integer, zero, negative, or unsupported schema_version", () => {
+  assert.throws(
+    () => validateFixture({ id: "missing-version", kind: "synthetic" }),
+    /Missing required field 'schema_version'/,
+  );
+
+  assert.throws(
+    () => validateFixture({ schema_version: "1", id: "string-version" }),
+    /Invalid 'schema_version'/,
+  );
+
+  assert.throws(
+    () => validateFixture({ schema_version: 0, id: "zero-version" }),
+    /Invalid 'schema_version'/,
+  );
+
+  assert.throws(
+    () => validateFixture({ schema_version: -1, id: "neg-version" }),
+    /Invalid 'schema_version'/,
+  );
+
+  assert.throws(
+    () => validateFixture({ schema_version: 999, id: "future-version" }),
+    /Unsupported schema version 999/,
+  );
+});
+
+test("fixtures: validates required metadata fields and primary vacuum entity in states", () => {
+  assert.throws(
+    () =>
+      validateFixture({
+        schema_version: 1,
+        id: "INVALID ID",
+        kind: "synthetic",
+      }),
+    /'id' must be a valid kebab-case string/,
+  );
+
+  assert.throws(
+    () =>
+      validateFixture({
+        schema_version: 1,
+        id: "valid-id",
+        kind: "unknown-kind",
+      }),
+    /'kind' must be one of/,
+  );
+
+  assert.throws(
+    () =>
+      validateFixture({
+        schema_version: 1,
+        id: "valid-id",
+        kind: "synthetic",
+        description: "valid",
+        vacuum_entity_id: "sensor.not_a_vacuum",
+      }),
+    /'vacuum_entity_id' must be a valid vacuum entity ID/,
+  );
+
+  assert.throws(
+    () =>
+      validateFixture({
+        schema_version: 1,
+        id: "valid-id",
+        kind: "synthetic",
+        description: "valid",
+        vacuum_entity_id: "vacuum.test",
+        states: {},
+      }),
+    /'states' must contain the primary vacuum entity/,
+  );
+
+  const validBase = {
+    schema_version: 1,
+    id: "valid-id",
+    kind: "synthetic",
+    description: "valid description",
+    vacuum_entity_id: "vacuum.test",
+    states: {
+      "vacuum.test": {
+        entity_id: "vacuum.test",
+        state: "docked",
+      },
+    },
+  };
+
+  assert.throws(
+    () => validateFixture({ ...validBase, entities: "invalid" }),
+    /'entities' must be an object map/,
+  );
+  assert.throws(
+    () => validateFixture({ ...validBase, entities: [] }),
+    /'entities' must be an object map/,
+  );
+  assert.throws(
+    () => validateFixture({ ...validBase, entities: { "sensor.test": "invalid" } }),
+    /'entities.sensor.test' entry must be an object/,
+  );
+  assert.throws(
+    () =>
+      validateFixture({
+        ...validBase,
+        entities: { "sensor.test": { entity_id: "sensor.mismatched" } },
+      }),
+    /'entities.sensor.test' entity_id must match key 'sensor.test'/,
+  );
+  assert.throws(
+    () =>
+      validateFixture({
+        ...validBase,
+        entities: { "sensor.test": { entity_id: "sensor.test", device_id: 42 } },
+      }),
+    /'entities.sensor.test' device_id must be a string/,
+  );
+
+  assert.throws(
+    () => validateFixture({ ...validBase, devices: "invalid" }),
+    /'devices' must be an object map/,
+  );
+  assert.throws(
+    () => validateFixture({ ...validBase, devices: [] }),
+    /'devices' must be an object map/,
+  );
+  assert.throws(
+    () => validateFixture({ ...validBase, devices: { device_1: "invalid" } }),
+    /'devices.device_1' entry must be an object/,
+  );
+  assert.throws(
+    () =>
+      validateFixture({
+        ...validBase,
+        devices: { device_1: { id: "device_mismatched" } },
+      }),
+    /'devices.device_1' id must match key 'device_1'/,
+  );
+});
+
+test("fixtures: rejects sensitive data, credentials, opaque tokens, MAC addresses, and private IPs", () => {
+  const createFixtureWithState = (attrKey, attrVal) => ({
+    schema_version: 1,
+    id: "privacy-test",
+    kind: "synthetic",
+    description: "Testing privacy validation",
+    vacuum_entity_id: "vacuum.privacy_cleaner",
+    states: {
+      "vacuum.privacy_cleaner": {
+        entity_id: "vacuum.privacy_cleaner",
+        state: "docked",
+        attributes: {
+          [attrKey]: attrVal,
+        },
+      },
+    },
+  });
+
+  // Opaque tokens and credential keys
+  assert.throws(
+    () => validateFixture(createFixtureWithState("auth_token", "opaque_value_xyz")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("authToken", "opaque_value_xyz")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("api_key", "custom_key_abc")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("apiKey", "custom_key_abc")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("api-key", "custom_key_abc")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("private_key", "pem_value")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("privateKey", "pem_value")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("private-key", "pem_value")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("password", "unencrypted_pwd")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("bearer", "opaque-bearer-value")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("serial_number", "SN-123456789")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("serialNumber", "SN-123456789")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("serial", "123456789")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("cloud_user_id", "user-abc-123")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("cloudUserId", "user-abc-123")),
+    /Sanitization error/,
+  );
+  // Location, GPS, and map coordinates
+  assert.throws(
+    () => validateFixture(createFixtureWithState("latitude", 37.7749)),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("longitude", -122.4194)),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("gps", [37.7749, -122.4194])),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("coordinate", [10, 20])),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () =>
+      validateFixture(
+        createFixtureWithState("coordinates", [
+          [0, 0],
+          [10, 10],
+        ]),
+      ),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () =>
+      validateFixture(
+        createFixtureWithState("polygon", [
+          [0, 0],
+          [1, 1],
+        ]),
+      ),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("mac_address", "00:1A:2B:3C:4D:5E")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("device_mac", "aa-bb-cc-dd-ee-ff")),
+    /Sanitization error/,
+  );
+
+  // Private IPs
+  assert.throws(
+    () => validateFixture(createFixtureWithState("ip_address", "192.168.1.55")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("local_ip", "10.0.0.12")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("host", "172.20.0.5")),
+    /Sanitization error/,
+  );
+
+  const validBaseForPrivacy = {
+    schema_version: 1,
+    id: "privacy-nested-test",
+    kind: "synthetic",
+    description: "Testing nested privacy validation",
+    vacuum_entity_id: "vacuum.privacy_cleaner",
+    states: {
+      "vacuum.privacy_cleaner": {
+        entity_id: "vacuum.privacy_cleaner",
+        state: "docked",
+      },
+    },
+  };
+
+  // Nested object privacy check
+  assert.throws(
+    () =>
+      validateFixture({
+        ...validBaseForPrivacy,
+        custom_data: {
+          nested: {
+            auth_token: "nested_opaque_val",
+          },
+        },
+      }),
+    /Sanitization error/,
+  );
+
+  // Nested array privacy check
+  assert.throws(
+    () =>
+      validateFixture({
+        ...validBaseForPrivacy,
+        custom_data: {
+          items: [{ name: "item1" }, { secret: "nested_array_secret" }],
+        },
+      }),
+    /Sanitization error/,
+  );
+});
+
+test("fixtures: loadFixture rejects filename and fixture ID mismatch", async () => {
+  assert.throws(() => loadFixture("nonexistent-fixture-file"), /Fixture file not found/);
+
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const { FIXTURES_DIR } = await import("./fixtures/loader.mjs");
+  const tempPath = path.join(FIXTURES_DIR, "temp-mismatch-test.json");
+
+  try {
+    fs.writeFileSync(
+      tempPath,
+      JSON.stringify({
+        schema_version: 1,
+        id: "differing-id-from-filename",
+        kind: "synthetic",
+        description: "Testing mismatch between filename and ID",
+        vacuum_entity_id: "vacuum.mismatch_test",
+        states: {
+          "vacuum.mismatch_test": {
+            entity_id: "vacuum.mismatch_test",
+            state: "docked",
+          },
+        },
+      }),
+    );
+
+    assert.throws(
+      () => loadFixture("temp-mismatch-test"),
+      /Fixture ID 'differing-id-from-filename' does not match expected filename ID 'temp-mismatch-test'/,
+    );
+  } finally {
+    if (fs.existsSync(tempPath)) {
+      fs.unlinkSync(tempPath);
+    }
+  }
+});
+test("fixtures: loadFixture rejects malformed JSON", async () => {
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const { FIXTURES_DIR } = await import("./fixtures/loader.mjs");
+  const tempMalformedPath = path.join(FIXTURES_DIR, "temp-malformed-test.json");
+
+  try {
+    fs.writeFileSync(tempMalformedPath, '{"unclosed": "json"');
+    assert.throws(() => loadFixture("temp-malformed-test"), /Malformed JSON in fixture file/);
+  } finally {
+    if (fs.existsSync(tempMalformedPath)) {
+      fs.unlinkSync(tempMalformedPath);
+    }
+  }
+});
+
+test("node contract: modern separated battery fixture resolves battery sensor and action evaluations", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+  const fixture = loadFixture("modern-separated-battery");
+  const hass = createHass(fixtureToHass(fixture));
+
+  card.setConfig({
+    type: "custom:xiaomi-vacuum-card",
+    entity: fixture.vacuum_entity_id,
+  });
+  card.hass = hass;
+  // Assert separate battery sensor is discovered and resolved
+  const batteryRow = Object.assign({ id: "battery" }, card.config.state.battery);
+  const resolvedBattery = card.resolveAttributeSource(batteryRow);
+  assert.equal(resolvedBattery.rawValue, "88");
+  assert.equal(resolvedBattery.entityState?.entity_id, "sensor.modern_cleaner_battery");
+
+  // Expected actions
+  if (fixture.expected && fixture.expected.actions) {
+    for (const [actionId, expectedState] of Object.entries(fixture.expected.actions)) {
+      const btnConfig = card.config.buttons[actionId];
+      assert.ok(btnConfig, `Button '${actionId}' missing from card configuration`);
+      const evaluated = card.evaluateButton(btnConfig);
+      assert.equal(
+        evaluated.visible,
+        expectedState.visible,
+        `Action '${actionId}' visible mismatch`,
+      );
+      assert.equal(
+        evaluated.disabled,
+        expectedState.disabled,
+        `Action '${actionId}' disabled mismatch`,
+      );
+    }
+
+    // Assert service target and payload evaluation for enabled start action
+    const startBtn = card.config.buttons.start;
+    await card.callActionButton(startBtn);
+    assert.deepEqual(hass.calls.services, [
+      {
+        domain: "vacuum",
+        service: "start",
+        data: { entity_id: fixture.vacuum_entity_id },
+      },
+    ]);
+  }
+});
+
+test("node contract: same-device discovered battery fixture resolves renamed battery sensor", async () => {
+  const { Card } = await loadCard();
+  const card = new Card();
+  const fixture = loadFixture("same-device-discovered-battery");
+  const hass = createHass(fixtureToHass(fixture));
+
+  card.setConfig({
+    type: "custom:xiaomi-vacuum-card",
+    entity: fixture.vacuum_entity_id,
+  });
+  card.hass = hass;
+
+  const batteryRow = Object.assign({ id: "battery" }, card.config.state.battery);
+  const resolved = card.resolveAttributeSource(batteryRow);
+  assert.equal(resolved.rawValue, "94");
+  assert.equal(resolved.entityState?.entity_id, "sensor.living_room_power_level");
+});

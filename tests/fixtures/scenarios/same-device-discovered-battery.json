@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "same-device-discovered-battery",
+  "kind": "synthetic",
+  "description": "Vacuum with renamed battery sensor discovered via same-device device_id in entity and device registries",
+  "vacuum_entity_id": "vacuum.device_cleaner",
+  "states": {
+    "vacuum.device_cleaner": {
+      "entity_id": "vacuum.device_cleaner",
+      "state": "docked",
+      "attributes": {
+        "friendly_name": "Device Registry Cleaner",
+        "supported_features": 8220
+      }
+    },
+    "sensor.living_room_power_level": {
+      "entity_id": "sensor.living_room_power_level",
+      "state": "94",
+      "attributes": {
+        "friendly_name": "Living Room Power Level",
+        "device_class": "battery",
+        "unit_of_measurement": "%"
+      }
+    },
+    "sensor.unrelated_device_battery": {
+      "entity_id": "sensor.unrelated_device_battery",
+      "state": "42",
+      "attributes": {
+        "friendly_name": "Unrelated Device Battery",
+        "device_class": "battery",
+        "unit_of_measurement": "%"
+      }
+    }
+  },
+  "entities": {
+    "vacuum.device_cleaner": {
+      "entity_id": "vacuum.device_cleaner",
+      "device_id": "device_vacuum_robot_101",
+      "platform": "roborock"
+    },
+    "sensor.living_room_power_level": {
+      "entity_id": "sensor.living_room_power_level",
+      "device_id": "device_vacuum_robot_101",
+      "platform": "roborock",
+      "device_class": "battery"
+    },
+    "sensor.unrelated_device_battery": {
+      "entity_id": "sensor.unrelated_device_battery",
+      "device_id": "device_unrelated_sensor_202",
+      "platform": "generic",
+      "device_class": "battery"
+    }
+  },
+  "devices": {
+    "device_vacuum_robot_101": {
+      "id": "device_vacuum_robot_101",
+      "name": "Roborock S7 MaxV"
+    },
+    "device_unrelated_sensor_202": {
+      "id": "device_unrelated_sensor_202",
+      "name": "Unrelated Sensor Hub"
+    }
+  },
+  "expected": {
+    "status": "Docked",
+    "battery": "94%"
+  }
+}
