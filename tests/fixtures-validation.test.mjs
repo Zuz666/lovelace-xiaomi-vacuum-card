@@ -96,6 +96,62 @@ test("fixtures: validates required metadata fields and primary vacuum entity in 
       }),
     /'states' must contain the primary vacuum entity/,
   );
+
+  const validBase = {
+    schema_version: 1,
+    id: "valid-id",
+    kind: "synthetic",
+    description: "valid description",
+    vacuum_entity_id: "vacuum.test",
+    states: {
+      "vacuum.test": {
+        entity_id: "vacuum.test",
+        state: "docked",
+      },
+    },
+  };
+
+  assert.throws(
+    () => validateFixture({ ...validBase, entities: "invalid" }),
+    /'entities' must be an object map/,
+  );
+  assert.throws(
+    () => validateFixture({ ...validBase, entities: [] }),
+    /'entities' must be an object map/,
+  );
+  assert.throws(
+    () => validateFixture({ ...validBase, entities: { "sensor.test": "invalid" } }),
+    /'entities.sensor.test' entry must be an object/,
+  );
+  assert.throws(
+    () =>
+      validateFixture({
+        ...validBase,
+        entities: { "sensor.test": { entity_id: "sensor.mismatched" } },
+      }),
+    /'entities.sensor.test' entity_id must match key 'sensor.test'/,
+  );
+
+  assert.throws(
+    () => validateFixture({ ...validBase, devices: "invalid" }),
+    /'devices' must be an object map/,
+  );
+  assert.throws(
+    () => validateFixture({ ...validBase, devices: [] }),
+    /'devices' must be an object map/,
+  );
+  assert.throws(
+    () => validateFixture({ ...validBase, devices: { device_1: "invalid" } }),
+    /'devices.device_1' entry must be an object/,
+  );
+  assert.throws(
+    () =>
+      validateFixture({
+        ...validBase,
+        devices: { device_1: { id: "device_mismatched" } },
+      }),
+    /'devices.device_1' id must match key 'device_1'/,
+  );
 });
 
 test("fixtures: rejects sensitive data, credentials, opaque tokens, MAC addresses, and private IPs", () => {
@@ -234,6 +290,46 @@ test("fixtures: rejects sensitive data, credentials, opaque tokens, MAC addresse
   );
   assert.throws(
     () => validateFixture(createFixtureWithState("host", "172.20.0.5")),
+    /Sanitization error/,
+  );
+
+  const validBaseForPrivacy = {
+    schema_version: 1,
+    id: "privacy-nested-test",
+    kind: "synthetic",
+    description: "Testing nested privacy validation",
+    vacuum_entity_id: "vacuum.privacy_cleaner",
+    states: {
+      "vacuum.privacy_cleaner": {
+        entity_id: "vacuum.privacy_cleaner",
+        state: "docked",
+      },
+    },
+  };
+
+  // Nested object privacy check
+  assert.throws(
+    () =>
+      validateFixture({
+        ...validBaseForPrivacy,
+        custom_data: {
+          nested: {
+            auth_token: "nested_opaque_val",
+          },
+        },
+      }),
+    /Sanitization error/,
+  );
+
+  // Nested array privacy check
+  assert.throws(
+    () =>
+      validateFixture({
+        ...validBaseForPrivacy,
+        custom_data: {
+          items: [{ name: "item1" }, { secret: "nested_array_secret" }],
+        },
+      }),
     /Sanitization error/,
   );
 });

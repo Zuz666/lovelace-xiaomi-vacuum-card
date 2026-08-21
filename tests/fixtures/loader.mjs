@@ -141,7 +141,47 @@ export function validateFixture(fixture, sourceName = "fixture") {
     );
   }
 
-  // 4. Privacy and sanitization validation
+  // 4. Validate optional entities and devices registry maps
+  if (fixture.entities !== undefined && fixture.entities !== null) {
+    if (typeof fixture.entities !== "object" || Array.isArray(fixture.entities)) {
+      throw new Error(`[fixtures] ${sourceName}: 'entities' must be an object map.`);
+    }
+    for (const [entityId, entityEntry] of Object.entries(fixture.entities)) {
+      if (!entityEntry || typeof entityEntry !== "object" || Array.isArray(entityEntry)) {
+        throw new Error(
+          `[fixtures] ${sourceName}: 'entities.${entityId}' entry must be an object.`,
+        );
+      }
+      if (typeof entityEntry.entity_id !== "string" || entityEntry.entity_id !== entityId) {
+        throw new Error(
+          `[fixtures] ${sourceName}: 'entities.${entityId}' entity_id must match key '${entityId}'.`,
+        );
+      }
+      if ("device_id" in entityEntry && typeof entityEntry.device_id !== "string") {
+        throw new Error(
+          `[fixtures] ${sourceName}: 'entities.${entityId}' device_id must be a string.`,
+        );
+      }
+    }
+  }
+
+  if (fixture.devices !== undefined && fixture.devices !== null) {
+    if (typeof fixture.devices !== "object" || Array.isArray(fixture.devices)) {
+      throw new Error(`[fixtures] ${sourceName}: 'devices' must be an object map.`);
+    }
+    for (const [deviceId, deviceEntry] of Object.entries(fixture.devices)) {
+      if (!deviceEntry || typeof deviceEntry !== "object" || Array.isArray(deviceEntry)) {
+        throw new Error(`[fixtures] ${sourceName}: 'devices.${deviceId}' entry must be an object.`);
+      }
+      if (typeof deviceEntry.id !== "string" || deviceEntry.id !== deviceId) {
+        throw new Error(
+          `[fixtures] ${sourceName}: 'devices.${deviceId}' id must match key '${deviceId}'.`,
+        );
+      }
+    }
+  }
+
+  // 5. Privacy and sanitization validation
   checkObjectPrivacy(fixture, "", sourceName);
 
   const serialized = JSON.stringify(fixture);

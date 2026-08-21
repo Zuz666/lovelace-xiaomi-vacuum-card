@@ -39,16 +39,40 @@ test.describe("Fixture-Driven Scenarios Matrix", () => {
     await expect(returnBtn).toBeVisible();
     await expect(returnBtn).not.toHaveAttribute("disabled", "");
 
-    // Verify keyboard interaction triggers service call
+    // Verify keyboard Enter interaction triggers service call
     await startBtn.focus();
     await page.keyboard.press("Enter");
-    const serviceCalls = await page.evaluate(() => window.__componentHarness.serviceCalls);
+    let serviceCalls = await page.evaluate(() => window.__componentHarness.serviceCalls);
     expect(serviceCalls.length).toBe(1);
     expect(serviceCalls[0]).toMatchObject({
       domain: "vacuum",
       service: "start",
       data: { entity_id: fixture.vacuum_entity_id },
     });
+
+    // Verify keyboard Space interaction triggers service call
+    await page.evaluate(() => {
+      window.__componentHarness.serviceCalls = [];
+    });
+    await startBtn.focus();
+    await page.keyboard.press("Space");
+    serviceCalls = await page.evaluate(() => window.__componentHarness.serviceCalls);
+    expect(serviceCalls.length).toBe(1);
+    expect(serviceCalls[0]).toMatchObject({
+      domain: "vacuum",
+      service: "start",
+      data: { entity_id: fixture.vacuum_entity_id },
+    });
+
+    // Verify disabled control suppresses keyboard interaction
+    await page.evaluate(() => {
+      window.__componentHarness.serviceCalls = [];
+    });
+    await pauseBtn.focus();
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("Space");
+    serviceCalls = await page.evaluate(() => window.__componentHarness.serviceCalls);
+    expect(serviceCalls.length).toBe(0);
   });
 
   test("scenario: legacy-attribute-vacuum renders status and battery from legacy attributes", async ({
