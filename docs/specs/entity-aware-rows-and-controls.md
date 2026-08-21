@@ -4,9 +4,9 @@
 
 Historically, rows in `xiaomi-vacuum-card` were directly coupled to vacuum entity attributes (e.g. `attributes.status`, `attributes.battery_level`, `attributes.fan_speed`). Over time, external sensor binding, units, icons, custom service templates, and dropdowns were added as ad-hoc extensions.
 
-In modern Home Assistant Core (validated baseline: Core 2024.1+ through 2026.2+, with legacy attribute fallbacks preserved for Core 2023.9+), vacuum integrations distribute capabilities across distinct entity domains:
+The card targets **Home Assistant Core 2024.1+ through 2026.2+** as its supported baseline, while retaining attribute and legacy formatting fallbacks (including `hass.formatEntityState` introduced in Core 2023.9). In modern Home Assistant, vacuum integrations distribute capabilities across distinct entity domains:
 
-- **Status & Activity**: `vacuum.*` canonical state (`VacuumActivity` enum: `cleaning`, `docked`, `idle`, `paused`, `returning`, `error` introduced in Core 2025.1) or dedicated `select.*` entities (e.g. cleaning mode, water level, mop route).
+- **Status & Activity**: Canonical vacuum state strings in Core 2024.x, or `VacuumActivity` enum (`cleaning`, `docked`, `idle`, `paused`, `returning`, `error` introduced as the integration activity property in Core 2025.1), or dedicated `select.*` entities (e.g. cleaning mode, water level, mop route).
 - **Consumables & Telemetry**: `sensor.*` (main brush left, side brush left, filter left, sensor dirty, total cleaning area, cleaning time).
 - **Battery & Power**: `sensor.*` (with `device_class: battery`) and `binary_sensor.*` (with `device_class: battery_charging` or companion power sensor).
 - **Actions & Triggers**: `button.*` (reset filter, empty dustbin, dock, self-clean).
@@ -21,7 +21,8 @@ To scale cleanly across all integrations without piling up vendor-specific speci
 ```text
 ┌─────────────────────────────────────────────────────────────┐
 │ 1. SOURCE LAYER                                             │
-│ - Entity binding (vacuum, sensor, select, binary_sensor)    │
+│ - Entity binding (vacuum, sensor, select, binary_sensor,    │
+│   button)                                                   │
 │ - Attribute extraction (explicit attribute vs state)        │
 │ - Same-device registry & prefix auto-discovery              │
 │ - Availability & reactive dependency tracking               │
@@ -30,9 +31,9 @@ To scale cleanly across all integrations without piling up vendor-specific speci
                                ▼
 ┌─────────────────────────────────────────────────────────────┐
 │ 2. PRESENTATION LAYER                                       │
-│ - Home Assistant metadata formatting (localize, formatState)│
+│ - HA formatting (hass.formatEntityState, formatAttribute)   │
 │ - Unit of measurement & custom unit suffixes                │
-│ - Non-negative integer display precision                    │
+│ - Non-negative integer display precision resolution         │
 │ - Icon resolution & dynamic charging state indicators       │
 │ - Value mapping (translation keys or literal overrides)     │
 │ - Unavailable / Unknown string localization & styling       │
@@ -89,13 +90,23 @@ attributes:
     presentation:
       unit: " %"
       precision: 0
+
+  empty_dustbin_action:
+    source:
+      entity: button.roborock_s7_empty_dustbin
+    presentation:
+      icon: mdi:delete-restore
+      label: "Empty dustbin"
+    control:
+      type: button
+      service: button.press
 ```
 
 ### 3.2 Source Descriptors
 
 | Source Property | Type                               | Description                                                                                                                                                                                      |
 | :-------------- | :--------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `entity`        | `string` (optional)                | Explicit entity ID (e.g. `sensor.vacuum_battery` or `select.cleaning_mode`). Takes precedence over auto-discovery.                                                                               |
+| `entity`        | `string` (optional)                | Explicit entity ID (e.g. `sensor.vacuum_battery`, `select.cleaning_mode`, `button.empty_dustbin`). Takes precedence over auto-discovery and disables silent legacy attribute fallback.           |
 | `attribute`     | `string` (optional)                | Specific attribute on the bound entity (e.g. `status` or `filter_left`). If omitted and `entity` is provided, the entity's canonical state is resolved.                                          |
 | `discovery`     | `"device_registry"` \| `"prefix"`  | Auto-discovery strategy: `"device_registry"` (discovers entities sharing the vacuum's `device_id`) or `"prefix"` (matches candidate entities by prefix pattern).                                 |
 | `prefix`        | `string` (optional)                | Explicit entity ID prefix used when `discovery: "prefix"` is configured (e.g. `sensor.roborock_s7_`). Matched entities must start with this prefix and conform to expected domain/role suffixes. |
@@ -108,7 +119,7 @@ attributes:
 | `icon`                | `string` (optional)                 | Material Design icon name (e.g. `mdi:battery`, `mdi:fan`). Overrides integration and entity icons.                                                                                                                                                      |
 | `label`               | `string` (optional)                 | Text label rendered beside or as tooltip for the row. Overrides entity `friendly_name`.                                                                                                                                                                 |
 | `unit`                | `string` (optional)                 | Unit suffix (e.g. `" %"`, `" h"`, `" m²"`). Overrides entity `unit_of_measurement` if explicitly specified.                                                                                                                                             |
-| `precision`           | `integer >= 0` (optional)           | Non-negative integer specifying decimal places for numeric formatting (e.g. `0`, `1`, `2`). Corresponds to Home Assistant's `suggested_display_precision`.                                                                                              |
+| `precision`           | `integer >= 0` (optional)           | Non-negative integer specifying decimal places for numeric formatting (e.g. `0`, `1`, `2`). Corresponds to Home Assistant's `display_precision` / `suggested_display_precision`.                                                                        |
 | `value_map`           | `Record<string, string>` (optional) | Key-value dictionary translating raw states into localized strings. Values can be explicit localized strings or Home Assistant translation keys (e.g. `"state.vacuum.docked"` or `"ui.attributes.idle"`), resolved via `hass.localize` when applicable. |
 
 #### Deterministic Presentation Resolution Precedence
@@ -118,12 +129,14 @@ attributes:
    - **Value Map**: If `presentation.value_map` contains an entry matching the raw string value:
      - If the mapped value matches a known translation key format, resolve via `hass.localize(key)`.
      - Otherwise, display the mapped string verbatim.
-   - **Entity State Formatting (`hass.formatEntityState`)**: If `source.entity` is bound to a registered Home Assistant entity and no explicit override overrides it, format state through `hass.formatEntityState(entityState)` to respect integration localization, device class translations, and standard units.
-   - **Numeric Formatting**: If the value is numeric:
-     - Apply `presentation.precision` if explicitly defined as a non-negative integer.
-     - Else apply the entity's `suggested_display_precision` / `display_precision` attribute if present.
-     - Else preserve natural decimal representation.
-     - Append `presentation.unit` if explicitly provided, else the entity's `unit_of_measurement`, else the default domain unit.
+   - **Entity State Formatting**:
+     - For raw entity states: format via `hass.formatEntityState(entityState)` when available (introduced in Core 2023.9) to respect integration localization, device class translations, and standard units.
+     - For extracted attributes (`source.attribute`): format via `hass.formatEntityAttributeValue(stateObj, attribute, rawValue)` when available.
+   - **Numeric Precision & Unit Formatting**:
+     - If the value is numeric:
+       1. Determine precision: use `presentation.precision` (if explicitly configured), else user `display_precision` from entity-registry options, else `suggested_display_precision` from sensor entity metadata.
+       2. Round numeric value according to the resolved integer precision.
+       3. Append unit: use `presentation.unit` if explicitly provided, else the entity's `unit_of_measurement`, else the default domain unit.
 2. **Icon Resolution Precedence**:
    - Explicit `presentation.icon` override from row configuration.
    - For battery indicators: dynamic battery charging icon computed from the companion `binary_sensor.*_battery_charging` or battery state attribute (`mdi:battery-charging-XX` / `mdi:battery-XX`).
@@ -155,12 +168,21 @@ When a user selects an option in a combobox control:
    - Defaults to `vacuum.set_fan_speed` when bound to legacy fan speed dropdown rows.
    - Uses explicit `control.service` when specified in configuration.
 3. **Service Payload Dispatch**:
-   - For `select.select_option`: dispatches `data: { option: selectedValue, ...control.service_data }`.
-   - For `vacuum.set_fan_speed`: dispatches `data: { fan_speed: selectedValue, ...control.service_data }`.
-   - For custom services: dispatches `data: { [key]: selectedValue, ...control.service_data }`.
-4. **Legacy Dropdown Backward Compatibility**:
-   - Legacy row definitions containing `service` or dropdown lists infer `control.type: "select"`.
-   - Existing configurations using `service: vacuum.set_fan_speed` or custom scripts continue working identically without requiring manual migration.
+   - `control.service_data` is merged **before** the generated selected-value field so user parameters cannot overwrite the active selection:
+     - For `select.select_option`: dispatches `data: { ...control.service_data, option: selectedValue }`.
+     - For `vacuum.set_fan_speed`: dispatches `data: { ...control.service_data, fan_speed: selectedValue }`.
+     - For custom services: dispatches `data: { ...control.service_data, [key]: selectedValue }`.
+
+#### Button Control Dispatch Contract
+
+When a user triggers an action button:
+
+1. **Target Entity**:
+   - For `button.press`: requires `source.entity` targeting a `button.*` domain entity (`target: { entity_id: source.entity }`). It does not fall back to `config.entity` (the `vacuum.*` entity).
+   - For vacuum services (e.g. `vacuum.locate`, `vacuum.clean_spot`): targets `config.entity`.
+2. **Payload Validation**:
+   - For `button.press`: dispatches `target: { entity_id: source.entity }` with no arbitrary `service_data` payload.
+   - For custom action services: dispatches `data: { ...control.service_data }` targeting either `source.entity` or `config.entity`.
 
 ---
 
@@ -168,21 +190,21 @@ When a user selects an option in a combobox control:
 
 The card maintains 100% backward compatibility by normalizing existing flat YAML into the canonical model during `setConfig`:
 
-| Legacy YAML Field       | Normalized Canonical Path                              | Normalization Contract & Deterministic Rules                                                                                                         | Example Transformation                                                                                                                                                                                    |
-| :---------------------- | :----------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `entity: sensor.custom` | `source.entity: sensor.custom`                         | Explicit entity binding promoted to source layer.                                                                                                    | `{ entity: "sensor.batt" }` $\rightarrow$ `{ source: { entity: "sensor.batt" } }`                                                                                                                         |
-| `key: status`           | `source.attribute` (if configured) or canonical vacuum | **Precedence rule**: If `attribute` is explicitly provided, maps to `source.attribute`. Otherwise maps to the bound vacuum entity's canonical state. | • Explicit: `{ key: "status", attribute: "clean_mode" }` $\rightarrow$ `{ source: { attribute: "clean_mode" } }`<br>• Fallback: `{ key: "status" }` $\rightarrow$ `{ source: { entity: config.entity } }` |
-| `icon: mdi:brush`       | `presentation.icon: mdi:brush`                         | Promoted to presentation layer.                                                                                                                      | `{ icon: "mdi:brush" }` $\rightarrow$ `{ presentation: { icon: "mdi:brush" } }`                                                                                                                           |
-| `label: "Brush: "`      | `presentation.label: "Brush: "`                        | Promoted to presentation layer.                                                                                                                      | `{ label: "Brush: " }` $\rightarrow$ `{ presentation: { label: "Brush: " } }`                                                                                                                             |
-| `unit: " h"`            | `presentation.unit: " h"`                              | Promoted to presentation layer.                                                                                                                      | `{ unit: " h" }` $\rightarrow$ `{ presentation: { unit: " h" } }`                                                                                                                                         |
-| `decimals: 1`           | `presentation.precision: 1`                            | Legacy `decimals` integer mapped to `presentation.precision`.                                                                                        | `{ decimals: 1 }` $\rightarrow$ `{ presentation: { precision: 1 } }`                                                                                                                                      |
-| `service: custom.call`  | `control.service: custom.call`                         | Promotes row to controllable.                                                                                                                        | `{ service: "custom.call" }` $\rightarrow$ `{ control: { type: "button", service: "custom.call" } }`                                                                                                      |
+| Legacy YAML Field       | Normalized Canonical Path                              | Normalization Contract & Deterministic Rules                                                                                                                                                                                               | Example Transformation                                                                                                                                                                                                                                 |
+| :---------------------- | :----------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entity: sensor.custom` | `source.entity: sensor.custom`                         | Explicit entity binding promoted to source layer.                                                                                                                                                                                          | `{ entity: "sensor.batt" }` $\rightarrow$ `{ source: { entity: "sensor.batt" } }`                                                                                                                                                                      |
+| `key: status`           | `source.attribute` (if configured) or canonical vacuum | **Precedence rule**: If `attribute` is explicitly provided, maps to `source.attribute`. Otherwise maps to the bound vacuum entity's canonical state.                                                                                       | • Explicit: `{ key: "status", attribute: "clean_mode" }` $\rightarrow$ `{ source: { attribute: "clean_mode" } }`<br>• Fallback: `{ key: "status" }` $\rightarrow$ `{ source: { entity: config.entity } }`                                              |
+| `icon: mdi:brush`       | `presentation.icon: mdi:brush`                         | Promoted to presentation layer.                                                                                                                                                                                                            | `{ icon: "mdi:brush" }` $\rightarrow$ `{ presentation: { icon: "mdi:brush" } }`                                                                                                                                                                        |
+| `label: "Brush: "`      | `presentation.label: "Brush: "`                        | Promoted to presentation layer.                                                                                                                                                                                                            | `{ label: "Brush: " }` $\rightarrow$ `{ presentation: { label: "Brush: " } }`                                                                                                                                                                          |
+| `unit: " h"`            | `presentation.unit: " h"`                              | Promoted to presentation layer.                                                                                                                                                                                                            | `{ unit: " h" }` $\rightarrow$ `{ presentation: { unit: " h" } }`                                                                                                                                                                                      |
+| `decimals: 1`           | `presentation.precision: 1`                            | Legacy `decimals` integer mapped to `presentation.precision`.                                                                                                                                                                              | `{ decimals: 1 }` $\rightarrow$ `{ presentation: { precision: 1 } }`                                                                                                                                                                                   |
+| `service: custom.call`  | `control: { type: ..., service: ... }`                 | **Deterministic inference**: Infers `control.type: "select"` if dropdown or options metadata is present; infers `control.type: "button"` for action-only services without options metadata. Explicit `control.type` remains authoritative. | • Button: `{ service: "vacuum.locate" }` $\rightarrow$ `{ control: { type: "button", service: "vacuum.locate" } }`<br>• Select: `{ service: "vacuum.set_fan_speed" }` $\rightarrow$ `{ control: { type: "select", service: "vacuum.set_fan_speed" } }` |
 
 ---
 
 ## 5. Reactive Dependency Resolution & Availability
 
-### 5.1 Reactive Subscriptions (`shouldUpdate` & `getReferencedEntities`)
+### 5.1 Reactive Subscriptions & Registry Invalidation (`shouldUpdate` & `getReferencedEntities`)
 
 The card tracks reactive dependencies to ensure efficient rendering without wasted cycles:
 
@@ -190,15 +212,17 @@ The card tracks reactive dependencies to ensure efficient rendering without wast
 2. **Explicit Source Entities**: All `source.entity` references across `state` and `attributes` rows (`sensor.*`, `select.*`, `binary_sensor.*`, `button.*`).
 3. **Discovered Companion Entities**: Dynamically discovered battery, charging, and filter companion entities.
 4. **Custom Attribute Dependencies**: Monitored vacuum attributes explicitly declared in `source.attribute` or used in template resolvers.
-5. **Media Background Resolvers**: Entity IDs referenced by dynamic background image paths.
+5. **Registry-Context Invalidation**: Subscriptions to Home Assistant entity registry (`hass.entities`) and device registry (`hass.devices`) snapshots. Whenever the registry snapshot updates (e.g. entities added, renamed, or precision settings changed), candidate resolution and metadata recompute immediately without waiting for state changes.
+6. **Media Background Resolvers**: Entity IDs referenced by dynamic background image paths.
 
-The card re-renders only when a tracked entity's `state` or relevant `attributes` change.
+The card re-renders only when a tracked entity's `state`, relevant `attributes`, or registry metadata changes.
 
 ### 5.2 Availability Semantics
 
-1. **State Evaluation**:
+1. **State Evaluation & Fallback Constraints**:
    - A row is marked as unavailable when its bound `source.entity` has state `"unavailable"` or `"unknown"`.
-   - If a companion entity is unavailable, the card attempts a graceful fallback to legacy vacuum attributes (e.g. falling back to `attributes.battery_level` if external `sensor.*_battery` is unavailable).
+   - **Fallback Constraint**: Silent fallback to legacy vacuum attributes (e.g. falling back to `attributes.battery_level` if external battery sensor is missing) applies **only** to auto-discovered companion entities (`source.discovery`).
+   - If `source.entity` was **explicitly configured** by the user, explicit binding retains absolute authority: the card does not fall back to vacuum attributes and renders the row as unavailable.
 2. **Control Protection**:
    - Combobox selects (`control.type: "select"`) and action buttons (`control.type: "button"`) bound to unavailable entities are disabled.
    - Disabled controls render with standard disabled contrast/opacity and suppress user click/key dispatch events.
@@ -234,7 +258,7 @@ When auto-discovery is active (`discovery: "device_registry"` or `"prefix"`), ca
      3. Deterministic alphabetical entity ID ordering.
      4. Log a debug notice when multiple candidate entities match.
 4. **Dynamic Recomputation**:
-   - Candidate resolution is re-evaluated whenever Home Assistant emits entity registry or device registry updates.
+   - Candidate resolution is re-evaluated immediately whenever Home Assistant emits entity registry or device registry updates.
 
 ---
 
