@@ -131,6 +131,14 @@ test("fixtures: validates required metadata fields and primary vacuum entity in 
       }),
     /'entities.sensor.test' entity_id must match key 'sensor.test'/,
   );
+  assert.throws(
+    () =>
+      validateFixture({
+        ...validBase,
+        entities: { "sensor.test": { entity_id: "sensor.test", device_id: 42 } },
+      }),
+    /'entities.sensor.test' device_id must be a string/,
+  );
 
   assert.throws(
     () => validateFixture({ ...validBase, devices: "invalid" }),
