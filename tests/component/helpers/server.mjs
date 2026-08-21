@@ -125,7 +125,9 @@ export function createComponentServer() {
           return this._expanded !== undefined ? this._expanded : this.hasAttribute("expanded");
         }
         toggle() {
-          this.dispatchEvent(new CustomEvent("expanded-changed", { bubbles: false, composed: true, detail: { expanded: !this.expanded } }));
+          const next = !this.expanded;
+          this.expanded = next;
+          this.dispatchEvent(new CustomEvent("expanded-changed", { bubbles: false, composed: true, detail: { expanded: next } }));
         }
       });
     }

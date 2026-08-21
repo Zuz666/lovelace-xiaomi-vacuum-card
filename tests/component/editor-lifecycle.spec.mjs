@@ -301,23 +301,67 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
     expect(visibilityHelpersInDom.some((text) => text.includes("state column"))).toBe(true);
     expect(visibilityHelpersInDom.some((text) => text.includes("attribute column"))).toBe(true);
 
-    // 3. Verify schema-level helpers for entity rows and buttons
+    // 3. Verify stub toggle method updates state and dispatches alternating values
+    const toggleResults = await page.evaluate(() => {
+      const editor = window.__activeEditor;
+      const visPanel = editor.shadowRoot.querySelectorAll("ha-expansion-panel")[1];
+      const events = [];
+      const listener = (ev) => events.push(ev.detail.expanded);
+      visPanel.addEventListener("expanded-changed", listener);
+
+      visPanel.expanded = false;
+      visPanel.toggle();
+      const afterFirst = {
+        expanded: visPanel.expanded,
+        hasAttr: visPanel.hasAttribute("expanded"),
+      };
+      visPanel.toggle();
+      const afterSecond = {
+        expanded: visPanel.expanded,
+        hasAttr: visPanel.hasAttribute("expanded"),
+      };
+      visPanel.removeEventListener("expanded-changed", listener);
+      return { events, afterFirst, afterSecond };
+    });
+    expect(toggleResults.events).toEqual([true, false]);
+    expect(toggleResults.afterFirst).toEqual({ expanded: true, hasAttr: true });
+    expect(toggleResults.afterSecond).toEqual({ expanded: false, hasAttr: false });
+
+    // 4. Verify field-specific schema helpers for entity rows and buttons
     const helpers = await page.evaluate(() => {
       const editor = window.__activeEditor;
-      const rowSchema = editor.entityDataRowSchema({ id: "status" });
-      const rowHelpers = rowSchema.map((s) => ({ name: s.name, helper: editor.computeHelper(s) }));
+      const rowSchema = editor.entityDataRowSchema({ id: "status", custom: true });
+      const rowHelpers = Object.fromEntries(
+        rowSchema.map((s) => [s.name, editor.computeHelper(s)]),
+      );
 
-      const btnSchema = editor.buttonRowSchema({ id: "start" });
-      const btnHelpers = btnSchema.map((s) => ({ name: s.name, helper: editor.computeHelper(s) }));
+      const btnSchema = editor.buttonRowSchema({ id: "start", custom: true });
+      const btnHelpers = Object.fromEntries(
+        btnSchema.map((s) => [s.name, editor.computeHelper(s)]),
+      );
 
       return { rowHelpers, btnHelpers };
     });
 
-    expect(
-      helpers.rowHelpers.every((h) => typeof h.helper === "string" && h.helper.length > 5),
-    ).toBe(true);
-    expect(
-      helpers.btnHelpers.every((h) => typeof h.helper === "string" && h.helper.length > 5),
-    ).toBe(true);
+    // Field-specific helper content assertions
+    expect(helpers.rowHelpers.id).toContain("Unique identifier for this custom row");
+    expect(helpers.rowHelpers.key).toContain("Attribute or state property key");
+    expect(helpers.rowHelpers.entity).toContain("Optional external sensor entity binding");
+    expect(helpers.rowHelpers.icon).toContain("Custom Material Design icon displayed beside");
+    expect(helpers.rowHelpers.label).toContain(
+      "Text label displayed beside or as accessible tooltip",
+    );
+    expect(helpers.rowHelpers.unit).toContain(
+      "Unit suffix appended to the displayed numeric value",
+    );
+    expect(helpers.rowHelpers.show).toContain("Show or hide this row in the card");
+
+    expect(helpers.btnHelpers.id).toContain("Unique identifier for this custom action button");
+    expect(helpers.btnHelpers.icon).toContain("Material Design icon for the button");
+    expect(helpers.btnHelpers.label).toContain("Accessible tooltip and aria-label");
+    expect(helpers.btnHelpers.service).toContain("Home Assistant service called when clicked");
+    expect(helpers.btnHelpers.show).toContain(
+      "Show or hide this button (subject to active buttons_mode rules)",
+    );
   });
 });
