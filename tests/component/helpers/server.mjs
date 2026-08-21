@@ -141,6 +141,53 @@ export function createComponentServer() {
       customElements.define("ha-form", class extends HTMLElement {
         connectedCallback() {
           this.style.display = "block";
+          this._render();
+        }
+        set schema(val) {
+          this._schema = val;
+          this._render();
+        }
+        get schema() {
+          return this._schema;
+        }
+        set computeHelper(fn) {
+          this._computeHelper = fn;
+          this._render();
+        }
+        get computeHelper() {
+          return this._computeHelper;
+        }
+        set computeLabel(fn) {
+          this._computeLabel = fn;
+          this._render();
+        }
+        get computeLabel() {
+          return this._computeLabel;
+        }
+        set data(val) {
+          this._data = val;
+        }
+        get data() {
+          return this._data;
+        }
+        set hass(val) {
+          this._hass = val;
+        }
+        get hass() {
+          return this._hass;
+        }
+        _render() {
+          if (!Array.isArray(this._schema)) return;
+          this.innerHTML = this._schema
+            .map((item) => {
+              const label = this._computeLabel ? this._computeLabel(item) : item.label || item.name;
+              const helper = this._computeHelper ? this._computeHelper(item) : item.helper;
+              return \`<div class="form-row" data-field="\${item.name}">\` +
+                \`<label class="form-label">\${label}</label>\` +
+                (helper ? \`<p class="ha-form-helper-text helper">\${helper}</p>\` : "") +
+                \`</div>\`;
+            })
+            .join("");
         }
       });
     }

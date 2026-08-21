@@ -272,29 +272,46 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
       },
     });
 
+    // 1. Verify Basic section rendered helper text in DOM
+    const basicHelpersInDom = await page.evaluate(() => {
+      const editor = window.__activeEditor;
+      const basicPanel = editor.shadowRoot.querySelectorAll("ha-expansion-panel")[0];
+      const helpers = Array.from(basicPanel.querySelectorAll(".helper")).map((p) => p.textContent);
+      return helpers;
+    });
+    expect(basicHelpersInDom.some((text) => text.includes("Vacuum entity"))).toBe(true);
+    expect(basicHelpersInDom.some((text) => text.includes("Custom card title"))).toBe(true);
+
+    // 2. Expand Visibility panel and verify rendered helper text in DOM
+    await page.evaluate(() => {
+      const editor = window.__activeEditor;
+      editor._expandedSections = { basic: true, visibility: true };
+      editor.requestUpdate();
+    });
+    await page.waitForTimeout(50);
+
+    const visibilityHelpersInDom = await page.evaluate(() => {
+      const editor = window.__activeEditor;
+      const visPanel = editor.shadowRoot.querySelectorAll("ha-expansion-panel")[1];
+      const helpers = Array.from(visPanel.querySelectorAll(".helper")).map((p) => p.textContent);
+      return helpers;
+    });
+    expect(visibilityHelpersInDom.some((text) => text.includes("card header title"))).toBe(true);
+    expect(visibilityHelpersInDom.some((text) => text.includes("state column"))).toBe(true);
+    expect(visibilityHelpersInDom.some((text) => text.includes("attribute column"))).toBe(true);
+
+    // 3. Verify schema-level helpers for entity rows and buttons
     const helpers = await page.evaluate(() => {
       const editor = window.__activeEditor;
-      const basicHelpers = {
-        entity: editor.computeHelper({
-          name: "entity",
-          helper: "Vacuum entity (domain: vacuum) to display and control",
-        }),
-        name: editor.computeHelper({
-          name: "name",
-          helper: "Custom card title (overrides vacuum entity friendly name)",
-        }),
-      };
       const rowSchema = editor.entityDataRowSchema({ id: "status" });
       const rowHelpers = rowSchema.map((s) => ({ name: s.name, helper: editor.computeHelper(s) }));
 
       const btnSchema = editor.buttonRowSchema({ id: "start" });
       const btnHelpers = btnSchema.map((s) => ({ name: s.name, helper: editor.computeHelper(s) }));
 
-      return { basicHelpers, rowHelpers, btnHelpers };
+      return { rowHelpers, btnHelpers };
     });
 
-    expect(helpers.basicHelpers.entity).toContain("Vacuum entity");
-    expect(helpers.basicHelpers.name).toContain("Custom card title");
     expect(
       helpers.rowHelpers.every((h) => typeof h.helper === "string" && h.helper.length > 5),
     ).toBe(true);
