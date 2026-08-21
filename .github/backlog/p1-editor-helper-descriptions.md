@@ -31,18 +31,18 @@ When editing the card in the Lovelace visual editor, form fields display their e
 
 ## Acceptance criteria
 
-- [ ] All inputs in Basic, State, Attributes, and Buttons editor panels have contextual `helper` text.
-- [ ] Field names remain strictly identical to their YAML configuration keys.
-- [ ] Editor model serialization and event dispatch continue to function without regressions.
-- [ ] Browser component tests verify `computeHelper` output in the rendered editor DOM.
+- [x] All inputs in Basic, State, Attributes, and Buttons editor panels have contextual `helper` text.
+- [x] Field names remain strictly identical to their YAML configuration keys.
+- [x] Editor model serialization and event dispatch continue to function without regressions.
+- [x] Browser component tests verify `computeHelper` output in the rendered editor DOM.
 
 ## Test plan
 
-- [ ] Node unit or contract tests: Verify editor schema definitions and `computeHelper` resolution.
-- [ ] Real browser component tests: Verify helper text rendering under form inputs in Playwright component tests.
+- [x] Node unit or contract tests: Verify editor schema definitions and `computeHelper` resolution.
+- [x] Real browser component tests: Verify helper text rendering under form inputs in Playwright component tests.
 - [ ] Pinned Home Assistant smoke test: N/A
 - [ ] Shared sanitized fixtures: N/A
-- [ ] Manual browser or Companion App verification: Verify visual rendering across desktop and mobile browsers
+- [x] Manual browser or Companion App verification: Verify visual rendering across desktop and mobile browsers
 
 Test-layer rationale:
 
