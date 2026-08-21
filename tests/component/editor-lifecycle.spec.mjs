@@ -285,7 +285,9 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
     // 2. Expand Visibility panel via public expansion event and verify rendered helper text in DOM
     await page.evaluate(async () => {
       const editor = window.__activeEditor;
-      const visPanel = editor.shadowRoot.querySelectorAll("ha-expansion-panel")[1];
+      const visPanel = Array.from(editor.shadowRoot.querySelectorAll("ha-expansion-panel")).find(
+        (p) => p.textContent.includes("Visibility"),
+      );
       visPanel.dispatchEvent(
         new CustomEvent("expanded-changed", { bubbles: false, composed: true }),
       );
@@ -293,7 +295,9 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
     });
     const visibilityHelpersInDom = await page.evaluate(() => {
       const editor = window.__activeEditor;
-      const visPanel = editor.shadowRoot.querySelectorAll("ha-expansion-panel")[1];
+      const visPanel = Array.from(editor.shadowRoot.querySelectorAll("ha-expansion-panel")).find(
+        (p) => p.textContent.includes("Visibility"),
+      );
       const helpers = Array.from(visPanel.querySelectorAll(".helper")).map((p) => p.textContent);
       return helpers;
     });
@@ -301,32 +305,32 @@ test.describe("Card Editor Lifecycle & Event Dispatch", () => {
     expect(visibilityHelpersInDom.some((text) => text.includes("state column"))).toBe(true);
     expect(visibilityHelpersInDom.some((text) => text.includes("attribute column"))).toBe(true);
 
-    // 3. Verify stub toggle method updates state and dispatches alternating values
+    // 3. Verify stub toggle method updates state and dispatches alternating values on standalone panel
     const toggleResults = await page.evaluate(() => {
-      const editor = window.__activeEditor;
-      const visPanel = editor.shadowRoot.querySelectorAll("ha-expansion-panel")[1];
+      const panel = document.createElement("ha-expansion-panel");
+      document.body.appendChild(panel);
       const events = [];
       const listener = (ev) => events.push(ev.detail.expanded);
-      visPanel.addEventListener("expanded-changed", listener);
+      panel.addEventListener("expanded-changed", listener);
 
-      visPanel.expanded = false;
-      visPanel.toggle();
+      panel.expanded = false;
+      panel.toggle();
       const afterFirst = {
-        expanded: visPanel.expanded,
-        hasAttr: visPanel.hasAttribute("expanded"),
+        expanded: panel.expanded,
+        hasAttr: panel.hasAttribute("expanded"),
       };
-      visPanel.toggle();
+      panel.toggle();
       const afterSecond = {
-        expanded: visPanel.expanded,
-        hasAttr: visPanel.hasAttribute("expanded"),
+        expanded: panel.expanded,
+        hasAttr: panel.hasAttribute("expanded"),
       };
-      visPanel.removeEventListener("expanded-changed", listener);
+      panel.removeEventListener("expanded-changed", listener);
+      panel.remove();
       return { events, afterFirst, afterSecond };
     });
     expect(toggleResults.events).toEqual([true, false]);
     expect(toggleResults.afterFirst).toEqual({ expanded: true, hasAttr: true });
     expect(toggleResults.afterSecond).toEqual({ expanded: false, hasAttr: false });
-
     // 4. Verify field-specific schema helpers for entity rows and buttons
     const helpers = await page.evaluate(() => {
       const editor = window.__activeEditor;
