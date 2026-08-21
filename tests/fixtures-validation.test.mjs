@@ -98,7 +98,7 @@ test("fixtures: validates required metadata fields and primary vacuum entity in 
   );
 });
 
-test("fixtures: rejects sensitive data, credentials, and private IPs", () => {
+test("fixtures: rejects sensitive data, credentials, opaque tokens, MAC addresses, and private IPs", () => {
   const createFixtureWithState = (attrKey, attrVal) => ({
     schema_version: 1,
     id: "privacy-test",
@@ -116,15 +116,80 @@ test("fixtures: rejects sensitive data, credentials, and private IPs", () => {
     },
   });
 
+  // Opaque tokens and credential keys
   assert.throws(
-    () => validateFixture(createFixtureWithState("auth_token", "secret_token_12345")),
+    () => validateFixture(createFixtureWithState("auth_token", "opaque_value_xyz")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("api_key", "custom_key_abc")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("password", "unencrypted_pwd")),
     /Sanitization error/,
   );
 
+  // MAC addresses
+  assert.throws(
+    () => validateFixture(createFixtureWithState("mac_address", "00:1A:2B:3C:4D:5E")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("device_mac", "aa-bb-cc-dd-ee-ff")),
+    /Sanitization error/,
+  );
+
+  // Private IPs
   assert.throws(
     () => validateFixture(createFixtureWithState("ip_address", "192.168.1.55")),
     /Sanitization error/,
   );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("local_ip", "10.0.0.12")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("host", "172.20.0.5")),
+    /Sanitization error/,
+  );
+});
+
+test("fixtures: loadFixture rejects filename and fixture ID mismatch", async () => {
+  assert.throws(() => loadFixture("nonexistent-fixture-file"), /Fixture file not found/);
+
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const { FIXTURES_DIR } = await import("./fixtures/loader.mjs");
+  const tempPath = path.join(FIXTURES_DIR, "temp-mismatch-test.json");
+
+  try {
+    fs.writeFileSync(
+      tempPath,
+      JSON.stringify({
+        schema_version: 1,
+        id: "differing-id-from-filename",
+        kind: "synthetic",
+        description: "Testing mismatch between filename and ID",
+        vacuum_entity_id: "vacuum.mismatch_test",
+        states: {
+          "vacuum.mismatch_test": {
+            entity_id: "vacuum.mismatch_test",
+            state: "docked",
+          },
+        },
+      }),
+    );
+
+    assert.throws(
+      () => loadFixture("temp-mismatch-test"),
+      /Fixture ID 'differing-id-from-filename' does not match expected filename ID 'temp-mismatch-test'/,
+    );
+  } finally {
+    if (fs.existsSync(tempPath)) {
+      fs.unlinkSync(tempPath);
+    }
+  }
 });
 
 test("node contract: modern separated battery fixture resolves battery sensor and action evaluations", async () => {

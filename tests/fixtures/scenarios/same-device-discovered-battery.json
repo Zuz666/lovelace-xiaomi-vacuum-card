@@ -44,6 +44,6 @@
   },
   "expected": {
     "status": "Docked",
-    "battery": "94 %"
+    "battery": "94%"
   }
 }

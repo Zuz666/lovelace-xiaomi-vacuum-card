@@ -6,9 +6,8 @@ This repository uses a versioned, sanitized entity fixture format located in `te
 
 - **Node.js Contract Tests** (`tests/fixtures-validation.test.mjs`)
 - **Playwright Component Tests** (`tests/component/fixture-driven-scenarios.spec.mjs`)
-- **Home Assistant Smoke Scenarios** (`tests/ha-smoke/`)
-
-By sharing canonical entity shapes, source precedence, reactivity, availability, and action capabilities are verified against the exact same scenario data without duplicating ad-hoc inline mocks.
+- **Home Assistant Smoke Scenarios** (`tests/ha-smoke/` — currently uses an independent YAML baseline and requires a deterministic adapter before shared fixtures can drive it)
+  By sharing canonical entity shapes, source precedence, reactivity, availability, and action capabilities are verified against the exact same scenario data without duplicating ad-hoc inline mocks.
 
 ---
 
@@ -58,7 +57,7 @@ Every fixture file declares a top-level integer `schema_version`.
   "devices": {},
   "expected": {
     "status": "Docked",
-    "battery": "88 %",
+    "battery": "88%",
     "actions": {
       "start": { "visible": true, "disabled": false },
       "pause": { "visible": true, "disabled": true }

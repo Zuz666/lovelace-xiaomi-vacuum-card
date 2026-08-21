@@ -11,12 +11,42 @@ const SENSITIVE_PATTERNS = [
   /password/i,
   /secret/i,
   /access_token/i,
+  /auth_token/i,
   /api_key/i,
   /bearer\s+[a-z0-9_.-]+/i,
+  /private_key/i,
+  /\b(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}\b/,
   /\b192\.168\.\d{1,3}\.\d{1,3}\b/,
   /\b10\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/,
   /\b172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}\b/,
 ];
+
+const CREDENTIAL_KEY_PATTERN =
+  /(?:^|[_\-.])(token|secret|password|auth_token|access_token|api_key|private_key)(?:[_\-.]|$)/i;
+
+function checkObjectPrivacy(obj, path = "", sourceName = "fixture") {
+  if (obj === null || obj === undefined) return;
+  if (typeof obj !== "object") return;
+
+  if (Array.isArray(obj)) {
+    for (let i = 0; i < obj.length; i++) {
+      checkObjectPrivacy(obj[i], `${path}[${i}]`, sourceName);
+    }
+    return;
+  }
+
+  for (const [key, value] of Object.entries(obj)) {
+    const currentPath = path ? `${path}.${key}` : key;
+    if (CREDENTIAL_KEY_PATTERN.test(key)) {
+      if (value !== null && value !== undefined && value !== "") {
+        throw new Error(
+          `[fixtures] ${sourceName}: Sanitization error: fixture contains credential field '${currentPath}' with sensitive value.`,
+        );
+      }
+    }
+    checkObjectPrivacy(value, currentPath, sourceName);
+  }
+}
 
 export function validateFixture(fixture, sourceName = "fixture") {
   if (!fixture || typeof fixture !== "object" || Array.isArray(fixture)) {
@@ -91,6 +121,8 @@ export function validateFixture(fixture, sourceName = "fixture") {
   }
 
   // 4. Privacy and sanitization validation
+  checkObjectPrivacy(fixture, "", sourceName);
+
   const serialized = JSON.stringify(fixture);
   for (const pattern of SENSITIVE_PATTERNS) {
     if (pattern.test(serialized)) {
@@ -124,6 +156,13 @@ export function loadFixture(nameOrPath) {
       cause: err,
     });
   }
+  const expectedId = path.basename(filePath, ".json");
+  if (parsed && typeof parsed === "object" && parsed.id !== expectedId) {
+    throw new Error(
+      `[fixtures] ${path.basename(filePath)}: Fixture ID '${parsed.id}' does not match expected filename ID '${expectedId}'.`,
+    );
+  }
+
   return validateFixture(parsed, path.basename(filePath));
 }
 

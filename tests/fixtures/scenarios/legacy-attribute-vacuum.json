@@ -17,8 +17,8 @@
     }
   },
   "expected": {
-    "status": "Charging",
-    "battery": "65 %",
+    "status": "Docked",
+    "battery": "65%",
     "actions": {
       "start": { "visible": false, "disabled": true },
       "pause": { "visible": false, "disabled": true },
