@@ -122,7 +122,31 @@ test("fixtures: rejects sensitive data, credentials, opaque tokens, MAC addresse
     /Sanitization error/,
   );
   assert.throws(
+    () => validateFixture(createFixtureWithState("authToken", "opaque_value_xyz")),
+    /Sanitization error/,
+  );
+  assert.throws(
     () => validateFixture(createFixtureWithState("api_key", "custom_key_abc")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("apiKey", "custom_key_abc")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("api-key", "custom_key_abc")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("private_key", "pem_value")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("privateKey", "pem_value")),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("private-key", "pem_value")),
     /Sanitization error/,
   );
   assert.throws(
@@ -133,7 +157,6 @@ test("fixtures: rejects sensitive data, credentials, opaque tokens, MAC addresse
     () => validateFixture(createFixtureWithState("bearer", "opaque-bearer-value")),
     /Sanitization error/,
   );
-
   // Location, GPS, and map coordinates
   assert.throws(
     () => validateFixture(createFixtureWithState("latitude", 37.7749)),
@@ -145,6 +168,10 @@ test("fixtures: rejects sensitive data, credentials, opaque tokens, MAC addresse
   );
   assert.throws(
     () => validateFixture(createFixtureWithState("gps", [37.7749, -122.4194])),
+    /Sanitization error/,
+  );
+  assert.throws(
+    () => validateFixture(createFixtureWithState("coordinate", [10, 20])),
     /Sanitization error/,
   );
   assert.throws(
@@ -167,7 +194,6 @@ test("fixtures: rejects sensitive data, credentials, opaque tokens, MAC addresse
       ),
     /Sanitization error/,
   );
-  // MAC addresses
   assert.throws(
     () => validateFixture(createFixtureWithState("mac_address", "00:1A:2B:3C:4D:5E")),
     /Sanitization error/,
@@ -225,6 +251,21 @@ test("fixtures: loadFixture rejects filename and fixture ID mismatch", async () 
   } finally {
     if (fs.existsSync(tempPath)) {
       fs.unlinkSync(tempPath);
+    }
+  }
+});
+test("fixtures: loadFixture rejects malformed JSON", async () => {
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const { FIXTURES_DIR } = await import("./fixtures/loader.mjs");
+  const tempMalformedPath = path.join(FIXTURES_DIR, "temp-malformed-test.json");
+
+  try {
+    fs.writeFileSync(tempMalformedPath, '{"unclosed": "json"');
+    assert.throws(() => loadFixture("temp-malformed-test"), /Malformed JSON in fixture file/);
+  } finally {
+    if (fs.existsSync(tempMalformedPath)) {
+      fs.unlinkSync(tempMalformedPath);
     }
   }
 });

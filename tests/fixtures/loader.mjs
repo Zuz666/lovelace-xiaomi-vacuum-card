@@ -22,7 +22,7 @@ const SENSITIVE_PATTERNS = [
 ];
 
 const SENSITIVE_KEY_PATTERN =
-  /(?:^|[_\-.])(token|secret|password|auth_token|access_token|api_key|private_key|bearer|gps|latitude|longitude|coordinates|polygon)(?:[_\-.]|$)/i;
+  /(?:^|[_\-.])(token|secret|password|auth_token|access_token|api_key|private_key|bearer|gps|latitude|longitude|coordinates?|polygon)(?:[_\-.]|$)/i;
 
 /**
  * Recursively scans an object for prohibited credential or location keys.
@@ -45,7 +45,11 @@ function checkObjectPrivacy(obj, path = "", sourceName = "fixture") {
 
   for (const [key, value] of Object.entries(obj)) {
     const currentPath = path ? `${path}.${key}` : key;
-    if (SENSITIVE_KEY_PATTERN.test(key)) {
+    const normalizedKey = key
+      .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+      .toLowerCase()
+      .replace(/[-.]/g, "_");
+    if (SENSITIVE_KEY_PATTERN.test(key) || SENSITIVE_KEY_PATTERN.test(normalizedKey)) {
       if (value !== null && value !== undefined && value !== "") {
         throw new Error(
           `[fixtures] ${sourceName}: Sanitization error: fixture contains sensitive or prohibited field '${currentPath}' with value.`,
