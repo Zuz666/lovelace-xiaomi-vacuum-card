@@ -26,7 +26,7 @@
     "eslint": "^10.8.1",
     "globals": "^17.11.0",
     "lit": "^3.3.3",
-    "markdownlint-cli2": "^0.23.2",
+    "markdownlint-cli2": "^0.23.3",
     "prettier": "^3.9.6"
   }
 }
